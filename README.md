@@ -1,54 +1,113 @@
-# Lugar.ph MVP
+# Lugar.ph
 
-A mobile-first jeepney route preview for Bacolod, Iloilo, Cebu, and Tacloban, built with FastAPI, Jinja2, Alpine.js, Tailwind CSS, Leaflet, SQLAlchemy, and Alembic.
+Jeepney directions for Bacolod, Iloilo, Cebu, and Tacloban. Pick a start and a destination; Lugar.ph walks you to a nearby line and plans up to three jeepney rides, naming the signboards to look for, where to get off, and the estimated fare.
 
-## Run with Docker
+Built with FastAPI, Alpine.js, Tailwind CSS, and Leaflet.
+
+## Run it
 
 ```sh
 docker compose up --build
 ```
 
-Open <http://localhost:8000>. Compose starts PostgreSQL, applies the migrations, and serves the app.
-
-## Run locally
-
-Use Python 3.12 or newer. Without `DATABASE_URL`, the app and migrations use a local SQLite file.
+Or locally with Python 3.12+ (uses SQLite unless `DATABASE_URL` is set):
 
 ```sh
-python -m venv .venv
-source .venv/bin/activate
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-alembic upgrade head
-python seed_routes.py
+alembic upgrade head && python seed_routes.py
 uvicorn main:app --reload
 ```
 
-The city switcher loads 24 Bacolod lines, 25 Iloilo lines, 64 Cebu route-code shapes, or 19 Tacloban PUJ lines. The **Jeepney routes** tab draws the selected city's network dynamically on Leaflet. Each colored line can be selected from the map or searchable directory. Each line has public community notes stored in the `route_comments` table. Notes are explicitly unverified; the MVP has no moderation dashboard or user accounts. The comment API is `GET/POST /api/jeepney-routes/{route_slug}/comments`; posting has basic length checks, a honeypot, and a short per-client cooldown. Public deployment should add moderation, stronger abuse controls, and a privacy policy.
+Open <http://localhost:8000>. Run the tests with `pytest`.
 
-Users can search for both their origin and destination or tap the Leaflet map to place either pin. Place search uses a deliberate submit action rather than autocomplete, is bounded to the selected city, and is cached and rate limited through the backend. Recent places remain as one-tap shortcuts.
+## Route data
 
-`/api/cities` lists supported cities. `/api/places` performs city-bounded place search. `/api/landmarks` lists named places along a city's jeepney lines; the trip editor filters these, recent places, and popular places instantly as you type, and only calls the public geocoder when you press Search, as its usage policy requires. `/api/jeepney-routes` and `/api/jeepney-network` accept a `city` query parameter. `/api/routes` accepts `city`, `origin_lat`, `origin_lng`, `destination_lat`, and `destination_lng`. It searches that city's jeepney network, walks up to 750 meters from each pin to a useful corridor, and plans up to three rides with short walking transfers. The recommended trip comes first in `options`, labelled with its `highlight` (for example `Fastest`); up to two distinct alternatives follow, each with `tags` and a `compared_to_best` breakdown of minutes, walking, transfers, and fare. Walking distances come from one OpenStreetMap foot-router table request (capped at 3 seconds, with detour-adjusted estimates as the fallback), so the numbers shown never change after the first response. Each ride names its signboard, the direction it heads, and nearby landmarks or streets to board and get off, plus an estimated LTFRB regular fare. Cebu's GTFS shapes are round trips and are only ridden in their direction of travel. When no trip is found, `no_route` explains why and points to the nearest mapped line from each pin. `/api/walking-route` adds street-level pedestrian geometry and turn steps between the pins and jeepney corridors. The directions view combines those walking legs with the jeepney legs and reports total minutes and kilometers. Lugar.ph recommends jeepneys only; an unmapped trip returns no substitute transport mode.
+Each city's jeepney network is one GeoJSON file in `data/`:
 
-The MVP uses the public [Nominatim search API](https://operations.osmfoundation.org/policies/nominatim/) and the FOSSGIS [OSM routing service](https://routing.openstreetmap.de/about.html). Both adapters enforce a one-request-per-second interval and keep a small in-process cache. These public services are suitable only for low-volume evaluation; deploy a self-hosted or contracted geocoder and pedestrian router before production traffic.
+| City | File | Lines |
+| --- | --- | --- |
+| Bacolod | `jeepney_network.geojson` | 24 |
+| Iloilo | `iloilo_jeepney_network.geojson` | 25 |
+| Cebu | `cebu_jeepney_network.geojson` | 64 |
+| Tacloban | `tacloban_jeepney_network.geojson` | 19 |
 
-`seed_routes.py` also inserts the published line names and endpoints into the SQLAlchemy `routes` table without duplicating rows on later runs.
+The file is a `FeatureCollection` with one `LineString` feature per jeepney line:
 
-Generated networks are stored in `data/*_jeepney_network.geojson`. [`scripts/build_route_network.py`](scripts/build_route_network.py) builds Bacolod, while [`scripts/build_additional_city_networks.py`](scripts/build_additional_city_networks.py) builds Iloilo and Tacloban from official route-structure anchors and converts Cebu's archived DOTC GTFS shapes. Runtime route planning does not depend on OSRM, GTFS servers, or a geocoder.
+```json
+{
+  "type": "Feature",
+  "geometry": { "type": "LineString", "coordinates": [[122.95053, 10.70964], [122.95061, 10.70941]] },
+  "properties": {
+    "id": "banago-libertad",
+    "number": 1,
+    "name": "Banago – Libertad Loop",
+    "color": "#ef6f77",
+    "status": "inferred_from_lptrp_anchors",
+    "distance_km": 12.94,
+    "anchors": [
+      { "id": "banago_school", "name": "Banago School", "lng": 122.95053, "lat": 10.70964 },
+      { "id": "libertad", "name": "Libertad", "lng": 122.94974, "lat": 10.66012 }
+    ]
+  }
+}
+```
 
-These are route references, not live navigation or guaranteed designated stops. Bacolod, Iloilo, and Tacloban street geometry is inferred from published route structures and OSM roads. Cebu geometry comes from an archived 2017 DOTC GTFS feed and is filtered to codes in a current 74-line directory that explicitly includes active and inactive lines. Actual turns, driving direction, active service, safe boarding points, and fares still need local confirmation. GPS requires HTTPS or localhost in most browsers.
+### Line properties
 
-Route sources:
+| Property | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `id` | string | yes | Stable slug, unique across all cities. Community notes are stored against it, so don't rename it. |
+| `number` | string or int | yes | Route number or code shown on the jeep (`1`, `04L`), unique within the city. |
+| `name` | string | yes | Route name as `Terminal – Terminal`, with an en dash. The signboard shown to riders drops `via …` and a trailing `Loop`. |
+| `color` | hex string | yes | The line's colour on chips, directions, and maps. Pick one distinct from lines sharing its roads. Light colours get dark text automatically. |
+| `status` | string | yes | Where the geometry came from: `inferred_from_lptrp_anchors`, `inferred_from_official_route_structure`, or `archived_dotc_gtfs_shape`. |
+| `distance_km` | number | yes | Length of the drawn geometry. |
+| `planned_length_km` | number or null | no | Length stated in the published route plan. |
+| `source_url` | string | no | Document the line comes from. Defaults to the city's source. |
+| `anchors` | array | yes | Named landmarks along the line, in riding order (see below). |
 
-- [Bacolod LPTRP study, Table 1 and Figure 2](https://ncts.upd.edu.ph/tssp/wp-content/uploads/2024/01/TSSP2023-09-Tiglao-1.pdf) — 24 route names, planned lengths, and schematic line map. The figure itself says detailed roads and one-way streets are omitted. The user also supplied a readable copy of this route map and confirmed the Ayala boarding area and Shopping–La Salle landmark sequence.
-- [Iloilo LTFRB Memorandum Circular 2023-036](https://ilonggoengineer.com/wp-content/uploads/2025/04/mc-2023-036.pdf) — 25 approved PUJ route structures and street sequences.
-- [Tacloban LTFRB Memorandum Circular 2024-035](https://www.scribd.com/document/780942237/LTFRB-MC-2024-035) and [Tacloban ordinance directory](https://tacloban.gov.ph/ordinance/page/5/) — 19 rationalized PUJ routes plus one non-PUJ P2P route; the P2P route is excluded.
-- [Transitland Cebu DOTC feed record](https://www.transit.land/feeds/f-wcb4-cebu~dotc) — archived Cebu GTFS route shapes, with service dates ending in 2017.
-- [Cebu Bus Spotters route directory](https://sites.google.com/view/cebubusspotters/cbs-virtual-library/cebu-jeepney-route-guide/cebu-city-jeepney-routes) — 74 documented codes used to filter the archived GTFS; the directory notes that active and inactive routes are both included.
-- [OpenStreetMap](https://www.openstreetmap.org/copyright) — landmark positions, place search, map tiles, pedestrian directions, and road geometry for the inferred network; jeepney corridor geometry is saved locally as GeoJSON.
-- [Bacolod City route notice](https://bacolodcity.gov.ph/updated-routes-under-the-local-public-transport-route-plan-lptrp/) — the 2023 simulation routes; the notice calls the exercise temporary.
-- [Bacolod City's 2025 LPTRP consultation](https://bacolodcity.gov.ph/bacolod-city-holds-local-public-transport-route-plan-lptrp-public-consultation-2025/) — evidence the plan continues to be reviewed.
-- [Local Ayala–SM–La Salle trip account](https://www.reddit.com/r/LasalleBacolod/comments/1vsc3k8/jeep_to_ride_from_ayala/) — corroborates the Bata–Libertad and Shopping–La Salle connection around the city center.
+### Anchors
 
-## Next data step
+| Property | Type | Meaning |
+| --- | --- | --- |
+| `id` | string | Slug for the landmark. |
+| `name` | string | Place name riders know (`Ayala`, `Burgos Market`). Names of three letters or fewer are shown in capitals (`SM`). Names containing `endpoint` are ignored. |
+| `lng`, `lat` | number | Position in WGS84. |
 
-Survey active services and riding directions, then correct each inferred line from community evidence. Add PostGIS geometry columns with GeoAlchemy2 and replace the in-memory nearest-line search with `ST_DWithin` and indexed route-segment queries. Add moderation before enabling community notes in a public deployment.
+Anchors do three things. They name stops ("Get off near SM"), they give each ride its direction ("toward Libertad" is the first or last anchor), and they feed instant search suggestions.
+
+### Geometry rules
+
+- Coordinates are `[lng, lat]` in WGS84 and follow the roads the jeep drives.
+- Points run in riding order, starting at the first anchor. Keep consecutive points under 500 m apart.
+- An open line (start and end more than 500 m apart) is assumed to run both ways along the same roads.
+- A closed loop (it ends within 500 m of where it starts) is a one-way route. It is only ridden in the order the points are drawn.
+
+### How the planner reads it
+
+Like an OSMnx street graph, the planner turns the lines into nodes and edges when the app starts:
+
+| Nodes (stops) | |
+| --- | --- |
+| `line`, `stop` | Line and position along it. A stop is placed every 100 m of geometry. |
+| `x`, `y` | Longitude and latitude. |
+| `km` | Distance along the line from its first point. |
+
+| Edges | Connects | Weight |
+| --- | --- | --- |
+| ride | Stops on the same line, in either direction for open lines and forward only for loops. Rides are at least 250 m. | ride km |
+| transfer | A stop and the nearest stop of every other line within 320 m | walk km × 3 + 2 |
+| access | Each pin and the nearest stop of every line within 750 m | walk km × 2.2 |
+
+Any line that passes within 200 m of both ends of a ride is listed as an interchangeable jeep for that ride. [docs/DETAILS.md](docs/DETAILS.md) explains the search itself.
+
+## Contributing route data
+
+1. **Fix or add a line.** Edit the city's GeoJSON in [geojson.io](https://geojson.io), QGIS, or JOSM. Trace the roads the jeep actually takes, in riding order, and add anchors for the landmarks riders use.
+2. **Or change the anchors and regenerate.** Bacolod, Iloilo, and Tacloban geometry is generated from anchors by [`scripts/build_route_network.py`](scripts/build_route_network.py) and [`scripts/build_additional_city_networks.py`](scripts/build_additional_city_networks.py). Change the anchors there and rerun the script. Rerunning overwrites hand edits to those cities' files.
+3. **New Bacolod lines** also need an entry in `ROUTES` in [`route_catalog.py`](route_catalog.py).
+4. **Run `pytest`.** If you added or removed lines, update the expected line counts in `tests/test_route_catalog.py`.
+5. **Open a pull request** that says what changed and how you know: a published route plan, a photo of the signboard, or a ride you took.
+
+Sources and known limitations are in [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md).

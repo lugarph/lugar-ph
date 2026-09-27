@@ -4,7 +4,7 @@ import unittest
 
 from route_catalog import ROUTE_BY_ID, distance_km, match_jeepney, public_catalog
 from transit_network import (
-    LINES_BY_CITY, MAX_ACCESS_WALK_KM, MAX_TRANSFER_WALK_KM, MIN_RIDE_KM, NETWORK, NETWORKS, STRAIGHT_LINE_DETOUR,
+    LINE_BY_ID, LINES_BY_CITY, MAX_ACCESS_WALK_KM, SHARED_STOP_KM, MAX_TRANSFER_WALK_KM, MIN_RIDE_KM, NETWORK, NETWORKS, STRAIGHT_LINE_DETOUR,
     _fare, _scan_line, plan_trips, trip_help,
 )
 
@@ -14,6 +14,7 @@ SM = (10.6722, 122.9443)
 LA_SALLE = (10.6785, 122.9626)
 NORTH_TERMINAL = (10.70655, 122.96312)
 ALANGILAN_EDGE = (10.65956, 123.07579)
+ROBINSONS = (10.6913003, 122.9583181)
 SOUTH_BACOLOD = (10.63613, 122.94726)
 
 
@@ -175,6 +176,21 @@ class RouteCatalogTests(unittest.TestCase):
         self.assertLessEqual(help["destination"]["walk_km"], MAX_ACCESS_WALK_KM)
         self.assertEqual(trip_help(*AYALA, *AYALA)["reason"], "too_close")
         self.assertIsNone(trip_help(10.80, 123.15, *SM)["origin"])  # outside the mapped area
+
+    def test_rides_list_every_jeep_that_serves_them(self):
+        trips = plan_trips(*ROBINSONS, *AYALA)
+        leg = trips[0]["legs"][0]
+        others = leg["also"]
+        self.assertGreaterEqual(len(others), 3)
+        numbers = [leg["route_number"], *(jeep["route_number"] for jeep in others)]
+        self.assertEqual(len(numbers), len(set(numbers)))
+        for jeep in others:
+            line = LINE_BY_ID[jeep["route_id"]]
+            for stop in (leg["board"], leg["alight"]):
+                self.assertLessEqual(min(distance_km(stop["lat"], stop["lng"], lat, lng) for lng, lat in line.coordinates), SHARED_STOP_KM + 0.01)
+        # A trip that only swaps in one of those jeeps is not listed separately.
+        listed = {trip["legs"][0]["route_number"] for trip in trips[1:] if trip["ride_count"] == 1}
+        self.assertFalse(listed & set(numbers))
 
 
 if __name__ == "__main__":

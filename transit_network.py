@@ -123,6 +123,10 @@ FASTER_MIN_MINUTES = 3
 RIDE_KMH, WALK_KMH, BOARDING_MINUTES, TRANSFER_MINUTES = 12, 4.8, 6, 8
 STRAIGHT_LINE_DETOUR = 1.25  # street walks are longer than the crow flies when no router answer is available
 LANDMARK_RADIUS_KM = 0.35
+# Another line can stand in for a ride when it passes this close to both the
+# boarding and the get-off point, like buses sharing a stop in a maps app.
+SHARED_STOP_KM = 0.2
+MAX_INTERCHANGEABLE_LINES = 5
 NEAREST_LINE_SEARCH_KM = 5.0
 # LTFRB regular fare for traditional jeepneys, effective 28 September 2026.
 FARE_BASE_PHP, FARE_BASE_KM, FARE_PER_KM_PHP = 14, 4, 2
@@ -416,6 +420,39 @@ def _dominated(journey: Journey, shown: list[Journey]) -> bool:
     )
 
 
+def _interchangeable(graph: StopGraph, ride: tuple[int, int, int], ride_km: float) -> list[tuple[float, int, int, int]]:
+    """Other lines that serve the same ride: (ride km, line, board stop, alight stop), shortest first.
+
+    They must pass near both ends, may be ridden in that direction, and must
+    not wander much further than the chosen line to get there.
+    """
+    line_pos, board, alight = ride
+    starts = {line: stop for _, line, stop in graph.nearest_per_line(*graph.latlng((line_pos, board)), SHARED_STOP_KM, exclude_line=line_pos)}
+    ends = {line: stop for _, line, stop in graph.nearest_per_line(*graph.latlng((line_pos, alight)), SHARED_STOP_KM, exclude_line=line_pos)}
+    found = []
+    for line, board_stop in starts.items():
+        alight_stop = ends.get(line)
+        if alight_stop is None or (graph.lines[line].round_trip and alight_stop <= board_stop):
+            continue
+        km = abs(graph.stop_km[line][alight_stop] - graph.stop_km[line][board_stop])
+        if MIN_RIDE_KM <= km <= max(ride_km * 1.5, ride_km + 1.0):
+            found.append((km, line, board_stop, alight_stop))
+    return sorted(found)[:MAX_INTERCHANGEABLE_LINES]
+
+
+def _covered(graph: StopGraph, journey: Journey, shown: list[Journey]) -> bool:
+    """True when a shown trip already offers this trip's jeeps as interchangeable choices."""
+    for other in shown:
+        if len(other.rides) != len(journey.rides):
+            continue
+        if all(
+            ride[0] == other_ride[0] or ride[0] in {line for _, line, _, _ in _interchangeable(graph, other_ride, other_km)}
+            for ride, other_ride, other_km in zip(journey.rides, other.rides, other.ride_kms)
+        ):
+            return True
+    return False
+
+
 def _line_ids(graph: StopGraph, journey: Journey) -> tuple[str, ...]:
     return tuple(graph.lines[line].id for line, _, _ in journey.rides)
 
@@ -468,6 +505,15 @@ def _itinerary(graph: StopGraph, journey: Journey, city: str, streets: dict[tupl
             "geometry": {"type": "LineString", "coordinates": _slice(line, start, end)},
             "geometry_status": line.status, "road_distance_km": round(ride_km, 2),
             "ride_minutes": max(1, round(ride_km / RIDE_KMH * 60)), "fare_php": _fare(ride_km),
+            # Any of these jeeps also works for this ride.
+            "also": [
+                {
+                    "route_id": other.id, "route_number": other.number, "color": other.color, "signboard": _signboard(other),
+                    "heading": _heading(other, other_alight > other_board), "road_distance_km": round(other_km, 2),
+                }
+                for other_km, other_pos, other_board, other_alight in _interchangeable(graph, (line_pos, board, alight), ride_km)
+                for other in [graph.lines[other_pos]]
+            ],
         })
         board_point = _point_json(graph.point((line_pos, board)), f"Board line {line.number}")
         if position:
@@ -520,7 +566,7 @@ def plan_trips(
         if (
             _tags(journey, primary)
             and journey.cost() <= primary.cost() * ALTERNATIVE_MAX_RATIO
-            and _line_ids(graph, journey) not in {_line_ids(graph, other) for other in shown}
+            and not _covered(graph, journey, shown)
             and not _dominated(journey, shown)
         ):
             shown.append(journey)
