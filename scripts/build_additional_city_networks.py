@@ -1,7 +1,10 @@
 """Build Iloilo, Cebu, and Tacloban jeepney GeoJSON files.
 
 Iloilo and Tacloban lines use endpoint and corridor anchors transcribed from
-their LTFRB route structures, then follow OSM roads through public OSRM. Cebu
+their LTFRB route structures, then follow OSM roads through public OSRM. Each
+is drawn as a full circuit in riding order (out to the far terminal and back),
+with the way back routed separately so one-way streets are respected; list
+known return landmarks in RETURN_VIA. Cebu
 uses the archived DOTC GTFS shapes and keeps codes found in the 74-line Cebu
 Bus Spotters directory. Generated geometry is committed so runtime is offline.
 """
@@ -140,11 +143,17 @@ def osrm(anchor_ids: list[str], places: dict[str, tuple[float, float]]) -> dict:
     raise RuntimeError("unreachable")
 
 
+# Landmarks a line passes on its way back, when they differ from the outbound
+# ones in reverse. Keyed by "city-code", for example "iloilo-02".
+RETURN_VIA: dict[str, list[str]] = {}
+
+
 def build_inferred(city: str, routes, places, source: str) -> None:
     features = []
     for index, (code, name, planned_km, anchor_ids) in enumerate(routes):
         print(f"{city}: {code} {name}", flush=True)
-        geometry = osrm(anchor_ids, places)
+        return_via = RETURN_VIA.get(f"{city}-{code.lower()}", anchor_ids[-2:0:-1])
+        geometry = osrm([*anchor_ids, *return_via, anchor_ids[0]], places)
         features.append({
             "type": "Feature",
             "properties": {
@@ -153,6 +162,10 @@ def build_inferred(city: str, routes, places, source: str) -> None:
                 "distance_km": round(distance_km(geometry["coordinates"]), 2), "planned_length_km": planned_km,
                 "source_url": source,
                 "anchors": [{"id": key, "name": key.replace("_", " ").title(), "lng": places[key][0], "lat": places[key][1]} for key in anchor_ids],
+                "return_anchors": [
+                    {"id": key, "name": key.replace("_", " ").title(), "lng": places[key][0], "lat": places[key][1]}
+                    for key in RETURN_VIA.get(f"{city}-{code.lower()}", [])
+                ],
             },
             "geometry": geometry,
         })

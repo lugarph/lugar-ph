@@ -22,19 +22,7 @@
 
 ## Trip planning
 
-[`transit_network.py`](../transit_network.py) runs a round-based search in the style of RAPTOR over the stop graph described in the README. Round *r* finds the cheapest way to reach every stop using exactly *r* rides, up to three. Each line is scanned once per round in each allowed direction, keeping a running minimum. Jeepneys run by frequency rather than timetable, so the cost is in ride-km equivalents rather than time:
-
-`ride km + 2.2 × walk to and from the pins + 3 × walk between lines + 2 per extra ride`
-
-- A second search that weights walking four times as heavily finds alternatives with less walking.
-- Candidates are compared on street walking distances. These come from a single OSRM table request, capped at 3 seconds, with a fallback of straight-line distance × 1.25.
-- The recommended trip is the one with the fewest rides whose cost is within 30% of the cheapest.
-- An alternative is shown only if it is:
-  - faster, has less walking, or has fewer transfers;
-  - costs no more than 1.8 × the recommended trip;
-  - is not beaten on rides, walking, and time together by an option already shown;
-  - is not just the same trip on an interchangeable jeep.
-- Time estimates assume 12 km/h riding, 4.8 km/h walking, 6 minutes to board, and 8 minutes per transfer.
+The algorithm is described in the README under [How trips are planned](../README.md#how-trips-are-planned).
 
 ## External services
 

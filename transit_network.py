@@ -27,9 +27,10 @@ NETWORK_FILES = {
 NETWORKS = {city: json.loads(path.read_text(encoding="utf-8")) for city, path in NETWORK_FILES.items()}
 NETWORK = NETWORKS["bacolod"]
 
-# A shape that ends where it starts is a GTFS-style round trip drawn in the
-# direction of travel, so it may only be ridden forward.
-ROUND_TRIP_GAP_KM = 0.5
+# Jeeps are not bidirectional: a line is drawn in riding order and only ridden
+# forward. A line that ends where it starts is a full circuit (out and back),
+# so a ride may also continue past its start.
+CIRCUIT_GAP_KM = 0.5
 
 
 def distance_km(a_lat: float, a_lng: float, b_lat: float, b_lng: float) -> float:
@@ -57,8 +58,10 @@ class Line:
     status: str
     coordinates: tuple[tuple[float, float], ...]
     cumulative_km: tuple[float, ...]
-    anchors: tuple[Anchor, ...] = ()  # published landmarks, in the order the geometry visits them
-    round_trip: bool = False
+    anchors: tuple[Anchor, ...] = ()  # published landmarks from the first terminal to the far one
+    return_anchors: tuple[Anchor, ...] = ()  # landmarks passed only on the way back
+    circuit: bool = False  # the geometry returns to its start
+    turnaround_km: float | None = None  # distance along the geometry where it reaches the far terminal
 
 
 def _place_name(name: str) -> str:
@@ -73,28 +76,39 @@ def _line(city: str, feature: dict) -> Line:
         cumulative.append(cumulative[-1] + distance_km(first[1], first[0], second[1], second[0]))
     properties = feature["properties"]
     start, end = coordinates[0], coordinates[-1]
+    anchors = _anchors(properties.get("anchors", []))
+    turnaround_km = None
+    if len(anchors) >= 2:
+        far = anchors[-1]
+        index = min(range(len(coordinates)), key=lambda i: distance_km(far.lat, far.lng, coordinates[i][1], coordinates[i][0]))
+        turnaround_km = cumulative[index]
     return Line(
         city=city, id=properties["id"], number=str(properties["number"]), name=properties["name"],
         color=properties["color"], source_url=properties.get("source_url") or CITY_METADATA[city]["source_url"], status=properties["status"],
         coordinates=coordinates, cumulative_km=tuple(cumulative),
-        anchors=tuple(
-            Anchor(_place_name(anchor["name"]), anchor["lat"], anchor["lng"])
-            for anchor in properties.get("anchors", []) if "endpoint" not in anchor["name"]
-        ),
-        round_trip=distance_km(start[1], start[0], end[1], end[0]) < ROUND_TRIP_GAP_KM,
+        anchors=anchors, return_anchors=_anchors(properties.get("return_anchors", [])),
+        circuit=distance_km(start[1], start[0], end[1], end[0]) < CIRCUIT_GAP_KM,
+        turnaround_km=turnaround_km,
     )
+
+
+def _anchors(items: list[dict]) -> tuple[Anchor, ...]:
+    return tuple(Anchor(_place_name(item["name"]), item["lat"], item["lng"]) for item in items if "endpoint" not in item["name"])
 
 
 LINES_BY_CITY = {city: tuple(_line(city, feature) for feature in network["features"]) for city, network in NETWORKS.items()}
 LINE_BY_ID = {line.id: line for lines in LINES_BY_CITY.values() for line in lines}
 LANDMARKS_BY_CITY = {
-    city: tuple({anchor.name: anchor for line in lines for anchor in line.anchors}.values())
+    city: tuple({anchor.name: anchor for line in lines for anchor in (*line.anchors, *line.return_anchors)}.values())
     for city, lines in LINES_BY_CITY.items()
 }
 
 
 def _slice(line: Line, start: int, end: int) -> list[tuple[float, float]]:
-    return list(line.coordinates[start : end + 1]) if start <= end else list(reversed(line.coordinates[end : start + 1]))
+    """Coordinates ridden from start to end, continuing past the start of a circuit."""
+    if start <= end:
+        return list(line.coordinates[start : end + 1])
+    return list(line.coordinates[start:]) + list(line.coordinates[1 : end + 1])
 
 
 def _point_json(point: tuple[float, float], name: str) -> dict:
@@ -114,6 +128,7 @@ MAX_TRANSFER_WALK_KM = 0.32
 MIN_RIDE_KM = 0.25
 MAX_RIDES = 3
 STOP_SPACING_KM = 0.1
+PASS_GAP_STOPS = 3  # stops more than this far apart along a line are separate passes of it
 GRID_DEGREES = 0.003  # ~0.33 km cells for the spatial stop index
 PREFER_FEWER_RIDES_RATIO = 1.3  # fewer rides win while within 30% of the cheapest trip
 ALTERNATIVE_MAX_RATIO = 1.8
@@ -182,12 +197,30 @@ class StopGraph:
         return found
 
     def nearest_per_line(self, lat: float, lng: float, radius_km: float, exclude_line: int = -1) -> list[tuple[float, int, int]]:
-        """The closest stop of each line within reach: riders board where they meet a line, not further along it."""
-        nearest: dict[int, tuple[float, int, int]] = {}
+        """The closest stop on each pass of each line within reach.
+
+        Riders board where they meet a line, not further along it. A circuit
+        can pass the same spot twice (going and coming back, often on
+        parallel streets), and each pass heads a different way, so each is
+        kept as its own option.
+        """
+        by_line: dict[int, list[tuple[int, float]]] = defaultdict(list)
         for walk, line, stop in self.nearby(lat, lng, radius_km):
-            if line != exclude_line and walk < nearest.get(line, (INF,))[0]:
-                nearest[line] = (walk, line, stop)
-        return list(nearest.values())
+            if line != exclude_line:
+                by_line[line].append((stop, walk))
+        nearest = []
+        for line, stops in by_line.items():
+            best: tuple[float, int] | None = None
+            previous = None
+            for stop, walk in sorted(stops):
+                if previous is not None and stop - previous > PASS_GAP_STOPS:
+                    nearest.append((best[0], line, best[1]))
+                    best = None
+                if best is None or walk < best[0]:
+                    best = (walk, stop)
+                previous = stop
+            nearest.append((best[0], line, best[1]))
+        return nearest
 
 
 @dataclass(frozen=True)
@@ -283,34 +316,35 @@ def _graph(city: str) -> StopGraph:
     return graph
 
 
-def _scan_line(stop_km: tuple[float, ...], boards: dict[int, float], forward_only: bool = False) -> dict[int, tuple[float, int]]:
-    """Cheapest (cost, boarding stop) for alighting at each stop.
+def _scan_line(stop_km: tuple[float, ...], boards: dict[int, float], circuit_km: float | None = None) -> dict[int, tuple[float, int]]:
+    """Cheapest (cost, boarding stop) for alighting at each stop, riding forward only.
 
-    Riding from i to j costs board[i] + |km[j] - km[i]|, so a sweep in each
-    direction only needs the running minimum of board[i] -/+ km[i] over stops
-    at least MIN_RIDE_KM behind the current one.
+    Riding from i to j costs board[i] + km[j] - km[i], so one forward sweep
+    only needs the running minimum of board[i] - km[i] over stops at least
+    MIN_RIDE_KM behind the current one. On a circuit the sweep runs a second
+    lap so a ride can continue past the line's start.
     """
     count = len(stop_km)
-    board = [boards.get(index, INF) for index in range(count)]
+    laps = 2 if circuit_km else 1
+    km = [value + lap * (circuit_km or 0) for lap in range(laps) for value in stop_km]
+    board = [boards.get(index, INF) for index in range(count)] + [INF] * (count * (laps - 1))
     best = [(INF, -1)] * count
     running, running_stop, index = INF, -1, 0
-    for stop in range(count):
-        while index < count and stop_km[index] <= stop_km[stop] - MIN_RIDE_KM:
-            if board[index] - stop_km[index] < running:
-                running, running_stop = board[index] - stop_km[index], index
+    for position in range(len(km)):
+        while index < len(km) and km[index] <= km[position] - MIN_RIDE_KM:
+            if board[index] - km[index] < running:
+                running, running_stop = board[index] - km[index], index
             index += 1
-        if running + stop_km[stop] < best[stop][0]:
-            best[stop] = (running + stop_km[stop], running_stop)
-    if not forward_only:
-        running, running_stop, index = INF, -1, count - 1
-        for stop in reversed(range(count)):
-            while index >= 0 and stop_km[index] >= stop_km[stop] + MIN_RIDE_KM:
-                if board[index] + stop_km[index] < running:
-                    running, running_stop = board[index] + stop_km[index], index
-                index -= 1
-            if running - stop_km[stop] < best[stop][0]:
-                best[stop] = (running - stop_km[stop], running_stop)
+        stop = position % count
+        if running + km[position] < best[stop][0]:
+            best[stop] = (running + km[position], running_stop)
     return {stop: value for stop, value in enumerate(best) if value[0] < INF}
+
+
+def _ride_km(graph: StopGraph, line: int, board: int, alight: int) -> float:
+    """Distance ridden forward from board to alight, wrapping past the start of a circuit."""
+    km = graph.stop_km[line]
+    return km[alight] - km[board] if alight >= board else km[-1] - km[board] + km[alight]
 
 
 def _journey(graph: StopGraph, rounds: list[dict[Stop, Label]], stop: Stop, end_walk: float) -> Journey:
@@ -324,7 +358,7 @@ def _journey(graph: StopGraph, rounds: list[dict[Stop, Label]], stop: Stop, end_
         stop = label.prev
     rides.reverse()
     walks.reverse()
-    ride_kms = tuple(abs(graph.stop_km[line][alight] - graph.stop_km[line][board]) for line, board, alight in rides)
+    ride_kms = tuple(_ride_km(graph, line, board, alight) for line, board, alight in rides)
     return Journey(rides=tuple(rides), ride_kms=ride_kms, straight_walks=tuple(walks))
 
 
@@ -342,7 +376,8 @@ def _search(graph: StopGraph, origin: tuple[float, float], destination: tuple[fl
         arrivals: dict[Stop, Label] = {}
         for line, line_boards in boards.items():
             costs = {stop: entry[0] for stop, entry in line_boards.items()}
-            for stop, (cost, board) in _scan_line(graph.stop_km[line], costs, graph.lines[line].round_trip).items():
+            circuit_km = graph.stop_km[line][-1] if graph.lines[line].circuit else None
+            for stop, (cost, board) in _scan_line(graph.stop_km[line], costs, circuit_km).items():
                 _, prev, walk = line_boards[board]
                 arrivals[(line, stop)] = Label(cost, board, prev, walk)
         rounds.append(arrivals)
@@ -427,23 +462,34 @@ def _interchangeable(graph: StopGraph, ride: tuple[int, int, int], ride_km: floa
     not wander much further than the chosen line to get there.
     """
     line_pos, board, alight = ride
-    starts = {line: stop for _, line, stop in graph.nearest_per_line(*graph.latlng((line_pos, board)), SHARED_STOP_KM, exclude_line=line_pos)}
-    ends = {line: stop for _, line, stop in graph.nearest_per_line(*graph.latlng((line_pos, alight)), SHARED_STOP_KM, exclude_line=line_pos)}
+    starts, ends = defaultdict(list), defaultdict(list)
+    for _, line, stop in graph.nearest_per_line(*graph.latlng((line_pos, board)), SHARED_STOP_KM, exclude_line=line_pos):
+        starts[line].append(stop)
+    for _, line, stop in graph.nearest_per_line(*graph.latlng((line_pos, alight)), SHARED_STOP_KM, exclude_line=line_pos):
+        ends[line].append(stop)
     found = []
-    for line, board_stop in starts.items():
-        alight_stop = ends.get(line)
-        if alight_stop is None or (graph.lines[line].round_trip and alight_stop <= board_stop):
-            continue
-        km = abs(graph.stop_km[line][alight_stop] - graph.stop_km[line][board_stop])
-        if MIN_RIDE_KM <= km <= max(ride_km * 1.5, ride_km + 1.0):
-            found.append((km, line, board_stop, alight_stop))
+    for line in starts.keys() & ends.keys():
+        # Only forward rides count; take the pass pairing with the shortest ride.
+        rides = [
+            (_ride_km(graph, line, board_stop, alight_stop), line, board_stop, alight_stop)
+            for board_stop in starts[line] for alight_stop in ends[line]
+            if alight_stop > board_stop or (graph.lines[line].circuit and alight_stop != board_stop)
+        ]
+        if rides:
+            best = min(rides)
+            if MIN_RIDE_KM <= best[0] <= max(ride_km * 1.5, ride_km + 1.0):
+                found.append(best)
     return sorted(found)[:MAX_INTERCHANGEABLE_LINES]
 
 
 def _covered(graph: StopGraph, journey: Journey, shown: list[Journey]) -> bool:
-    """True when a shown trip already offers this trip's jeeps as interchangeable choices."""
+    """True when a shown trip already offers this trip's jeeps as interchangeable choices.
+
+    A trip that boards closer and saves real walking stays a separate option,
+    even when its jeeps also appear in another trip's group.
+    """
     for other in shown:
-        if len(other.rides) != len(journey.rides):
+        if len(other.rides) != len(journey.rides) or journey.walk_km <= other.walk_km - LESS_WALKING_MIN_KM:
             continue
         if all(
             ride[0] == other_ride[0] or ride[0] in {line for _, line, _, _ in _interchangeable(graph, other_ride, other_km)}
@@ -483,10 +529,13 @@ def _signboard(line: Line) -> str:
     return name[: -len(" Loop")] if name.endswith(" Loop") else name
 
 
-def _heading(line: Line, forward: bool) -> str | None:
-    if line.round_trip or len(line.anchors) < 2:
+def _heading(line: Line, alight_km: float) -> str | None:
+    """The terminal the jeep is driving toward when the rider gets off."""
+    if len(line.anchors) < 2 or line.turnaround_km is None:
         return None
-    return (line.anchors[-1] if forward else line.anchors[0]).name
+    if not line.circuit or alight_km <= line.turnaround_km:
+        return line.anchors[-1].name
+    return line.anchors[0].name
 
 
 def _itinerary(graph: StopGraph, journey: Journey, city: str, streets: dict[tuple[float, float], str]) -> dict:
@@ -500,7 +549,7 @@ def _itinerary(graph: StopGraph, journey: Journey, city: str, streets: dict[tupl
         start, end = graph.stops[line_pos][board], graph.stops[line_pos][alight]
         legs.append({
             "route_id": line.id, "route_number": line.number, "route_name": line.name, "color": line.color,
-            "signboard": _signboard(line), "heading": _heading(line, alight > board), "round_trip": line.round_trip,
+            "signboard": _signboard(line), "heading": _heading(line, graph.stop_km[line_pos][alight]),
             "board": board_stop, "alight": alight_stop,
             "geometry": {"type": "LineString", "coordinates": _slice(line, start, end)},
             "geometry_status": line.status, "road_distance_km": round(ride_km, 2),
@@ -509,7 +558,7 @@ def _itinerary(graph: StopGraph, journey: Journey, city: str, streets: dict[tupl
             "also": [
                 {
                     "route_id": other.id, "route_number": other.number, "color": other.color, "signboard": _signboard(other),
-                    "heading": _heading(other, other_alight > other_board), "road_distance_km": round(other_km, 2),
+                    "heading": _heading(other, graph.stop_km[other_pos][other_alight]), "road_distance_km": round(other_km, 2),
                 }
                 for other_km, other_pos, other_board, other_alight in _interchangeable(graph, (line_pos, board, alight), ride_km)
                 for other in [graph.lines[other_pos]]

@@ -330,7 +330,7 @@
                               </li>
                             </template>
                           </ul>
-                          <p class="mt-2 text-xs text-slate-700"><span x-text="`Board ${step.leg.board.label || 'at the marked point'}`"></span><template x-if="step.leg.round_trip"><span> · loop route, ride in the direction shown</span></template></p>
+                          <p class="mt-2 text-xs text-slate-700"><span x-text="`Board ${step.leg.board.label || 'at the marked point'}`"></span><template x-if="!step.leg.heading"><span> · ride in the direction shown on the map</span></template></p>
                           <p class="mt-1 text-[11px] text-slate-500" x-text="`Ride ${step.leg.road_distance_km.toFixed(1)} km · ~${step.leg.ride_minutes} min · ~₱${step.leg.fare_php}`"></p>
                           <p class="mt-2 text-xs font-bold text-slate-900" x-text="`Get off ${step.leg.alight.label || 'at the marked point'}`"></p>
                         </div>

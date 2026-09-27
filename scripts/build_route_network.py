@@ -1,5 +1,11 @@
 """Build inferred LPTRP line geometry from map anchors and OSM roads.
 
+Each line is drawn as a full circuit in riding order: out through its
+anchors to the far terminal, then back. Jeeps rarely return on exactly the
+same streets, so the way back is routed separately with the driving
+profile, which follows one-way restrictions. Where a line is known to come
+back through other landmarks, list them in RETURN_VIA.
+
 Run this manually when anchor research changes. The app serves the generated
 GeoJSON locally and does not depend on OSRM at runtime.
 """
@@ -95,6 +101,17 @@ ROUTES = (
 )
 
 
+# Landmarks a line passes on its way back, between the far terminal and the
+# start, when they differ from the outbound ones in reverse. Keyed by route id.
+RETURN_VIA: dict[str, list[str]] = {}
+
+
+def circuit(route_id: str, anchor_ids: list[str]) -> list[str]:
+    """Outbound anchors, then the way back to the first anchor."""
+    return_via = RETURN_VIA.get(route_id, anchor_ids[-2:0:-1])
+    return [*anchor_ids, *return_via, anchor_ids[0]]
+
+
 def route_geometry(anchor_ids: list[str]) -> tuple[dict, float]:
     coordinates = ";".join(f"{P[key][0]},{P[key][1]}" for key in anchor_ids)
     query = urllib.parse.urlencode({"overview": "full", "geometries": "geojson", "steps": "false"})
@@ -129,7 +146,7 @@ def main() -> None:
             features.append(existing[route_id])
             continue
         print(f"Routing {number:02d} {name}", flush=True)
-        geometry, distance_km = route_geometry(anchor_ids)
+        geometry, distance_km = route_geometry(circuit(route_id, anchor_ids))
         features.append({
             "type": "Feature",
             "properties": {
@@ -142,6 +159,10 @@ def main() -> None:
                 "anchors": [
                     {"id": key, "name": key.replace("_", " ").title(), "lng": P[key][0], "lat": P[key][1]}
                     for key in anchor_ids
+                ],
+                "return_anchors": [
+                    {"id": key, "name": key.replace("_", " ").title(), "lng": P[key][0], "lat": P[key][1]}
+                    for key in RETURN_VIA.get(route_id, [])
                 ],
             },
             "geometry": geometry,

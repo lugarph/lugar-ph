@@ -65,7 +65,8 @@ The file is a `FeatureCollection` with one `LineString` feature per jeepney line
 | `distance_km` | number | yes | Length of the drawn geometry. |
 | `planned_length_km` | number or null | no | Length stated in the published route plan. |
 | `source_url` | string | no | Document the line comes from. Defaults to the city's source. |
-| `anchors` | array | yes | Named landmarks along the line, in riding order (see below). |
+| `anchors` | array | yes | Named landmarks from the first terminal to the far terminal, in riding order (see below). |
+| `return_anchors` | array | no | Landmarks passed only on the way back, when the return uses other streets. |
 
 ### Anchors
 
@@ -75,14 +76,18 @@ The file is a `FeatureCollection` with one `LineString` feature per jeepney line
 | `name` | string | Place name riders know (`Ayala`, `Burgos Market`). Names of three letters or fewer are shown in capitals (`SM`). Names containing `endpoint` are ignored. |
 | `lng`, `lat` | number | Position in WGS84. |
 
-Anchors do three things. They name stops ("Get off near SM"), they give each ride its direction ("toward Libertad" is the first or last anchor), and they feed instant search suggestions.
+Anchors do three things. They name stops ("Get off near SM"), they give each ride its direction, and they feed instant search suggestions. The direction reads "toward" the last anchor on the way out and "toward" the first anchor on the way back.
 
 ### Geometry rules
 
+Jeeps don't run both ways on the same roads, so every line is drawn one way, as it is driven:
+
 - Coordinates are `[lng, lat]` in WGS84 and follow the roads the jeep drives.
-- Points run in riding order, starting at the first anchor. Keep consecutive points under 500 m apart.
-- An open line (start and end more than 500 m apart) is assumed to run both ways along the same roads.
-- A closed loop (it ends within 500 m of where it starts) is a one-way route. It is only ridden in the order the points are drawn.
+- Draw the full circuit: start at the first anchor, drive out to the far terminal, and come back to the start. The line should end within 500 m of where it begins.
+- Draw the way back as it is really driven. Main roads are often shared, but side streets, one-way pairs, and detours differ.
+- Keep consecutive points under 500 m apart.
+- The planner only rides a line in the order its points are drawn. On a circuit, a ride may continue past the start, the way a jeep carries on through its terminal.
+- A line that doesn't come back to its start is treated as one-way and ends at its last point.
 
 ### How the planner reads it
 
@@ -96,16 +101,44 @@ Like an OSMnx street graph, the planner turns the lines into nodes and edges whe
 
 | Edges | Connects | Weight |
 | --- | --- | --- |
-| ride | Stops on the same line, in either direction for open lines and forward only for loops. Rides are at least 250 m. | ride km |
-| transfer | A stop and the nearest stop of every other line within 320 m | walk km × 3 + 2 |
-| access | Each pin and the nearest stop of every line within 750 m | walk km × 2.2 |
+| ride | A stop and any stop after it on the same line, forward only. Rides are at least 250 m. | ride km |
+| transfer | A stop and the nearest stop on each pass of every other line within 320 m | walk km × 3 + 2 |
+| access | Each pin and the nearest stop on each pass of every line within 750 m | walk km × 2.2 |
 
-Any line that passes within 200 m of both ends of a ride is listed as an interchangeable jeep for that ride. [docs/DETAILS.md](docs/DETAILS.md) explains the search itself.
+A circuit often passes the same spot twice, once going and once coming back, sometimes on parallel streets. Each pass heads a different way, so each counts as its own boarding option.
+
+## How trips are planned
+
+The planner lives in [`transit_network.py`](transit_network.py). It runs a round-based search, a simplified version of [RAPTOR](https://www.microsoft.com/en-us/research/publication/round-based-public-transit-routing/), over the stop graph above. Jeepneys run on frequency rather than a timetable, so it minimises a cost measured in ride-kilometres rather than time:
+
+```text
+cost = ride km + 2.2 × walk to and from the pins + 3 × walk between lines + 2 per extra ride
+```
+
+1. **Board.** Walk from the start pin to the nearest stop on each pass of every line within 750 m. Each is a boarding candidate, costed by its walk.
+2. **Ride (round r).** Scan each line that has candidates once, forward, keeping a running minimum. That gives the cheapest cost of getting off at every later stop with exactly *r* rides. Rides shorter than 250 m don't count. On a circuit, the scan runs a second lap so a ride can pass the terminal.
+3. **Transfer.** From every stop you could get off at, walk up to 320 m to the other lines. Those become the boarding candidates for round r + 1.
+4. **Finish.** After each round, walk from the nearest stops to the destination pin. That keeps the cheapest trip with one, two, and three rides.
+5. **Less walking.** Run the search again with walking weighted four times as heavily. This surfaces trips that walk less.
+6. **Street walking.** Replace every candidate's straight-line walks with street distances from one [OSRM](https://project-osrm.org/) table request. If the router takes more than 3 seconds, straight-line distance × 1.25 is used.
+7. **Choose.**
+   - **Recommended:** the trip with the fewest rides whose cost is within 30% of the cheapest.
+   - **Alternatives:** up to two more, each of which must:
+     - be faster, walk at least 150 m less, or have fewer transfers;
+     - cost no more than 1.8 × the recommended trip;
+     - not be beaten on rides, walking, and time together by a trip already shown.
+8. **Group jeeps.** Any other line that passes within 200 m of both ends of a ride, going forward without a long detour, is listed as an interchangeable jeep for that ride. A trip that only swaps in one of those jeeps is not shown separately.
+9. **Estimate.**
+   - **Time:** rides at 12 km/h, walks at 4.8 km/h, 6 minutes to board, and 8 minutes per transfer.
+   - **Fare:** the LTFRB regular jeepney fare for each ride.
 
 ## Contributing route data
 
 1. **Fix or add a line.** Edit the city's GeoJSON in [geojson.io](https://geojson.io), QGIS, or JOSM. Trace the roads the jeep actually takes, in riding order, and add anchors for the landmarks riders use.
-2. **Or change the anchors and regenerate.** Bacolod, Iloilo, and Tacloban geometry is generated from anchors by [`scripts/build_route_network.py`](scripts/build_route_network.py) and [`scripts/build_additional_city_networks.py`](scripts/build_additional_city_networks.py). Change the anchors there and rerun the script. Rerunning overwrites hand edits to those cities' files.
+2. **Or change the anchors and regenerate.** Bacolod, Iloilo, and Tacloban geometry is generated from anchors by [`scripts/build_route_network.py`](scripts/build_route_network.py) and [`scripts/build_additional_city_networks.py`](scripts/build_additional_city_networks.py).
+   - Each line is routed out through its anchors, then back.
+   - By default the way back passes the same landmarks in reverse, following one-way streets. If the jeep returns through different landmarks, list them in `RETURN_VIA`.
+   - Rerunning a script overwrites hand edits to those cities' files.
 3. **New Bacolod lines** also need an entry in `ROUTES` in [`route_catalog.py`](route_catalog.py).
 4. **Run `pytest`.** If you added or removed lines, update the expected line counts in `tests/test_route_catalog.py`.
 5. **Open a pull request** that says what changed and how you know: a published route plan, a photo of the signboard, or a ride you took.

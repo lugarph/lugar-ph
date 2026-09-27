@@ -28,6 +28,6 @@ Inferred lines follow the published landmark order, but the actual turns and one
 
 ## Known gaps
 
-- Riding direction is unknown for open lines, so they are assumed to run both ways on the same roads.
+- The way back on Bacolod, Iloilo, and Tacloban lines is inferred: it passes the outbound landmarks in reverse, along streets that respect one-way rules. Where a jeep actually returns through other side streets, the drawn return is a guess until someone records it in `RETURN_VIA` or redraws it. Inferred circuits can run longer than the published route length.
 - Cebu's anchors are route endpoints only, so Cebu stops are named by street, when the walking router answers.
 - Community notes are public and unverified.

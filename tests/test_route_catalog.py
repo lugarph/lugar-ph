@@ -18,6 +18,19 @@ ROBINSONS = (10.6913003, 122.9583181)
 SOUTH_BACOLOD = (10.63613, 122.94726)
 
 
+def _group(leg: dict) -> list[dict]:
+    """The chosen jeep for a ride plus every interchangeable one."""
+    return [leg, *leg["also"]]
+
+
+def _group_ids(leg: dict) -> set[str]:
+    return {jeep["route_id"] for jeep in _group(leg)}
+
+
+def _group_headings(leg: dict, route_id: str | None = None) -> list[str]:
+    return [jeep["heading"] for jeep in _group(leg) if route_id in (None, jeep["route_id"])]
+
+
 class RouteCatalogTests(unittest.TestCase):
     def test_stored_street_traces_remain_contiguous_in_bacolod(self):
         self.assertEqual(len(NETWORK["features"]), 24)
@@ -48,12 +61,15 @@ class RouteCatalogTests(unittest.TestCase):
     def test_ayala_to_sm_uses_published_bata_line(self):
         match = match_jeepney(*AYALA, *SM)
         self.assertEqual(match["ride_count"], 1)
-        self.assertIn(match["legs"][0]["route_id"], {"bata-libertad", "northbound-libertad"})
+        self.assertTrue({"bata-libertad", "northbound-libertad"} & _group_ids(match["legs"][0]))
         self.assertEqual(match["geometry_type"], "published_or_inferred_road_corridor")
-        self.assertGreater(len(match["legs"][0]["geometry"]["coordinates"]), 30)
-        self.assertGreater(match["road_distance_km"], 1.4)
-        self.assertLess(match["access"]["origin_walk_km"], 0.2)
-        self.assertLess(match["access"]["destination_walk_km"], 0.2)
+        self.assertGreater(len(match["legs"][0]["geometry"]["coordinates"]), 10)
+        self.assertGreater(match["road_distance_km"], 1.0)
+        # Some option boards right at Ayala and gets off right at SM.
+        self.assertTrue(any(
+            trip["access"]["origin_walk_km"] < 0.2 and trip["access"]["destination_walk_km"] < 0.2
+            for trip in plan_trips(*AYALA, *SM)
+        ))
 
     def test_ayala_to_la_salle_is_reachable_with_at_most_one_transfer(self):
         match = match_jeepney(*AYALA, *LA_SALLE)
@@ -109,26 +125,39 @@ class RouteCatalogTests(unittest.TestCase):
                 self.assertLess(alternative["ride_count"], primary["ride_count"])
         self.assertEqual(len({tuple(line["id"] for line in trip["lines"]) for trip in trips}), len(trips))
 
-    def test_line_scan_rides_both_directions_and_skips_hops(self):
+    def test_line_scan_rides_forward_only_and_skips_hops(self):
         stop_km = (0.0, 0.1, 0.5, 0.6, 1.0)
-        arrivals = _scan_line(stop_km, {2: 1.0, 4: 0.2})
-        self.assertEqual(arrivals[0], (1.2, 4))  # a cheaper boarding further away wins
+        arrivals = _scan_line(stop_km, {2: 1.0, 0: 1.2})
         self.assertAlmostEqual(arrivals[4][0], 1.5)
-        self.assertEqual(arrivals[4][1], 2)
-        self.assertNotIn(3, _scan_line(stop_km, {2: 1.0}))  # 100 m is below the minimum ride
+        self.assertEqual(arrivals[4][1], 2)  # the cheaper total wins
+        self.assertEqual(set(_scan_line(stop_km, {2: 1.0})), {4})  # never backwards, never a 100 m hop
 
-    def test_line_scan_can_be_limited_to_the_direction_of_travel(self):
-        stop_km = (0.0, 0.5, 1.0)
-        self.assertEqual(set(_scan_line(stop_km, {1: 0.0}, forward_only=True)), {2})
-        self.assertEqual(set(_scan_line(stop_km, {1: 0.0})), {0, 2})
+    def test_circuits_continue_past_their_start(self):
+        stop_km = (0.0, 0.5, 1.0, 1.5, 2.0)  # a 2 km circuit; stop 4 is back at the start
+        arrivals = _scan_line(stop_km, {3: 0.0}, circuit_km=2.0)
+        self.assertAlmostEqual(arrivals[1][0], 1.0)  # 1.5 -> 2.0, then on to 0.5
+        self.assertNotIn(1, _scan_line(stop_km, {3: 0.0}))  # an open line ends at its last stop
 
-    def test_cebu_round_trip_shapes_are_one_way(self):
-        self.assertGreater(sum(line.round_trip for line in LINES_BY_CITY["cebu"]), 60)
-        self.assertFalse(any(line.round_trip for line in LINES_BY_CITY["bacolod"]))
+    def test_every_line_is_a_circuit_in_riding_order(self):
+        for city in ("bacolod", "iloilo", "tacloban"):
+            with self.subTest(city=city):
+                self.assertTrue(all(line.circuit for line in LINES_BY_CITY[city]))
+        self.assertGreater(sum(line.circuit for line in LINES_BY_CITY["cebu"]), 60)
+
+    def test_return_trips_use_the_other_half_of_the_circuit(self):
+        there = match_jeepney(*AYALA, *SM)["legs"][0]
+        back = match_jeepney(*SM, *AYALA)["legs"][0]
+        # The Bata – Libertad jeep heads to Libertad one way and back to Bata the other.
+        self.assertEqual(_group_headings(there, "bata-libertad"), ["Libertad"])
+        self.assertEqual(_group_headings(back, "bata-libertad"), ["Bata"])
+        line = LINE_BY_ID[there["route_id"]]
+        # Rides follow the drawn order: the ride's first point is the boarding stop, not the reverse.
+        self.assertEqual(list(there["geometry"]["coordinates"][0]), [there["board"]["lng"], there["board"]["lat"]])
+        self.assertTrue(line.circuit)
 
     def test_rides_say_which_signboard_to_look_for_and_where_to_get_off(self):
         leg = match_jeepney(*AYALA, *SM)["legs"][0]
-        self.assertEqual(leg["heading"], "Libertad")
+        self.assertIn("Libertad", _group_headings(leg))
         self.assertEqual(leg["board"]["label"], "near Ayala")
         self.assertEqual(leg["alight"]["label"], "near SM")
         self.assertNotIn("Loop", leg["signboard"])
