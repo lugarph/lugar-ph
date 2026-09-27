@@ -3,7 +3,7 @@
 import unittest
 from unittest.mock import patch
 
-from main import routes
+from main import city_landmarks, routes
 
 
 class RouteOptionTests(unittest.TestCase):
@@ -57,6 +57,12 @@ class RouteOptionTests(unittest.TestCase):
         option = routes(10.65956, 123.07579, 10.63613, 122.94726)["options"][0]
         self.assertEqual(option["itinerary"]["ride_count"], 3)
         self.assertIn("transfer 2 times", option["description"])
+
+    def test_landmarks_feed_instant_search(self):
+        names = [item["name"] for item in city_landmarks("bacolod")["landmarks"]]
+        self.assertIn("SM", names)
+        self.assertEqual(names, sorted(names))
+        self.assertFalse(any("endpoint" in name for name in city_landmarks("cebu")["landmarks"]))
 
 
 if __name__ == "__main__":

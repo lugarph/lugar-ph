@@ -573,6 +573,11 @@ def trip_help(origin_lat: float, origin_lng: float, destination_lat: float, dest
     return {"reason": reason, "origin": origin, "destination": destination}
 
 
+def landmarks(city: str = "bacolod") -> list[dict]:
+    """Named places along the city's jeepney lines, for instant search suggestions."""
+    return [{"name": anchor.name, "lat": anchor.lat, "lng": anchor.lng} for anchor in sorted(LANDMARKS_BY_CITY[city], key=lambda anchor: anchor.name)]
+
+
 def public_network(city: str = "bacolod") -> dict:
     return NETWORKS[city]
 

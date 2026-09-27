@@ -16,7 +16,7 @@ from sqlalchemy import select
 from models import RouteComment, SessionLocal
 from osm_services import search_places, walking_matrix, walking_route
 from route_catalog import ROUTE_BY_ID, distance_km, public_catalog
-from transit_network import CITY_METADATA, plan_trips, public_network, trip_help
+from transit_network import CITY_METADATA, landmarks, plan_trips, public_network, trip_help
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -72,6 +72,12 @@ def places(q: str = Query(min_length=2, max_length=120), city: str = "bacolod"):
         return {"results": search_places(city, q)}
     except (OSError, ValueError, TypeError):
         raise HTTPException(status_code=503, detail="Place search is temporarily unavailable")
+
+
+@app.get("/api/landmarks")
+def city_landmarks(city: str = "bacolod"):
+    """Landmarks along mapped jeepney lines; the client filters these as the rider types."""
+    return {"landmarks": landmarks(_known_city(city))}
 
 
 @app.get("/api/walking-route")
