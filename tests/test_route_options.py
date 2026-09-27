@@ -34,7 +34,7 @@ class RouteOptionTests(unittest.TestCase):
     def test_north_terminal_to_sm_uses_researched_corridor(self):
         result = routes(10.70655, 122.96312, 10.6722, 122.9443)
         self.assertEqual(result["options"][0]["id"], "jeepney")
-        self.assertGreater(result["distance_km"], 6)
+        self.assertGreater(result["distance_km"], 4.5)
 
     def test_two_ride_itinerary_is_returned_when_needed(self):
         result = routes(10.61779, 123.00592, 10.6722, 122.9443)

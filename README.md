@@ -61,12 +61,15 @@ The file is a `FeatureCollection` with one `LineString` feature per jeepney line
 | `number` | string or int | yes | Route number or code shown on the jeep (`1`, `04L`), unique within the city. |
 | `name` | string | yes | Route name as `Terminal – Terminal`, with an en dash. The signboard shown to riders drops `via …` and a trailing `Loop`. |
 | `color` | hex string | yes | The line's colour on chips, directions, and maps. Pick one distinct from lines sharing its roads. Light colours get dark text automatically. |
-| `status` | string | yes | Where the geometry came from: `inferred_from_lptrp_anchors`, `inferred_from_official_route_structure`, or `archived_dotc_gtfs_shape`. |
+| `status` | string | yes | Where the geometry came from. `osm_route_relation` (mapped street by street in OpenStreetMap) and `archived_dotc_gtfs_shape` are traced paths. `inferred_from_lptrp_anchors` and `inferred_from_official_route_structure` are estimated from route plans; riders see a note on those. |
+| `mode` | string | no | `jeepney` (default) or `uv_express`. UV Express rides get no fare estimate. |
 | `distance_km` | number | yes | Length of the drawn geometry. |
 | `planned_length_km` | number or null | no | Length stated in the published route plan. |
 | `source_url` | string | no | Document the line comes from. Defaults to the city's source. |
 | `anchors` | array | yes | Named landmarks from the first terminal to the far terminal, in riding order (see below). |
 | `return_anchors` | array | no | Landmarks passed only on the way back, when the return uses other streets. |
+| `osm_relations` | array of ints | no | OpenStreetMap route relations the geometry was imported from, in riding order. |
+| `attribution` | string | no | Required credit for imported geometry, such as `© OpenStreetMap contributors, ODbL`. |
 
 ### Anchors
 
@@ -130,17 +133,22 @@ cost = ride km + 2.2 × walk to and from the pins + 3 × walk between lines + 2 
 8. **Group jeeps.** Any other line that passes within 200 m of both ends of a ride, going forward without a long detour, is listed as an interchangeable jeep for that ride. A trip that only swaps in one of those jeeps is not shown separately.
 9. **Estimate.**
    - **Time:** rides at 12 km/h, walks at 4.8 km/h, 6 minutes to board, and 8 minutes per transfer.
-   - **Fare:** the LTFRB regular jeepney fare for each ride.
+   - **Fare:** the LTFRB regular jeepney fare for each ride. UV Express rides show "fare on board".
 
 ## Contributing route data
 
-1. **Fix or add a line.** Edit the city's GeoJSON in [geojson.io](https://geojson.io), QGIS, or JOSM. Trace the roads the jeep actually takes, in riding order, and add anchors for the landmarks riders use.
-2. **Or change the anchors and regenerate.** Bacolod, Iloilo, and Tacloban geometry is generated from anchors by [`scripts/build_route_network.py`](scripts/build_route_network.py) and [`scripts/build_additional_city_networks.py`](scripts/build_additional_city_networks.py).
+1. **Best: map it in OpenStreetMap.** Add or fix the line's public-transport route relations in OSM (one per direction, following the [PTv2 scheme](https://wiki.openstreetmap.org/wiki/Public_transport)). Then list the relation ids in `OSM_ROUTES` in [`scripts/build_route_network.py`](scripts/build_route_network.py) and rerun it with the line's id. The fix then helps every OSM-based app too. Eleven Bacolod lines already come from OSM.
+2. **Or fix the GeoJSON directly.** Edit the city's file in [geojson.io](https://geojson.io), QGIS, or JOSM. Trace the roads the jeep actually takes, in riding order, and add anchors for the landmarks riders use.
+3. **Or change the anchors and regenerate.** Lines without a mapped path are generated from anchors by [`scripts/build_route_network.py`](scripts/build_route_network.py) and [`scripts/build_additional_city_networks.py`](scripts/build_additional_city_networks.py).
    - Each line is routed out through its anchors, then back.
    - By default the way back passes the same landmarks in reverse, following one-way streets. If the jeep returns through different landmarks, list them in `RETURN_VIA`.
    - Rerunning a script overwrites hand edits to those cities' files.
-3. **New Bacolod lines** also need an entry in `ROUTES` in [`route_catalog.py`](route_catalog.py).
-4. **Run `pytest`.** If you added or removed lines, update the expected line counts in `tests/test_route_catalog.py`.
-5. **Open a pull request** that says what changed and how you know: a published route plan, a photo of the signboard, or a ride you took.
+4. **New Bacolod lines** also need an entry in `ROUTES` in [`route_catalog.py`](route_catalog.py).
+5. **Run `pytest`.** If you added or removed lines, update the expected line counts in `tests/test_route_catalog.py`.
+6. **Open a pull request** that says what changed and how you know: a published route plan, a photo of the signboard, or a ride you took.
 
 Sources and known limitations are in [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md).
+
+### Licence of the route data
+
+Geometry imported from OpenStreetMap is © OpenStreetMap contributors and available under the [Open Database Licence](https://opendatacommons.org/licenses/odbl/). Because `data/jeepney_network.geojson` includes it, that file is shared under the ODbL too. Keep the credit when you reuse it.

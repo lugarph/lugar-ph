@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections import defaultdict
 from dataclasses import dataclass, field, replace
 from functools import lru_cache
@@ -62,6 +63,12 @@ class Line:
     return_anchors: tuple[Anchor, ...] = ()  # landmarks passed only on the way back
     circuit: bool = False  # the geometry returns to its start
     turnaround_km: float | None = None  # distance along the geometry where it reaches the far terminal
+    mode: str = "jeepney"  # or "uv_express"
+
+    @property
+    def estimated_path(self) -> bool:
+        """True when the path is inferred from a route plan rather than mapped street by street."""
+        return self.status.startswith("inferred")
 
 
 def _place_name(name: str) -> str:
@@ -88,6 +95,7 @@ def _line(city: str, feature: dict) -> Line:
         coordinates=coordinates, cumulative_km=tuple(cumulative),
         anchors=anchors, return_anchors=_anchors(properties.get("return_anchors", [])),
         circuit=distance_km(start[1], start[0], end[1], end[0]) < CIRCUIT_GAP_KM,
+        mode=properties.get("mode", "jeepney"),
         turnaround_km=turnaround_km,
     )
 
@@ -237,6 +245,7 @@ class Label:
 class Journey:
     rides: tuple[tuple[int, int, int], ...]  # (line, board stop, alight stop)
     ride_kms: tuple[float, ...]
+    fares: tuple[int | None, ...]  # per ride; None where no fare rule applies (UV Express)
     straight_walks: tuple[float, ...]  # origin walk, each transfer walk, destination walk
     street_walks: tuple[float | None, ...] | None = None  # the same walks along streets, when routed
 
@@ -266,15 +275,18 @@ class Journey:
         return self.ride_minutes + round(self.walk_km / WALK_KMH * 60)
 
     @property
-    def fare_php(self) -> int:
-        return sum(_fare(km) for km in self.ride_kms)
+    def fare_php(self) -> int | None:
+        return None if None in self.fares else sum(self.fares)
 
     def cost(self, weights: Weights = DEFAULT_WEIGHTS) -> float:
         transfer_walk = self.walk_km - self.access_walk_km
         return self.ride_km + self.access_walk_km * weights.walk + transfer_walk * weights.transfer_walk + (len(self.rides) - 1) * weights.transfer
 
 
-def _fare(ride_km: float) -> int:
+def _fare(ride_km: float, mode: str = "jeepney") -> int | None:
+    """Estimated regular jeepney fare; UV Express fares follow a different matrix, so they are left to the driver."""
+    if mode != "jeepney":
+        return None
     return FARE_BASE_PHP + FARE_PER_KM_PHP * ceil(round(max(0.0, ride_km - FARE_BASE_KM), 3))
 
 
@@ -359,7 +371,8 @@ def _journey(graph: StopGraph, rounds: list[dict[Stop, Label]], stop: Stop, end_
     rides.reverse()
     walks.reverse()
     ride_kms = tuple(_ride_km(graph, line, board, alight) for line, board, alight in rides)
-    return Journey(rides=tuple(rides), ride_kms=ride_kms, straight_walks=tuple(walks))
+    fares = tuple(_fare(km, graph.lines[line].mode) for (line, _, _), km in zip(rides, ride_kms))
+    return Journey(rides=tuple(rides), ride_kms=ride_kms, fares=fares, straight_walks=tuple(walks))
 
 
 def _search(graph: StopGraph, origin: tuple[float, float], destination: tuple[float, float], weights: Weights) -> dict[int, Journey]:
@@ -503,12 +516,17 @@ def _line_ids(graph: StopGraph, journey: Journey) -> tuple[str, ...]:
     return tuple(graph.lines[line].id for line, _, _ in journey.rides)
 
 
+STREET_NAME = re.compile(r"\b(St|Rd|Ave|Street|Road|Avenue|Drive|Blvd)\b\.?", re.IGNORECASE)
+
+
 def _landmark(city: str, lat: float, lng: float) -> str | None:
-    nearest = min(
-        ((distance_km(lat, lng, anchor.lat, anchor.lng), anchor.name) for anchor in LANDMARKS_BY_CITY[city]),
-        default=(INF, None),
-    )
-    return nearest[1] if nearest[0] <= LANDMARK_RADIUS_KM else None
+    """The nearest named place within reach, preferring places over street-named terminals."""
+    nearby = [
+        (bool(STREET_NAME.search(anchor.name)), walk, anchor.name)
+        for anchor in LANDMARKS_BY_CITY[city]
+        if (walk := distance_km(lat, lng, anchor.lat, anchor.lng)) <= LANDMARK_RADIUS_KM
+    ]
+    return min(nearby)[2] if nearby else None
 
 
 def _stop_json(city: str, point: tuple[float, float], streets: dict[tuple[float, float], str]) -> dict:
@@ -552,12 +570,14 @@ def _itinerary(graph: StopGraph, journey: Journey, city: str, streets: dict[tupl
             "signboard": _signboard(line), "heading": _heading(line, graph.stop_km[line_pos][alight]),
             "board": board_stop, "alight": alight_stop,
             "geometry": {"type": "LineString", "coordinates": _slice(line, start, end)},
-            "geometry_status": line.status, "road_distance_km": round(ride_km, 2),
-            "ride_minutes": max(1, round(ride_km / RIDE_KMH * 60)), "fare_php": _fare(ride_km),
+            "geometry_status": line.status, "estimated_path": line.estimated_path, "mode": line.mode,
+            "road_distance_km": round(ride_km, 2),
+            "ride_minutes": max(1, round(ride_km / RIDE_KMH * 60)), "fare_php": _fare(ride_km, line.mode),
             # Any of these jeeps also works for this ride.
             "also": [
                 {
                     "route_id": other.id, "route_number": other.number, "color": other.color, "signboard": _signboard(other),
+                    "mode": other.mode, "estimated_path": other.estimated_path,
                     "heading": _heading(other, graph.stop_km[other_pos][other_alight]), "road_distance_km": round(other_km, 2),
                 }
                 for other_km, other_pos, other_board, other_alight in _interchangeable(graph, (line_pos, board, alight), ride_km)
@@ -630,7 +650,7 @@ def plan_trips(
         trip["compared_to_best"] = None if journey is primary else {
             "minutes": journey.minutes - primary.minutes,
             "walk_m": round((journey.walk_km - primary.walk_km) * 1000),
-            "fare_php": journey.fare_php - primary.fare_php,
+            "fare_php": None if None in (journey.fare_php, primary.fare_php) else journey.fare_php - primary.fare_php,
             "rides": len(journey.rides) - len(primary.rides),
         }
         trips.append(trip)

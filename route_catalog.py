@@ -70,6 +70,12 @@ for city, network in NETWORKS.items():
         }
 
 
+MAPPED_PORTION = {
+    "osm_route_relation": "mapped street by street in OpenStreetMap",
+    "archived_dotc_gtfs_shape": "archived DOTC GTFS shape",
+}
+
+
 def public_catalog(city: str = "bacolod") -> dict:
     network = public_network(city)
     routes = []
@@ -79,12 +85,10 @@ def public_catalog(city: str = "bacolod") -> dict:
         routes.append({
             **base,
             "color": properties["color"],
-            "mapped_portion": (
-                "archived DOTC GTFS shape"
-                if properties["status"] == "archived_dotc_gtfs_shape"
-                else f"{len(properties.get('anchors', []))} published route anchors"
-            ),
+            "mapped_portion": MAPPED_PORTION.get(properties["status"], "estimated from the published route plan"),
             "geometry_status": properties["status"],
+            "mode": properties.get("mode", "jeepney"),
+            "osm_relations": properties.get("osm_relations", []),
         })
     source_url = next((feature["properties"].get("source_url") for feature in network["features"] if feature["properties"].get("source_url")), CITY_METADATA[city]["source_url"])
     return {

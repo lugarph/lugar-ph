@@ -50,7 +50,9 @@ class RouteCatalogTests(unittest.TestCase):
         self.assertGreater(len(ROUTE_BY_ID), 100)
         self.assertEqual([route["number"] for route in catalog["routes"]], list(range(1, 25)))
         self.assertEqual(sum(bool(route["mapped_portion"]) for route in catalog["routes"]), 24)
-        self.assertTrue(all(route["geometry_status"] == "inferred_from_lptrp_anchors" for route in catalog["routes"]))
+        statuses = [route["geometry_status"] for route in catalog["routes"]]
+        self.assertEqual(statuses.count("osm_route_relation"), 11)
+        self.assertEqual(statuses.count("inferred_from_lptrp_anchors"), 13)
 
     def test_additional_city_catalogs_have_mapped_jeepney_lines(self):
         self.assertEqual(len(public_catalog("iloilo")["routes"]), 25)
@@ -81,14 +83,15 @@ class RouteCatalogTests(unittest.TestCase):
     def test_north_terminal_uses_lacson_corridor_to_sm(self):
         match = match_jeepney(*NORTH_TERMINAL, *SM)
         self.assertEqual(match["ride_count"], 1)
-        self.assertIn(match["legs"][0]["route_id"], {"bata-libertad", "northbound-libertad", "pepsi-bata-bgc"})
-        self.assertGreater(match["road_distance_km"], 6)
+        self.assertTrue({"bata-libertad", "northbound-libertad", "pepsi-bata-bgc"} & _group_ids(match["legs"][0]))
+        self.assertGreater(match["road_distance_km"], 4.5)  # down Lacson Street, about 5 km
 
-    def test_north_terminal_to_la_salle_uses_two_rides(self):
+    def test_north_terminal_to_la_salle_rides_the_mapped_shopping_line(self):
+        # OpenStreetMap shows line 5 passing La Salle on its way back to Shopping, so one ride is enough.
         match = match_jeepney(*NORTH_TERMINAL, *LA_SALLE)
-        self.assertEqual(match["ride_count"], 2)
-        self.assertEqual(len(match["transfers"]), 1)
-        self.assertLessEqual(match["transfers"][0]["walk_km"], MAX_TRANSFER_WALK_KM * STRAIGHT_LINE_DETOUR)
+        self.assertEqual(match["ride_count"], 1)
+        self.assertIn("shopping-northbound", _group_ids(match["legs"][0]))
+        self.assertEqual(match["legs"][0]["heading"], "Shopping")
 
     def test_remote_places_and_zero_length_trips_are_not_guessed(self):
         self.assertIsNone(match_jeepney(10.80, 123.15, *SM))
@@ -147,9 +150,9 @@ class RouteCatalogTests(unittest.TestCase):
     def test_return_trips_use_the_other_half_of_the_circuit(self):
         there = match_jeepney(*AYALA, *SM)["legs"][0]
         back = match_jeepney(*SM, *AYALA)["legs"][0]
-        # The Bata – Libertad jeep heads to Libertad one way and back to Bata the other.
-        self.assertEqual(_group_headings(there, "bata-libertad"), ["Libertad"])
-        self.assertEqual(_group_headings(back, "bata-libertad"), ["Bata"])
+        # Jeeps toward Libertad serve Ayala -> SM; the way back is served by jeeps heading elsewhere.
+        self.assertIn("Libertad", _group_headings(there))
+        self.assertNotIn("Libertad", _group_headings(back))
         line = LINE_BY_ID[there["route_id"]]
         # Rides follow the drawn order: the ride's first point is the boarding stop, not the reverse.
         self.assertEqual(list(there["geometry"]["coordinates"][0]), [there["board"]["lng"], there["board"]["lat"]])
@@ -220,6 +223,30 @@ class RouteCatalogTests(unittest.TestCase):
         # A trip that only swaps in one of those jeeps is not listed separately.
         listed = {trip["legs"][0]["route_number"] for trip in trips[1:] if trip["ride_count"] == 1}
         self.assertFalse(listed & set(numbers))
+
+    def test_bacolod_lines_mapped_in_openstreetmap_keep_their_credit(self):
+        for feature in NETWORK["features"]:
+            properties = feature["properties"]
+            if properties["status"] != "osm_route_relation":
+                continue
+            with self.subTest(route=properties["id"]):
+                self.assertTrue(properties["osm_relations"])
+                self.assertIn("OpenStreetMap contributors", properties["attribution"])
+                self.assertTrue(LINE_BY_ID[properties["id"]].circuit)
+                self.assertGreaterEqual(len(properties["anchors"]), 2)
+
+    def test_uv_express_routes_are_not_priced_as_jeepneys(self):
+        uv = {line.id for line in LINES_BY_CITY["bacolod"] if line.mode == "uv_express"}
+        self.assertEqual(uv, {"granada-burgos", "alangilan-burgos"})
+        self.assertIsNone(_fare(5.0, "uv_express"))
+        self.assertEqual(_fare(5.0), 16)
+
+    def test_estimated_paths_are_flagged_on_rides(self):
+        legs = [leg for trip in plan_trips(*ALANGILAN_EDGE, *SOUTH_BACOLOD) for leg in trip["legs"]]
+        for leg in legs:
+            line = LINE_BY_ID[leg["route_id"]]
+            self.assertEqual(leg["estimated_path"], line.status.startswith("inferred"))
+            self.assertEqual(leg["mode"], line.mode)
 
 
 if __name__ == "__main__":
