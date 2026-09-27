@@ -1,7 +1,20 @@
-"""Build inferred LPTRP line geometry from map anchors and OSM roads.
+"""Build Bacolod line geometry as full circuits in riding order.
 
-Run this manually when anchor research changes. The app serves the generated
-GeoJSON locally and does not depend on OSRM at runtime.
+Lines mapped street by street in OpenStreetMap (OSM_ROUTES) are imported
+from their public-transport route relations: one relation per direction,
+joined out and back, or one relation for a loop. Small breaks between a
+relation's ways are bridged with a driving route. This geometry is derived
+from OpenStreetMap, (c) OpenStreetMap contributors, under the ODbL.
+
+The remaining lines are inferred from LPTRP anchors: routed out through
+their anchors to the far terminal, then back. The way back is routed
+separately with the driving profile, which follows one-way restrictions.
+Where a line is known to come back through other landmarks, list them in
+RETURN_VIA.
+
+Run this manually when route research or the OSM relations change; pass
+route ids to rebuild them. The app serves the generated GeoJSON locally and
+does not depend on OSRM or Overpass at runtime.
 """
 
 from __future__ import annotations
@@ -12,6 +25,8 @@ import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
+
+from osm_routes import circuit, fetch_relations, osm_anchors, osm_properties
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -95,6 +110,49 @@ ROUTES = (
 )
 
 
+# Lines mapped in OpenStreetMap: relation ids in riding order (outbound, then
+# return; a loop is one relation), the starting terminal, and the far
+# terminal. Names come from the route plan, which also corrects a few OSM tag
+# slips (a return relation tagged with its outbound from/to, "South Capital").
+OSM_ROUTES: dict[str, tuple[list[int], str, str]] = {
+    "banago-libertad": ([21146076, 21146074], "Banago", "Libertad"),
+    "bata-libertad": ([14998328, 14998329], "Bata", "Libertad"),
+    "northbound-libertad": ([21146071, 21146072], "Northbound Terminal", "Libertad"),
+    "shopping-northbound": ([21146073, 21146070], "Shopping", "Northbound Terminal"),
+    "shopping-libertad-lasalle": ([14998324], "Shopping", "Libertad"),
+    "shopping-libertad-san-agustin": ([21146069], "Shopping", "Libertad"),
+    "eroreco-central-market": ([21146068], "Eroreco", "Central Market"),
+    "punta-taytay-ferrero": ([21163565, 21163564], "Punta Taytay", "Fr. Ferrero St."),
+    "tangub-south-capitol": ([21163994, 21163995], "Tangub", "South Capitol Rd."),
+    "airport-south-capitol": ([21163992, 21163993], "Airport Subd.", "South Capitol Rd."),
+    "mansilingan-central-market": ([14998327, 14998326], "Mansilingan", "Central Market"),
+}
+# A loop relation may start anywhere on its circuit; start it at this anchor.
+LOOP_START = {
+    "shopping-libertad-lasalle": "central_market",
+    "shopping-libertad-san-agustin": "central_market",
+    "eroreco-central-market": "eroreco",
+}
+# For a loop, the far terminal is the point nearest this anchor.
+LOOP_TURNAROUND = {
+    "shopping-libertad-lasalle": "libertad",
+    "shopping-libertad-san-agustin": "libertad",
+    "eroreco-central-market": "central_market",
+}
+# Class 3 UV Express routes in City Ordinance 966, not jeepneys.
+UV_EXPRESS = {"granada-burgos", "alangilan-burgos"}
+
+# Landmarks a line passes on its way back, between the far terminal and the
+# start, when they differ from the outbound ones in reverse. Keyed by route id.
+RETURN_VIA: dict[str, list[str]] = {}
+
+
+def inferred_circuit(route_id: str, anchor_ids: list[str]) -> list[str]:
+    """Outbound anchors, then the way back to the first anchor."""
+    return_via = RETURN_VIA.get(route_id, anchor_ids[-2:0:-1])
+    return [*anchor_ids, *return_via, anchor_ids[0]]
+
+
 def route_geometry(anchor_ids: list[str]) -> tuple[dict, float]:
     coordinates = ";".join(f"{P[key][0]},{P[key][1]}" for key in anchor_ids)
     query = urllib.parse.urlencode({"overview": "full", "geometries": "geojson", "steps": "false"})
@@ -114,6 +172,20 @@ def route_geometry(anchor_ids: list[str]) -> tuple[dict, float]:
     raise RuntimeError(f"OSRM failed for {anchor_ids}: {last_error}")
 
 
+def osm_feature(number: int, route_id: str, name: str, color: str, anchor_ids: list[str], relations: dict[int, dict]) -> dict:
+    relation_ids, start_name, far_name = OSM_ROUTES[route_id]
+    loop_start = list(P[LOOP_START[route_id]]) if route_id in LOOP_START else None
+    loop_far = list(P[LOOP_TURNAROUND[route_id]]) if route_id in LOOP_TURNAROUND else None
+    points, turnaround = circuit(relations, relation_ids, loop_start, loop_far)
+    landmarks = [(key, key.replace("_", " ").title(), list(P[key])) for key in anchor_ids]
+    anchors, return_anchors = osm_anchors(points, turnaround, landmarks, start_name, far_name)
+    return {
+        "type": "Feature",
+        "properties": {"number": number, "id": route_id, "name": name, "color": color, **osm_properties(relation_ids, points, anchors, return_anchors)},
+        "geometry": {"type": "LineString", "coordinates": [[round(lng, 6), round(lat, 6)] for lng, lat in points]},
+    }
+
+
 def main() -> None:
     forced = set(sys.argv[1:])
     existing = {}
@@ -123,13 +195,24 @@ def main() -> None:
             for feature in json.loads(OUTPUT.read_text(encoding="utf-8"))["features"]
         }
     features = []
+    relations: dict[int, dict] = {}
     for number, route_id, name, color, anchor_ids in ROUTES:
-        if route_id in existing and route_id not in forced:
+        mode = "uv_express" if route_id in UV_EXPRESS else "jeepney"
+        from_osm = route_id in OSM_ROUTES
+        current = existing.get(route_id)
+        if current and route_id not in forced and (current["properties"]["status"] == "osm_route_relation") == from_osm:
             print(f"Keeping {number:02d} {name}", flush=True)
-            features.append(existing[route_id])
+            features.append({**current, "properties": {**current["properties"], "mode": mode}})
+            continue
+        if from_osm:
+            if not relations:
+                relations = fetch_relations([relation_id for ids, _, _ in OSM_ROUTES.values() for relation_id in ids])
+            print(f"Importing {number:02d} {name} from OpenStreetMap", flush=True)
+            features.append(osm_feature(number, route_id, name, color, anchor_ids, relations))
+            OUTPUT.write_text(json.dumps({"type": "FeatureCollection", "features": features}, indent=2), encoding="utf-8")
             continue
         print(f"Routing {number:02d} {name}", flush=True)
-        geometry, distance_km = route_geometry(anchor_ids)
+        geometry, distance_km = route_geometry(inferred_circuit(route_id, anchor_ids))
         features.append({
             "type": "Feature",
             "properties": {
@@ -137,17 +220,23 @@ def main() -> None:
                 "id": route_id,
                 "name": name,
                 "color": color,
+                "mode": mode,
                 "status": "inferred_from_lptrp_anchors",
                 "distance_km": round(distance_km, 2),
                 "anchors": [
                     {"id": key, "name": key.replace("_", " ").title(), "lng": P[key][0], "lat": P[key][1]}
                     for key in anchor_ids
                 ],
+                "return_anchors": [
+                    {"id": key, "name": key.replace("_", " ").title(), "lng": P[key][0], "lat": P[key][1]}
+                    for key in RETURN_VIA.get(route_id, [])
+                ],
             },
             "geometry": geometry,
         })
         OUTPUT.write_text(json.dumps({"type": "FeatureCollection", "features": features}, indent=2), encoding="utf-8")
         time.sleep(0.5)
+    OUTPUT.write_text(json.dumps({"type": "FeatureCollection", "features": features}, indent=2), encoding="utf-8")
     print(f"Wrote {len(features)} routes to {OUTPUT}")
 
 

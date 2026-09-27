@@ -19,6 +19,8 @@ from urllib.request import Request, urlopen
 USER_AGENT = "LugarPH/0.4 (local transit routing MVP)"
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 FOOT_ROUTER_URL = "https://routing.openstreetmap.de/routed-foot/route/v1/driving"
+FOOT_TABLE_URL = "https://routing.openstreetmap.de/routed-foot/table/v1/driving"
+WALKING_MATRIX_TIMEOUT_SECONDS = 3.0
 
 # Nominatim viewbox order: left, top, right, bottom.
 CITY_VIEWBOXES = {
@@ -37,8 +39,12 @@ class _PublicServiceClient:
         self._lock = threading.Lock()
         self._cache: OrderedDict[str, Any] = OrderedDict()
 
-    def get_json(self, url: str, cache_key: str) -> Any:
-        with self._lock:
+    def get_json(self, url: str, cache_key: str, timeout: float = 12) -> Any:
+        """Fetch JSON; `timeout` bounds the wait for the queue as well as the request."""
+        deadline = time.monotonic() + timeout
+        if not self._lock.acquire(timeout=timeout):
+            raise TimeoutError("Public service queue is busy")
+        try:
             if cache_key in self._cache:
                 self._cache.move_to_end(cache_key)
                 return self._cache[cache_key]
@@ -46,6 +52,9 @@ class _PublicServiceClient:
             delay = self.minimum_interval - (time.monotonic() - self._last_request)
             if delay > 0:
                 time.sleep(delay)
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError("Public service queue is busy")
             request = Request(
                 url,
                 headers={
@@ -54,7 +63,7 @@ class _PublicServiceClient:
                 },
             )
             try:
-                with urlopen(request, timeout=12) as response:
+                with urlopen(request, timeout=remaining) as response:
                     value = json.load(response)
             finally:
                 self._last_request = time.monotonic()
@@ -63,6 +72,8 @@ class _PublicServiceClient:
             if len(self._cache) > self.cache_size:
                 self._cache.popitem(last=False)
             return value
+        finally:
+            self._lock.release()
 
 
 _geocoder = _PublicServiceClient()
@@ -144,6 +155,55 @@ def _direct_distance_km(from_lat: float, from_lng: float, to_lat: float, to_lng:
     dlng = math.radians(to_lng - from_lng)
     value = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlng / 2) ** 2
     return radius * 2 * math.atan2(math.sqrt(value), math.sqrt(1 - value))
+
+
+def _street_name(waypoint: dict[str, Any]) -> str:
+    # OSRM joins every name on a way ("Galo Street / Galo Street / Gatuslao Street").
+    return (waypoint.get("name") or "").split(" / ")[0].strip()
+
+
+def walking_matrix(sources: list[tuple[float, float]], destinations: list[tuple[float, float]]) -> dict[str, Any] | None:
+    """Street walking distances (km) from every source to every destination in one request.
+
+    Points are (lat, lng). Also returns the street each point snaps to. None
+    when the router is unavailable, so callers can fall back to estimates.
+    """
+
+    points = [*sources, *destinations]
+    coordinates = ";".join(f"{lng:.6f},{lat:.6f}" for lat, lng in points)
+    params = urlencode({
+        "sources": ";".join(str(index) for index in range(len(sources))),
+        "destinations": ";".join(str(index) for index in range(len(sources), len(points))),
+        "annotations": "distance",
+    }, safe=";")
+    try:
+        payload = _foot_router.get_json(
+            f"{FOOT_TABLE_URL}/{coordinates}?{params}",
+            "table:" + coordinates + ":" + str(len(sources)),
+            # Trip results wait on this call, so a slow public router falls back to estimates.
+            timeout=WALKING_MATRIX_TIMEOUT_SECONDS,
+        )
+        if payload.get("code") != "Ok":
+            return None
+        snapped_sources, snapped_destinations = payload["sources"], payload["destinations"]
+        matrix = []
+        for source, row in zip(snapped_sources, payload["distances"]):
+            # The router measures between snapped points; add the walk onto the street at each end.
+            matrix.append([
+                None if meters is None else round((meters + source.get("distance", 0) + target.get("distance", 0)) / 1000, 3)
+                for meters, target in zip(row, snapped_destinations)
+            ])
+        for row, source in zip(matrix, sources):
+            for index, target in enumerate(destinations):
+                if _direct_distance_km(*source, *target) < 0.035:
+                    row[index] = 0.0
+        return {
+            "km": matrix,
+            "source_names": [_street_name(point) for point in snapped_sources],
+            "destination_names": [_street_name(point) for point in snapped_destinations],
+        }
+    except (OSError, ValueError, KeyError, IndexError, TypeError):
+        return None
 
 
 def walking_route(from_lat: float, from_lng: float, to_lat: float, to_lng: float) -> dict[str, Any]:

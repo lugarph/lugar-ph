@@ -14,9 +14,9 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 
 from models import RouteComment, SessionLocal
-from osm_services import search_places, walking_route
-from route_catalog import ROUTE_BY_ID, distance_km, match_jeepney, public_catalog
-from transit_network import CITY_METADATA, public_network
+from osm_services import search_places, walking_matrix, walking_route
+from route_catalog import ROUTE_BY_ID, distance_km, public_catalog
+from transit_network import CITY_METADATA, landmarks, plan_trips, public_network, trip_help
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -72,6 +72,12 @@ def places(q: str = Query(min_length=2, max_length=120), city: str = "bacolod"):
         return {"results": search_places(city, q)}
     except (OSError, ValueError, TypeError):
         raise HTTPException(status_code=503, detail="Place search is temporarily unavailable")
+
+
+@app.get("/api/landmarks")
+def city_landmarks(city: str = "bacolod"):
+    """Landmarks along mapped jeepney lines; the client filters these as the rider types."""
+    return {"landmarks": landmarks(_known_city(city))}
 
 
 @app.get("/api/walking-route")
@@ -147,37 +153,11 @@ def routes(
     destination_lng: float = Query(122.9569, ge=-180, le=180),
     city: str = "bacolod",
 ):
-    """Suggest mapped jeepney connections with walking access and one transfer."""
+    """Suggest mapped jeepney connections (up to three rides) plus distinct alternatives."""
     city = _known_city(city)
     straight_km = distance_km(origin_lat, origin_lng, destination_lat, destination_lng)
-    itinerary = match_jeepney(origin_lat, origin_lng, destination_lat, destination_lng, city)
-    road_km = itinerary["road_distance_km"] if itinerary else max(0.6, straight_km * 1.35)
-    options = []
-
-    if itinerary:
-        access = itinerary.get("access", {})
-        walking_km = sum(access.values())
-        ride_km = max(0, road_km - walking_km)
-        ride_minutes = max(6, round(ride_km / 12 * 60 + 6 + 8 * (itinerary["ride_count"] - 1)))
-        jeepney_minutes = ride_minutes + round(walking_km / 4.8 * 60)
-        options.append(
-            {
-                "id": "jeepney",
-                "mode": "jeepney",
-                "label": "Jeepney",
-                "fare_php": None,  # No verified current fare matrix for these trip legs.
-                "duration_minutes": jeepney_minutes,
-                "ride_duration_minutes": ride_minutes,
-                "ride_distance_km": round(ride_km, 2),
-                "description": (
-                    f"Walk {round((access.get('origin_walk_km', 0) + access.get('destination_walk_km', 0)) * 1000)} m total, then take one jeepney"
-                    if itinerary["ride_count"] == 1
-                    else f"Walk to the first line, then transfer once ({round(access.get('transfer_walk_km', 0) * 1000)} m between lines)"
-                ),
-                "lines": itinerary["lines"],
-                "itinerary": itinerary,
-            }
-        )
+    itineraries = plan_trips(origin_lat, origin_lng, destination_lat, destination_lng, city, walk_matrix=walking_matrix)
+    road_km = itineraries[0]["road_distance_km"] if itineraries else max(0.6, straight_km * 1.35)
 
     # Future PostGIS integration: store surveyed route geometries, query near
     # both endpoints, and compute exact access, ride, and transfer legs.
@@ -186,13 +166,46 @@ def routes(
         "origin": {"lat": origin_lat, "lng": origin_lng},
         "destination": {"lat": destination_lat, "lng": destination_lng},
         "distance_km": round(road_km, 1),
-        "jeepney_notice": None if itinerary else "No mapped jeepney connection was found within walking distance of both pins. Try moving a pin closer to a colored corridor or check the jeepney route map.",
+        "jeepney_notice": None if itineraries else "No mapped jeepney connection was found within walking distance of both pins. Try moving a pin closer to a colored corridor or check the jeepney route map.",
+        "no_route": None if itineraries else trip_help(origin_lat, origin_lng, destination_lat, destination_lng, city),
         "estimate_note": (
             "Walking links connect your pins to the nearest mapped corridors. Signboards, direction, current service, time, and fare need local confirmation."
-            if itinerary else
+            if itineraries else
             "Lugar.ph currently recommends jeepney routes only. Mapped coverage and active service still need local confirmation."
         ),
-        "options": options,
+        "fare_note": FARE_NOTE,
+        "options": [_jeepney_option(itinerary, index) for index, itinerary in enumerate(itineraries)],
+    }
+
+
+FARE_NOTE = "Estimated LTFRB regular fare (₱14 for the first 4 km, ₱2 per km after). Students, seniors, and PWDs pay 20% less."
+
+
+def _jeepney_option(itinerary: dict, index: int) -> dict:
+    access = itinerary["access"]
+    rides = itinerary["ride_count"]
+    if rides == 1:
+        description = f"Walk {round((access['origin_walk_km'] + access['destination_walk_km']) * 1000)} m total, then take one jeepney"
+    else:
+        transfers = "once" if rides == 2 else f"{rides - 1} times"
+        description = f"Take {rides} jeepneys and transfer {transfers} ({round(access['transfer_walk_km'] * 1000)} m between lines)"
+    return {
+        "id": "jeepney" if index == 0 else f"jeepney-alt-{index}",
+        "mode": "jeepney",
+        "label": "Jeepney",
+        "recommended": index == 0,
+        "highlight": itinerary["highlight"],
+        "tags": itinerary["tags"],
+        "compared_to_best": itinerary["compared_to_best"],
+        "fare_php": itinerary["fare_php"],
+        "duration_minutes": itinerary["duration_minutes"],
+        "ride_duration_minutes": itinerary["ride_minutes"],
+        "ride_distance_km": itinerary["ride_km"],
+        "walk_distance_km": itinerary["walk_km"],
+        "distance_km": itinerary["road_distance_km"],
+        "description": description,
+        "lines": itinerary["lines"],
+        "itinerary": itinerary,
     }
 
 
