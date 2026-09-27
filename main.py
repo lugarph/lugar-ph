@@ -14,13 +14,14 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 
 from models import RouteComment, SessionLocal
+from osm_services import search_places, walking_route
 from route_catalog import ROUTE_BY_ID, distance_km, match_jeepney, public_catalog
-from transit_network import public_network
+from transit_network import CITY_METADATA, public_network
 
 
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
-app = FastAPI(title="Lugar.ph", version="0.1.0")
+app = FastAPI(title="Lugar.ph", version="0.3.0")
 app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=6)
 _comment_times: dict[str, float] = {}
 _comment_lock = Lock()
@@ -37,6 +38,13 @@ def _known_line(route_slug: str) -> None:
         raise HTTPException(status_code=404, detail="Unknown jeepney line")
 
 
+def _known_city(city: str) -> str:
+    city = city.lower().strip()
+    if city not in CITY_METADATA:
+        raise HTTPException(status_code=404, detail="Unknown city")
+    return city
+
+
 def _comment_json(comment: RouteComment) -> dict:
     return {
         "id": comment.id,
@@ -51,17 +59,44 @@ def index(request: Request):
     return templates.TemplateResponse(request=request, name="index.html")
 
 
+@app.get("/api/cities")
+def cities():
+    return {"cities": [{"id": city, **metadata} for city, metadata in CITY_METADATA.items()]}
+
+
+@app.get("/api/places")
+def places(q: str = Query(min_length=2, max_length=120), city: str = "bacolod"):
+    """Explicit city-bounded place search through OpenStreetMap Nominatim."""
+    city = _known_city(city)
+    try:
+        return {"results": search_places(city, q)}
+    except (OSError, ValueError, TypeError):
+        raise HTTPException(status_code=503, detail="Place search is temporarily unavailable")
+
+
+@app.get("/api/walking-route")
+def walking_directions(
+    from_lat: float = Query(ge=-90, le=90),
+    from_lng: float = Query(ge=-180, le=180),
+    to_lat: float = Query(ge=-90, le=90),
+    to_lng: float = Query(ge=-180, le=180),
+):
+    """Pedestrian directions from a pin to a mapped jeepney corridor."""
+    return walking_route(from_lat, from_lng, to_lat, to_lng)
+
+
 @app.get("/api/jeepney-routes")
-def jeepney_routes():
-    """The 24 routes in Bacolod's published Local Public Transport Route Plan."""
-    return public_catalog()
+def jeepney_routes(city: str = "bacolod"):
+    """Published or documented jeepney routes for one supported city."""
+    return public_catalog(_known_city(city))
 
 
 @app.get("/api/jeepney-network", response_class=JSONResponse)
-def jeepney_network():
-    """Road-aligned GeoJSON for all 24 inferred LPTRP corridors."""
+def jeepney_network(city: str = "bacolod"):
+    """Road-aligned GeoJSON for a supported city's jeepney corridors."""
+    city = _known_city(city)
     return JSONResponse(
-        content=public_network(),
+        content=public_network(city),
         headers={"Cache-Control": "public, max-age=86400"},
     )
 
@@ -110,10 +145,12 @@ def routes(
     origin_lng: float = Query(122.9509, ge=-180, le=180),
     destination_lat: float = Query(10.6922, ge=-90, le=90),
     destination_lng: float = Query(122.9569, ge=-180, le=180),
+    city: str = "bacolod",
 ):
     """Suggest mapped jeepney connections with walking access and one transfer."""
+    city = _known_city(city)
     straight_km = distance_km(origin_lat, origin_lng, destination_lat, destination_lng)
-    itinerary = match_jeepney(origin_lat, origin_lng, destination_lat, destination_lng)
+    itinerary = match_jeepney(origin_lat, origin_lng, destination_lat, destination_lng, city)
     road_km = itinerary["road_distance_km"] if itinerary else max(0.6, straight_km * 1.35)
     options = []
 
@@ -121,7 +158,8 @@ def routes(
         access = itinerary.get("access", {})
         walking_km = sum(access.values())
         ride_km = max(0, road_km - walking_km)
-        jeepney_minutes = max(8, round(ride_km / 12 * 60 + walking_km / 4.8 * 60 + 6 + 8 * (itinerary["ride_count"] - 1)))
+        ride_minutes = max(6, round(ride_km / 12 * 60 + 6 + 8 * (itinerary["ride_count"] - 1)))
+        jeepney_minutes = ride_minutes + round(walking_km / 4.8 * 60)
         options.append(
             {
                 "id": "jeepney",
@@ -129,6 +167,8 @@ def routes(
                 "label": "Jeepney",
                 "fare_php": None,  # No verified current fare matrix for these trip legs.
                 "duration_minutes": jeepney_minutes,
+                "ride_duration_minutes": ride_minutes,
+                "ride_distance_km": round(ride_km, 2),
                 "description": (
                     f"Walk {round((access.get('origin_walk_km', 0) + access.get('destination_walk_km', 0)) * 1000)} m total, then take one jeepney"
                     if itinerary["ride_count"] == 1
@@ -141,39 +181,16 @@ def routes(
 
     # Future PostGIS integration: store surveyed route geometries, query near
     # both endpoints, and compute exact access, ride, and transfer legs.
-    if not itinerary:
-        tricycle_minutes = max(8, round(road_km / 18 * 60 + 3))
-        walk_minutes = max(8, round(road_km / 4.8 * 60))
-        options.extend([
-            {
-                "id": "walk",
-                "mode": "walk",
-                "label": "Walk",
-                "fare_php": 0,
-                "duration_minutes": walk_minutes,
-                "description": "Walk if practical; check crossings and street conditions.",
-                "lines": [],
-            },
-            {
-                "id": "tricycle",
-                "mode": "tricycle",
-                "label": "Tricycle (if available)",
-                "fare_php": None,  # No verified local fare for this origin/destination.
-                "duration_minutes": tricycle_minutes,
-                "availability": "unconfirmed",
-                "description": "Optional local ride. Availability varies and it can be costly; agree on a fare before boarding.",
-                "lines": [],
-            },
-        ])
     return {
+        "city": city,
         "origin": {"lat": origin_lat, "lng": origin_lng},
         "destination": {"lat": destination_lat, "lng": destination_lng},
         "distance_km": round(road_km, 1),
-        "jeepney_notice": None if itinerary else "This preview has no mapped jeepney connection for these places yet. That does not mean no jeepney serves them. Check the route map or ask locally; walk if practical, or ask about tricycles.",
+        "jeepney_notice": None if itinerary else "No mapped jeepney connection was found within walking distance of both pins. Try moving a pin closer to a colored corridor or check the jeepney route map.",
         "estimate_note": (
-            "Walking links connect your pins to the nearest mapped corridors. Route geometry is inferred from LPTRP landmarks and OpenStreetMap; signboards, direction, service, time, and fare need local confirmation."
+            "Walking links connect your pins to the nearest mapped corridors. Signboards, direction, current service, time, and fare need local confirmation."
             if itinerary else
-            "Walking time is approximate. Tricycle service and fare are unconfirmed; agree on a fare before boarding."
+            "Lugar.ph currently recommends jeepney routes only. Mapped coverage and active service still need local confirmation."
         ),
         "options": options,
     }

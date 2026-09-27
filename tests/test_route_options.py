@@ -11,13 +11,16 @@ class RouteOptionTests(unittest.TestCase):
         self.assertEqual([option["id"] for option in result["options"]], ["jeepney"])
         self.assertIsNone(result["jeepney_notice"])
 
-    def test_unverified_connection_leads_with_walk(self):
+    def test_unmapped_connection_returns_no_non_jeepney_modes(self):
         result = routes(10.80, 123.15, 10.6722, 122.9443)
-        self.assertEqual([option["id"] for option in result["options"]], ["walk", "tricycle"])
-        self.assertEqual(result["options"][1]["availability"], "unconfirmed")
-        self.assertIsNone(result["options"][1]["fare_php"])
-        self.assertIn("no mapped jeepney connection", result["jeepney_notice"])
-        self.assertIn("does not mean no jeepney serves them", result["jeepney_notice"])
+        self.assertEqual(result["options"], [])
+        self.assertIn("No mapped jeepney connection", result["jeepney_notice"])
+        self.assertIn("jeepney routes only", result["estimate_note"])
+
+    def test_other_city_uses_its_own_network(self):
+        result = routes(10.3180, 123.9037, 10.3116, 123.9186, city="cebu")
+        self.assertEqual(result["city"], "cebu")
+        self.assertEqual(result["options"][0]["id"], "jeepney")
 
     def test_north_terminal_to_sm_uses_researched_corridor(self):
         result = routes(10.70655, 122.96312, 10.6722, 122.9443)

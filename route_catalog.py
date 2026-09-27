@@ -8,7 +8,7 @@ Do not treat these as surveyed jeepney tracks or designated stops.
 
 from __future__ import annotations
 
-from transit_network import distance_km, match_trip, public_network
+from transit_network import CITY_METADATA, NETWORKS, distance_km, match_trip, public_network
 
 
 LPTRP_SOURCE = (
@@ -56,29 +56,49 @@ ROUTE_BY_ID = {
     for number, slug, name, length in ROUTES
 }
 
+for city, network in NETWORKS.items():
+    if city == "bacolod":
+        continue
+    for feature in network["features"]:
+        properties = feature["properties"]
+        ROUTE_BY_ID[properties["id"]] = {
+            "number": str(properties["number"]),
+            "id": properties["id"],
+            "name": properties["name"],
+            "length_km": properties.get("planned_length_km") or properties.get("distance_km"),
+            "city": city,
+        }
 
-def public_catalog() -> dict:
-    network_routes = {
-        feature["properties"]["id"]: feature["properties"]
-        for feature in public_network()["features"]
-    }
+
+def public_catalog(city: str = "bacolod") -> dict:
+    network = public_network(city)
+    routes = []
+    for feature in network["features"]:
+        properties = feature["properties"]
+        base = ROUTE_BY_ID[properties["id"]]
+        routes.append({
+            **base,
+            "color": properties["color"],
+            "mapped_portion": (
+                "archived DOTC GTFS shape"
+                if properties["status"] == "archived_dotc_gtfs_shape"
+                else f"{len(properties.get('anchors', []))} published route anchors"
+            ),
+            "geometry_status": properties["status"],
+        })
+    source_url = next((feature["properties"].get("source_url") for feature in network["features"] if feature["properties"].get("source_url")), CITY_METADATA[city]["source_url"])
     return {
-        "routes": [
-            {
-                **route,
-                "color": network_routes[route["id"]]["color"],
-                "mapped_portion": f"{len(network_routes[route['id']]['anchors'])} LPTRP map anchors",
-                "geometry_status": network_routes[route["id"]]["status"],
-            }
-            for route in ROUTE_BY_ID.values()
-        ],
-        "source_url": LPTRP_SOURCE,
-        "city_notice_url": CITY_SOURCE,
-        "status_note": "All 24 planned lines are mapped from LPTRP landmarks onto OSM roads. Geometry and current operation still need local verification.",
+        "city": city,
+        "city_name": CITY_METADATA[city]["name"],
+        "routes": routes,
+        "source_url": source_url,
+        "city_notice_url": CITY_SOURCE if city == "bacolod" else source_url,
+        "status_note": "Published route names are shown with mapped geometry. Exact alignment and current operation still need local verification.",
     }
 
 
 def match_jeepney(
-    origin_lat: float, origin_lng: float, destination_lat: float, destination_lng: float
+    origin_lat: float, origin_lng: float, destination_lat: float, destination_lng: float,
+    city: str = "bacolod",
 ) -> dict | None:
-    return match_trip(origin_lat, origin_lng, destination_lat, destination_lng)
+    return match_trip(origin_lat, origin_lng, destination_lat, destination_lng, city)

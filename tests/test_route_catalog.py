@@ -3,7 +3,7 @@
 import unittest
 
 from route_catalog import ROUTE_BY_ID, distance_km, match_jeepney, public_catalog
-from transit_network import NETWORK
+from transit_network import NETWORK, NETWORKS
 
 
 AYALA = (10.6768, 122.9500)
@@ -28,16 +28,22 @@ class RouteCatalogTests(unittest.TestCase):
     def test_published_catalog_has_24_distinct_routes(self):
         catalog = public_catalog()
         self.assertEqual(len(catalog["routes"]), 24)
-        self.assertEqual(len(ROUTE_BY_ID), 24)
+        self.assertGreater(len(ROUTE_BY_ID), 100)
         self.assertEqual([route["number"] for route in catalog["routes"]], list(range(1, 25)))
         self.assertEqual(sum(bool(route["mapped_portion"]) for route in catalog["routes"]), 24)
         self.assertTrue(all(route["geometry_status"] == "inferred_from_lptrp_anchors" for route in catalog["routes"]))
+
+    def test_additional_city_catalogs_have_mapped_jeepney_lines(self):
+        self.assertEqual(len(public_catalog("iloilo")["routes"]), 25)
+        self.assertEqual(len(public_catalog("tacloban")["routes"]), 19)
+        self.assertEqual(len(public_catalog("cebu")["routes"]), 64)
+        self.assertEqual(set(NETWORKS), {"bacolod", "iloilo", "cebu", "tacloban"})
 
     def test_ayala_to_sm_uses_published_bata_line(self):
         match = match_jeepney(*AYALA, *SM)
         self.assertEqual(match["ride_count"], 1)
         self.assertIn(match["legs"][0]["route_id"], {"bata-libertad", "northbound-libertad"})
-        self.assertEqual(match["geometry_type"], "inferred_osm_corridor")
+        self.assertEqual(match["geometry_type"], "published_or_inferred_road_corridor")
         self.assertGreater(len(match["legs"][0]["geometry"]["coordinates"]), 30)
         self.assertGreater(match["road_distance_km"], 1.4)
         self.assertLess(match["access"]["origin_walk_km"], 0.2)
