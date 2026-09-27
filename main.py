@@ -14,9 +14,9 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 
 from models import RouteComment, SessionLocal
-from osm_services import search_places, walking_route
+from osm_services import search_places, walking_matrix, walking_route
 from route_catalog import ROUTE_BY_ID, distance_km, public_catalog
-from transit_network import CITY_METADATA, plan_trips, public_network
+from transit_network import CITY_METADATA, plan_trips, public_network, trip_help
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -150,9 +150,8 @@ def routes(
     """Suggest mapped jeepney connections (up to three rides) plus distinct alternatives."""
     city = _known_city(city)
     straight_km = distance_km(origin_lat, origin_lng, destination_lat, destination_lng)
-    itineraries = plan_trips(origin_lat, origin_lng, destination_lat, destination_lng, city)
+    itineraries = plan_trips(origin_lat, origin_lng, destination_lat, destination_lng, city, walk_matrix=walking_matrix)
     road_km = itineraries[0]["road_distance_km"] if itineraries else max(0.6, straight_km * 1.35)
-    options = [_jeepney_option(itinerary, index) for index, itinerary in enumerate(itineraries)]
 
     # Future PostGIS integration: store surveyed route geometries, query near
     # both endpoints, and compute exact access, ride, and transfer legs.
@@ -162,13 +161,18 @@ def routes(
         "destination": {"lat": destination_lat, "lng": destination_lng},
         "distance_km": round(road_km, 1),
         "jeepney_notice": None if itineraries else "No mapped jeepney connection was found within walking distance of both pins. Try moving a pin closer to a colored corridor or check the jeepney route map.",
+        "no_route": None if itineraries else trip_help(origin_lat, origin_lng, destination_lat, destination_lng, city),
         "estimate_note": (
             "Walking links connect your pins to the nearest mapped corridors. Signboards, direction, current service, time, and fare need local confirmation."
             if itineraries else
             "Lugar.ph currently recommends jeepney routes only. Mapped coverage and active service still need local confirmation."
         ),
-        "options": options,
+        "fare_note": FARE_NOTE,
+        "options": [_jeepney_option(itinerary, index) for index, itinerary in enumerate(itineraries)],
     }
+
+
+FARE_NOTE = "Estimated LTFRB regular fare (₱14 for the first 4 km, ₱2 per km after). Students, seniors, and PWDs pay 20% less."
 
 
 def _jeepney_option(itinerary: dict, index: int) -> dict:
@@ -184,12 +188,15 @@ def _jeepney_option(itinerary: dict, index: int) -> dict:
         "mode": "jeepney",
         "label": "Jeepney",
         "recommended": index == 0,
+        "highlight": itinerary["highlight"],
         "tags": itinerary["tags"],
-        "fare_php": None,  # No verified current fare matrix for these trip legs.
+        "compared_to_best": itinerary["compared_to_best"],
+        "fare_php": itinerary["fare_php"],
         "duration_minutes": itinerary["duration_minutes"],
         "ride_duration_minutes": itinerary["ride_minutes"],
         "ride_distance_km": itinerary["ride_km"],
         "walk_distance_km": itinerary["walk_km"],
+        "distance_km": itinerary["road_distance_km"],
         "description": description,
         "lines": itinerary["lines"],
         "itinerary": itinerary,

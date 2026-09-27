@@ -3,7 +3,10 @@
 import unittest
 
 from route_catalog import ROUTE_BY_ID, distance_km, match_jeepney, public_catalog
-from transit_network import MAX_TRANSFER_WALK_KM, MIN_RIDE_KM, NETWORK, NETWORKS, _scan_line, plan_trips
+from transit_network import (
+    LINES_BY_CITY, MAX_ACCESS_WALK_KM, MAX_TRANSFER_WALK_KM, MIN_RIDE_KM, NETWORK, NETWORKS, STRAIGHT_LINE_DETOUR,
+    _fare, _scan_line, plan_trips, trip_help,
+)
 
 
 AYALA = (10.6768, 122.9500)
@@ -54,8 +57,9 @@ class RouteCatalogTests(unittest.TestCase):
     def test_ayala_to_la_salle_is_reachable_with_at_most_one_transfer(self):
         match = match_jeepney(*AYALA, *LA_SALLE)
         self.assertIn(match["ride_count"], {1, 2})
-        self.assertLessEqual(match["access"]["origin_walk_km"], 0.75)
-        self.assertLessEqual(match["access"]["destination_walk_km"], 0.75)
+        # Search radii are straight-line; reported walks include the street detour estimate.
+        self.assertLessEqual(match["access"]["origin_walk_km"], MAX_ACCESS_WALK_KM * STRAIGHT_LINE_DETOUR)
+        self.assertLessEqual(match["access"]["destination_walk_km"], MAX_ACCESS_WALK_KM * STRAIGHT_LINE_DETOUR)
 
     def test_north_terminal_uses_lacson_corridor_to_sm(self):
         match = match_jeepney(*NORTH_TERMINAL, *SM)
@@ -67,7 +71,7 @@ class RouteCatalogTests(unittest.TestCase):
         match = match_jeepney(*NORTH_TERMINAL, *LA_SALLE)
         self.assertEqual(match["ride_count"], 2)
         self.assertEqual(len(match["transfers"]), 1)
-        self.assertLessEqual(match["transfers"][0]["walk_km"], 0.32)
+        self.assertLessEqual(match["transfers"][0]["walk_km"], MAX_TRANSFER_WALK_KM * STRAIGHT_LINE_DETOUR)
 
     def test_remote_places_and_zero_length_trips_are_not_guessed(self):
         self.assertIsNone(match_jeepney(10.80, 123.15, *SM))
@@ -83,7 +87,7 @@ class RouteCatalogTests(unittest.TestCase):
         self.assertEqual(match["ride_count"], 3)
         self.assertEqual(len(match["transfers"]), 2)
         self.assertEqual(len(match["waypoints"]), 6)
-        self.assertTrue(all(transfer["walk_km"] <= MAX_TRANSFER_WALK_KM for transfer in match["transfers"]))
+        self.assertTrue(all(transfer["walk_km"] <= MAX_TRANSFER_WALK_KM * STRAIGHT_LINE_DETOUR for transfer in match["transfers"]))
         self.assertTrue(all(leg["road_distance_km"] >= MIN_RIDE_KM for leg in match["legs"]))
         # Each transfer walks from where the previous ride ends to where the next one starts.
         for previous, transfer, following in zip(match["legs"], match["transfers"], match["legs"][1:]):
@@ -111,6 +115,66 @@ class RouteCatalogTests(unittest.TestCase):
         self.assertAlmostEqual(arrivals[4][0], 1.5)
         self.assertEqual(arrivals[4][1], 2)
         self.assertNotIn(3, _scan_line(stop_km, {2: 1.0}))  # 100 m is below the minimum ride
+
+    def test_line_scan_can_be_limited_to_the_direction_of_travel(self):
+        stop_km = (0.0, 0.5, 1.0)
+        self.assertEqual(set(_scan_line(stop_km, {1: 0.0}, forward_only=True)), {2})
+        self.assertEqual(set(_scan_line(stop_km, {1: 0.0})), {0, 2})
+
+    def test_cebu_round_trip_shapes_are_one_way(self):
+        self.assertGreater(sum(line.round_trip for line in LINES_BY_CITY["cebu"]), 60)
+        self.assertFalse(any(line.round_trip for line in LINES_BY_CITY["bacolod"]))
+
+    def test_rides_say_which_signboard_to_look_for_and_where_to_get_off(self):
+        leg = match_jeepney(*AYALA, *SM)["legs"][0]
+        self.assertEqual(leg["heading"], "Libertad")
+        self.assertEqual(leg["board"]["label"], "near Ayala")
+        self.assertEqual(leg["alight"]["label"], "near SM")
+        self.assertNotIn("Loop", leg["signboard"])
+
+    def test_fares_follow_the_regular_jeepney_matrix(self):
+        self.assertEqual(_fare(1.0), 14)
+        self.assertEqual(_fare(4.0), 14)
+        self.assertEqual(_fare(4.2), 16)
+        self.assertEqual(_fare(6.5), 20)
+        match = match_jeepney(*NORTH_TERMINAL, *LA_SALLE)
+        self.assertEqual(match["fare_php"], sum(leg["fare_php"] for leg in match["legs"]))
+
+    def test_street_walks_replace_estimates_and_name_the_stops(self):
+        def router(sources, destinations):
+            return {
+                "km": [[0.4] * len(destinations) for _ in sources],
+                "source_names": ["Lacson Street"] * len(sources),
+                "destination_names": ["Lacson Street"] * len(destinations),
+            }
+
+        trip = plan_trips(*AYALA, *SM, walk_matrix=router)[0]
+        self.assertEqual(trip["walk_basis"], "street")
+        self.assertEqual(trip["access"]["origin_walk_km"], 0.4)
+        self.assertEqual(trip["legs"][0]["board"]["label"], "near Ayala, Lacson Street")
+
+    def test_unavailable_router_falls_back_to_detour_estimates(self):
+        estimated = plan_trips(*AYALA, *SM, walk_matrix=lambda sources, destinations: None)[0]
+        self.assertEqual(estimated["walk_basis"], "estimated")
+        self.assertEqual(estimated, match_jeepney(*AYALA, *SM) | {"tags": estimated["tags"], "highlight": estimated["highlight"], "compared_to_best": None})
+
+    def test_alternatives_compare_themselves_to_the_recommendation(self):
+        trips = plan_trips(*AYALA, *LA_SALLE)
+        self.assertIsNone(trips[0]["compared_to_best"])
+        self.assertIn(trips[0]["highlight"], {"Fastest", "Fewest transfers", "Least walking", "Recommended"})
+        for alternative in trips[1:]:
+            self.assertIsNone(alternative["highlight"])
+            self.assertEqual(alternative["compared_to_best"]["minutes"], alternative["duration_minutes"] - trips[0]["duration_minutes"])
+        minutes = [trip["duration_minutes"] for trip in trips[1:]]
+        self.assertEqual(minutes, sorted(minutes))
+
+    def test_trip_help_points_to_the_nearest_line(self):
+        help = trip_help(10.6555, 123.0100, *LA_SALLE)
+        self.assertEqual(help["reason"], "origin_far")
+        self.assertGreater(help["origin"]["walk_km"], MAX_ACCESS_WALK_KM)
+        self.assertLessEqual(help["destination"]["walk_km"], MAX_ACCESS_WALK_KM)
+        self.assertEqual(trip_help(*AYALA, *AYALA)["reason"], "too_close")
+        self.assertIsNone(trip_help(10.80, 123.15, *SM)["origin"])  # outside the mapped area
 
 
 if __name__ == "__main__":
