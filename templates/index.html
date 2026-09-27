@@ -208,12 +208,31 @@
           </div>
 
           <div x-show="destination" x-cloak class="mt-5">
-            <div class="flex items-end justify-between px-5 sm:px-6"><div><p class="text-[11px] font-bold uppercase tracking-[.18em] text-slate-500">Jeepney route</p><h2 class="mt-1 text-[18px] font-extrabold tracking-tight">Best mapped connection</h2></div><span class="text-xs font-medium text-slate-500" x-text="routeData ? `~${routeData.distance_km} km` : ''"></span></div>
+            <div class="flex items-end justify-between px-5 sm:px-6"><div><p class="text-[11px] font-bold uppercase tracking-[.18em] text-slate-500">Jeepney route</p><h2 class="mt-1 text-[18px] font-extrabold tracking-tight" x-text="routeData?.options?.length > 1 ? 'Route options' : 'Best mapped connection'"></h2></div><span class="text-xs font-medium text-slate-500" x-text="routeData ? `~${(tripKm(selectedOption) || routeData.distance_km).toFixed(1)} km` : ''"></span></div>
             <div x-show="loading" class="px-5 pt-4 text-sm text-slate-500">Finding a jeepney route…</div>
             <div x-show="error" x-text="error" class="mx-5 mt-4 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700"></div>
             <p x-show="routeData?.jeepney_notice" x-cloak x-text="routeData?.jeepney_notice" class="mx-5 mt-3 rounded-xl bg-blue-50 px-3 py-2 text-xs font-medium text-blue-800 sm:mx-6"></p>
+            <div x-show="routeData?.options?.length > 1 && !loading" x-cloak class="mx-5 mt-3 space-y-2 sm:mx-6" role="group" aria-label="Route options">
+              <template x-for="option in routeData?.options || []" :key="option.id">
+                <button type="button" @click="selectOption(option.id)" :aria-pressed="option.id === selectedOptionId" class="w-full rounded-2xl border px-4 py-3 text-left transition" :class="option.id === selectedOptionId ? 'border-blue-600 bg-blue-50/60 ring-1 ring-blue-600' : 'border-slate-200 bg-white hover:border-slate-300'">
+                  <div class="flex items-center justify-between gap-3">
+                    <div class="flex min-w-0 flex-wrap items-center gap-1">
+                      <template x-for="(line, index) in option.lines" :key="`${option.id}-line-${index}`">
+                        <span class="flex items-center gap-1"><span x-show="index" class="text-xs text-slate-400" aria-hidden="true">›</span><span class="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-extrabold text-slate-800"><span class="h-2 w-2 rounded-full" :style="{ background: line.color }"></span><span x-text="line.number"></span></span></span>
+                      </template>
+                    </div>
+                    <p class="shrink-0 text-sm font-extrabold" x-text="`${option.duration_minutes} min`"></p>
+                  </div>
+                  <div class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-semibold text-slate-500">
+                    <span x-text="rideCountLabel(option)"></span><span aria-hidden="true">·</span><span x-text="`${distanceLabel((option.walk_distance_km || 0) * 1000)} walk`"></span>
+                    <span x-show="option.recommended" class="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">Best</span>
+                    <template x-for="tag in option.tags" :key="`${option.id}-${tag}`"><span class="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700" x-text="tag"></span></template>
+                  </div>
+                </button>
+              </template>
+            </div>
             <div x-show="selectedOption && !loading" class="mx-5 mt-3 rounded-2xl border border-slate-100 bg-[#f8f9fb] p-4 sm:mx-6">
-              <div class="flex items-start justify-between gap-3"><div><p class="text-[10px] font-bold uppercase tracking-[.15em] text-slate-500">Directions</p><h3 class="mt-0.5 text-sm font-extrabold" x-text="selectedOption?.itinerary?.ride_count === 1 ? 'One jeepney ride' : 'Two jeepney rides'"></h3></div><div class="text-right"><p class="text-sm font-extrabold" x-text="`${selectedOption?.duration_minutes || 0} min`"></p><p class="text-[11px] font-semibold text-slate-500" x-text="`${Number(selectedOption?.distance_km || routeData?.distance_km || 0).toFixed(1)} km`"></p></div></div>
+              <div class="flex items-start justify-between gap-3"><div><p class="text-[10px] font-bold uppercase tracking-[.15em] text-slate-500">Directions</p><h3 class="mt-0.5 text-sm font-extrabold" x-text="rideCountLabel(selectedOption)"></h3></div><div class="text-right"><p class="text-sm font-extrabold" x-text="`${tripMinutes(selectedOption)} min`"></p><p class="text-[11px] font-semibold text-slate-500" x-text="`${tripKm(selectedOption).toFixed(1)} km`"></p></div></div>
               <p x-show="walkingLoading" class="mt-3 rounded-xl bg-white px-3 py-2 text-[11px] font-semibold text-slate-500">Adding street walking directions…</p>
               <ol class="mt-4 space-y-3">
                 <template x-for="(step, index) in tripSteps(selectedOption)" :key="`${step.kind}-${index}-${step.title}`">
@@ -226,14 +245,14 @@
             <p x-show="routeData" class="mx-5 mt-3 text-[11px] leading-relaxed text-slate-500 sm:mx-6" x-text="routeData?.estimate_note"></p>
           </div>
 
-          <div x-show="!destination" class="mx-5 mt-5 rounded-2xl bg-blue-50 p-4 sm:mx-6"><p class="text-sm font-bold text-blue-900">Tap the map to place your destination</p><p class="mt-1 text-xs leading-relaxed text-blue-700">You can also move the starting pin. Lugar.ph will walk you to a nearby line and use up to two jeepney rides.</p><button type="button" @click="beginPin('destination')" class="mt-3 rounded-xl bg-blue-700 px-3 py-2 text-xs font-bold text-white">Place destination pin</button></div>
+          <div x-show="!destination" class="mx-5 mt-5 rounded-2xl bg-blue-50 p-4 sm:mx-6"><p class="text-sm font-bold text-blue-900">Tap the map to place your destination</p><p class="mt-1 text-xs leading-relaxed text-blue-700">You can also move the starting pin. Lugar.ph will walk you to a nearby line and use up to three jeepney rides.</p><button type="button" @click="beginPin('destination')" class="mt-3 rounded-xl bg-blue-700 px-3 py-2 text-xs font-bold text-white">Place destination pin</button></div>
         </section>
 
         <section x-show="tripStarted && !searchTarget" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="px-5 pb-5 sm:px-6">
           <button type="button" @click="tripStarted = false; $nextTick(() => $refs.sheetBody.scrollTop = 0)" class="mb-4 flex items-center gap-1 text-xs font-bold text-slate-500"><span class="text-lg">‹</span> Back to options</button>
           <p class="text-[11px] font-bold uppercase tracking-[.18em] text-slate-500">Trip preview</p>
           <h1 class="mt-1 text-2xl font-extrabold tracking-tight" x-text="destination?.name"></h1>
-          <p class="mt-1 text-sm font-semibold text-slate-500" x-text="`${selectedOption?.duration_minutes || 0} min · ${Number(selectedOption?.distance_km || routeData?.distance_km || 0).toFixed(1)} km`"></p>
+          <p class="mt-1 text-sm font-semibold text-slate-500" x-text="`${tripMinutes(selectedOption)} min · ${tripKm(selectedOption).toFixed(1)} km`"></p>
           <ol class="mt-6 space-y-4 border-l-2 border-dashed border-blue-300 pl-5"><template x-for="(step, index) in tripSteps(selectedOption)" :key="`${step.kind}-preview-${index}`"><li><p class="text-sm font-bold" x-text="step.title"></p><p x-show="step.meta" class="mt-1 text-xs text-slate-600" x-text="step.meta"></p></li></template><li class="text-xs leading-relaxed text-slate-500">Numbered map markers are reference points. Confirm the signboard, direction, and boarding safety locally.</li></ol>
         </section>
       </div>
@@ -310,9 +329,10 @@
         placeSearchLoading: false,
         placeSearchError: '',
         loading: false,
-        walkingLoading: false,
+        walkingPending: [],
         error: '',
         selectedMode: 'jeepney',
+        selectedOptionId: 'jeepney',
         destination: null,
         routeData: null,
         catalogData: null,
@@ -382,7 +402,10 @@
         requestId: 0,
 
         get selectedOption() {
-          return this.routeData?.options.find(option => option.id === this.selectedMode) || null;
+          return this.routeData?.options.find(option => option.id === this.selectedOptionId) || null;
+        },
+        get walkingLoading() {
+          return !!this.selectedOption && this.walkingPending.includes(`${this.requestId}:${this.selectedOption.id}`);
         },
         get currentCity() {
           return this.cities.find(item => item.id === this.city) || this.cities[0];
@@ -398,6 +421,17 @@
           if (!option || option.fare_php === null || option.fare_php === undefined) return 'Fare on board';
           return option.fare_php === 0 ? 'Free' : `~₱${option.fare_php}`;
         },
+        rideCountLabel(option) {
+          const count = option?.itinerary?.ride_count || 0;
+          return ['', 'One jeepney ride', 'Two jeepney rides', 'Three jeepney rides'][count] || `${count} jeepney rides`;
+        },
+        // Option cards compare planner estimates; directions use street walking once it loads.
+        tripMinutes(option) {
+          return Number(option?.street_duration_minutes || option?.duration_minutes || 0);
+        },
+        tripKm(option) {
+          return Number(option?.street_distance_km || option?.itinerary?.road_distance_km || 0);
+        },
         distanceLabel(meters) {
           return meters < 1000 ? `${Math.round(meters)} m` : `${(meters / 1000).toFixed(1)} km`;
         },
@@ -408,13 +442,13 @@
           const output = [];
           const addWalk = (position, fallbackTitle) => {
             const leg = walking.find(item => item.position === position);
-            if (!leg || (!leg.steps?.length && !leg.distance_km)) return;
+            if (!leg || (!leg.steps?.length && !leg.distance_km)) return false;
             if (leg.steps?.length) {
               leg.steps.forEach((step, index) => {
                 let title = step.instruction;
                 if (index === leg.steps.length - 1 && position === 'origin') {
                   title = `Reach ${leg.street_name || 'the jeepney corridor'} and board the jeepney`;
-                } else if (index === leg.steps.length - 1 && position === 'transfer') {
+                } else if (index === leg.steps.length - 1 && position.startsWith('transfer')) {
                   title = `Reach the next jeepney line${leg.street_name ? ` on ${leg.street_name}` : ''}`;
                 } else if (index === leg.steps.length - 1 && position === 'destination') {
                   title = `Arrive at ${this.destination?.name || 'your destination'}`;
@@ -424,11 +458,15 @@
             } else {
               output.push({ kind: 'walk', title: fallbackTitle, meta: `Walk ${this.distanceLabel(leg.distance_km * 1000)}` });
             }
+            return true;
           };
           addWalk('origin', 'Walk to the jeepney corridor');
           itinerary.legs.forEach((leg, index) => {
             output.push({ kind: 'ride', title: `Take line ${leg.route_number}: ${leg.route_name}`, meta: `${Number(leg.road_distance_km || 0).toFixed(1)} km on the highlighted route` });
-            if (index === 0 && itinerary.ride_count === 2) addWalk('transfer', 'Walk to the connecting jeepney line');
+            const next = itinerary.legs[index + 1];
+            if (next && !addWalk(`transfer-${index}`, 'Walk to the connecting jeepney line') && itinerary.transfers?.[index]?.walk_km < 0.04) {
+              output.push({ kind: 'walk', title: `Get off and switch to line ${next.route_number} at the same spot`, meta: '' });
+            }
           });
           addWalk('destination', `Walk to ${this.destination?.name || 'your destination'}`);
           return output;
@@ -527,10 +565,9 @@
               const walking = itinerary.walking_legs || [];
               walking.forEach(leg => points.push(...this.addWalkingLeg(leg)));
               if (!walking.some(leg => leg.position === 'origin')) this.addAccessGuide([this.origin.lat, this.origin.lng], [waypoints[0].lat, waypoints[0].lng]);
-              if (itinerary.transfer_points?.length === 2 && !walking.some(leg => leg.position === 'transfer')) {
-                const first = itinerary.transfer_points[0], second = itinerary.transfer_points[1];
-                this.addAccessGuide([first.lat, first.lng], [second.lat, second.lng]);
-              }
+              (itinerary.transfers || []).forEach((transfer, index) => {
+                if (!walking.some(leg => leg.position === `transfer-${index}`)) this.addAccessGuide([transfer.from.lat, transfer.from.lng], [transfer.to.lat, transfer.to.lng]);
+              });
               const last = waypoints[waypoints.length - 1];
               if (!walking.some(leg => leg.position === 'destination')) this.addAccessGuide([last.lat, last.lng], [this.destination.lat, this.destination.lng]);
             }
@@ -561,7 +598,7 @@
           if (!this.destination) return;
           const currentRequest = ++this.requestId;
           this.loading = true;
-          this.walkingLoading = false;
+          this.walkingPending = [];
           this.error = '';
           this.routeData = null;
           const params = new URLSearchParams({ city: this.city, origin_lat: this.origin.lat, origin_lng: this.origin.lng, destination_lat: this.destination.lat, destination_lng: this.destination.lng });
@@ -570,26 +607,17 @@
             if (!response.ok) throw new Error('Route request failed');
             const result = await response.json();
             if (currentRequest === this.requestId) {
-              this.selectedMode = result.options[0]?.id || 'jeepney';
+              this.selectedMode = 'jeepney';
+              this.selectedOptionId = result.options[0]?.id || 'jeepney';
               this.routeData = result;
               this.loading = false;
-              this.walkingLoading = !!result.options[0]?.itinerary;
               this.updateMap();
-              await this.enrichWalking(result);
-              if (currentRequest !== this.requestId) return;
-              // Replace top-level references so Alpine re-renders the nested
-              // step list after the asynchronous pedestrian requests.
-              this.routeData = { ...result, options: [...result.options] };
-              this.walkingLoading = false;
-              this.updateMap();
+              await this.loadWalking(this.selectedOption);
             }
           } catch (error) {
             if (currentRequest === this.requestId) this.error = 'Could not load route options. Please try again.';
           } finally {
-            if (currentRequest === this.requestId) {
-              this.loading = false;
-              this.walkingLoading = false;
-            }
+            if (currentRequest === this.requestId) this.loading = false;
           }
         },
         async fetchWalkingLeg(position, label, from, to, fallbackKm) {
@@ -608,24 +636,43 @@
             };
           }
         },
-        async enrichWalking(result) {
-          const option = result.options?.[0];
+        selectOption(id) {
+          this.selectedOptionId = id;
+          this.updateMap();
+          this.loadWalking(this.selectedOption);
+        },
+        async loadWalking(option) {
+          // Street walking directions come from a rate-limited public router,
+          // so each option fetches them once, when it is first shown.
+          if (!option?.itinerary || option.itinerary.walking_legs) return;
+          const key = `${this.requestId}:${option.id}`;
+          if (this.walkingPending.includes(key)) return;
+          this.walkingPending.push(key);
+          try {
+            await this.enrichWalking(option);
+          } finally {
+            this.walkingPending = this.walkingPending.filter(item => item !== key);
+          }
+          if (key.startsWith(`${this.requestId}:`) && this.selectedOptionId === option.id) this.updateMap();
+        },
+        async enrichWalking(option) {
           const itinerary = option?.itinerary;
           if (!itinerary?.waypoints?.length) return;
           const waypoints = itinerary.waypoints;
           const access = itinerary.access || {};
+          const destination = this.destination;
           const tasks = [this.fetchWalkingLeg('origin', 'Walk to the boarding street', this.origin, waypoints[0], access.origin_walk_km)];
-          if (itinerary.transfer_points?.length === 2) {
-            tasks.push(this.fetchWalkingLeg('transfer', 'Walk to the connecting line', itinerary.transfer_points[0], itinerary.transfer_points[1], access.transfer_walk_km));
-          }
-          tasks.push(this.fetchWalkingLeg('destination', 'Walk from the jeepney line to your destination', waypoints[waypoints.length - 1], this.destination, access.destination_walk_km));
-          itinerary.walking_legs = await Promise.all(tasks);
-          const walkKm = itinerary.walking_legs.reduce((sum, leg) => sum + Number(leg.distance_km || 0), 0);
-          const walkMinutes = itinerary.walking_legs.reduce((sum, leg) => sum + Number(leg.duration_minutes || 0), 0);
+          (itinerary.transfers || []).forEach((transfer, index) => {
+            tasks.push(this.fetchWalkingLeg(`transfer-${index}`, 'Walk to the connecting line', transfer.from, transfer.to, transfer.walk_km));
+          });
+          tasks.push(this.fetchWalkingLeg('destination', 'Walk from the jeepney line to your destination', waypoints[waypoints.length - 1], destination, access.destination_walk_km));
+          const walkingLegs = await Promise.all(tasks);
+          const walkKm = walkingLegs.reduce((sum, leg) => sum + Number(leg.distance_km || 0), 0);
+          const walkMinutes = walkingLegs.reduce((sum, leg) => sum + Number(leg.duration_minutes || 0), 0);
           const rideKm = itinerary.legs.reduce((sum, leg) => sum + Number(leg.road_distance_km || 0), 0);
-          option.distance_km = Math.round((rideKm + walkKm) * 10) / 10;
-          option.duration_minutes = Number(option.ride_duration_minutes || option.duration_minutes) + walkMinutes;
-          result.distance_km = option.distance_km;
+          itinerary.walking_legs = walkingLegs;
+          option.street_distance_km = Math.round((rideKm + walkKm) * 10) / 10;
+          option.street_duration_minutes = Number(option.ride_duration_minutes || option.duration_minutes) + walkMinutes;
         },
         async openCatalog() {
           this.activeTab = 'routes';
