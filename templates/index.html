@@ -48,14 +48,35 @@
     .route-stop.transfer { background: #7c3aed; }
     .route-stop-label { background: #fff; border: 1px solid #dbe3ee; border-radius: 8px; padding: 3px 7px; color: #17212f; font: 700 10px Inter, sans-serif; box-shadow: 0 2px 8px rgba(15,23,42,.12); }
     .route-stop-label::before { display: none; }
+    .tab-bar { position: fixed; z-index: 900; left: 0; right: 0; bottom: 0; height: calc(65px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); display: flex; background: #fff; border-top: 1px solid #e2e8f0; box-shadow: 0 -5px 25px rgba(15,23,42,.05); }
+    .tab-bar button { flex: 1; display: grid; place-content: center; gap: 2px; text-align: center; color: #64748b; font-size: 11px; font-weight: 700; }
+    .tab-bar button.active { color: #0f172a; }
+    .tab-bar svg { margin: 0 auto; }
+    .sheet { bottom: calc(65px + env(safe-area-inset-bottom)); max-height: calc(100dvh - 180px); }
+    .sheet.expanded { height: min(735px, calc(82dvh - 65px)); }
+    .sheet.preview { height: 164px; }
+    .sheet.picking { height: 152px; }
+    .sheet-footer { padding-bottom: 12px; }
+    .network-screen { position: fixed; z-index: 700; inset: 0 0 calc(65px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; background: #f8fafc; }
+    .network-map { flex: 0 0 min(40dvh, 390px); min-height: 220px; background: #e8eef1; }
+    .network-details { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+    .network-chip { flex: none; width: 116px; border: 1px solid #e2e8f0; background: #fff; border-radius: 15px; padding: 9px; text-align: left; }
+    .network-chip.selected { border-color: #0f172a; box-shadow: 0 0 0 1px #0f172a; }
+    .network-chip strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
     @media (min-width: 768px) {
       .top-bar { left: 28px; right: 28px; }
       .sheet { left: 28px; right: auto; bottom: 28px; width: min(430px, calc(100vw - 56px)); border-radius: 30px; height: 435px; max-height: calc(100dvh - 56px); }
       .sheet.expanded { height: min(735px, calc(100dvh - 56px)); }
       .sheet.preview { height: 164px; }
+      .sheet.picking { height: 152px; }
       .map-button { right: 28px; bottom: 28px !important; }
       .map-route-badge { left: 480px; }
       .leaflet-control-attribution { margin-bottom: 0 !important; }
+      .tab-bar { left: auto; right: 28px; bottom: 28px; width: 300px; height: 64px; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 30px rgba(15,23,42,.15); }
+      .network-screen { inset: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(350px, 430px); grid-template-rows: auto minmax(0,1fr); }
+      .network-heading { grid-column: 1 / -1; }
+      .network-map { height: 100%; min-height: 0; }
+      .network-details { height: 100%; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
@@ -67,7 +88,7 @@
   <div class="map-wash"></div>
 
   <div x-data="lugarApp()" class="relative z-[500]">
-    <header class="top-bar">
+    <header x-show="activeTab === 'plan'" class="top-bar">
       <div class="flex items-center gap-2 rounded-2xl border border-white/80 bg-white/95 px-3 py-2 shadow-lg shadow-slate-900/10 backdrop-blur">
         <span class="grid h-9 w-9 place-items-center rounded-xl bg-slate-900 text-white font-extrabold text-lg tracking-tight">L<span class="text-[#ffc145]">.</span></span>
         <div class="leading-tight">
@@ -81,34 +102,34 @@
       </div>
     </header>
 
-    <div x-show="routeData && selectedMode === 'jeepney' && !catalogOpen" x-cloak class="map-route-badge" aria-live="polite">
+    <div x-show="activeTab === 'plan' && routeData && selectedMode === 'jeepney' && !pinTarget" x-cloak class="map-route-badge" aria-live="polite">
       <p class="flex items-center gap-2 text-xs font-extrabold text-blue-700"><span class="h-2.5 w-2.5 rounded-full bg-blue-600"></span><span x-text="selectedOption?.itinerary?.ride_count === 1 ? 'Jeepney route highlight' : 'Jeepney transfer highlight'"></span></p>
       <p class="mt-0.5 text-[10px] font-medium text-slate-600">Inferred street trace · verify locally</p>
     </div>
 
-    <button type="button" class="map-button text-slate-800" :style="{ bottom: expanded ? 'calc(min(82dvh, 735px) + 16px)' : mapPreview ? 'calc(164px + env(safe-area-inset-bottom) + 16px)' : 'calc(min(430px, 58dvh) + 16px)' }" @click="locateMe()" aria-label="Use my location" title="Use my location">
+    <button x-show="activeTab === 'plan'" type="button" class="map-button text-slate-800" :style="{ bottom: expanded ? 'calc(min(82dvh, 735px) + 16px)' : (mapPreview || pinTarget) ? 'calc(164px + 65px + env(safe-area-inset-bottom) + 16px)' : 'calc(min(430px, 58dvh) + 65px + env(safe-area-inset-bottom) + 16px)' }" @click="locateMe()" aria-label="Use my location" title="Use my location">
       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg>
     </button>
 
-    <main class="sheet" :class="{ 'expanded': expanded, 'preview': mapPreview && !expanded }" aria-label="Trip planner">
+    <main x-show="activeTab === 'plan'" class="sheet" :class="{ 'expanded': expanded, 'preview': mapPreview && !expanded, 'picking': !!pinTarget }" aria-label="Trip planner">
       <div class="grab-area" @pointerdown="startDrag($event)" @pointerup="endDrag($event)" @pointercancel="cancelDrag()" aria-label="Drag to expand or collapse trip planner">
         <span class="grabber"></span>
       </div>
 
       <div class="sheet-body" x-ref="sheetBody">
-        <section x-show="!expanded && !mapPreview" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-3" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-out duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="px-5 pb-5 sm:px-6">
+        <section x-show="!expanded && !mapPreview && !pinTarget" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-3" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-out duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="px-5 pb-5 sm:px-6">
           <div class="mb-5 flex items-start justify-between gap-3">
             <div>
               <p class="text-[11px] font-bold uppercase tracking-[.18em] text-slate-500">Get around Bacolod</p>
               <h1 class="mt-1 text-[27px] font-extrabold tracking-[-.04em] leading-tight">Where to next?</h1>
             </div>
-            <button type="button" @click="openCatalog()" class="rounded-full bg-[#f4f6f8] px-3 py-1.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-200">24 routes</button>
+            <button type="button" @click="openCatalog()" class="rounded-full bg-[#f4f6f8] px-3 py-1.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-200">Jeepney map</button>
           </div>
-          <label class="field flex h-14 items-center gap-3 rounded-2xl border border-slate-200 bg-[#f7f8fa] px-4 transition" for="quick-search">
+          <button type="button" @click="beginPin('destination')" class="field flex h-14 w-full items-center gap-3 rounded-2xl border border-slate-200 bg-[#f7f8fa] px-4 text-left transition">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>
-            <input id="quick-search" x-model="search" @focus="expanded = true; $nextTick(() => $refs.destinationInput.focus())" @input="expanded = true; $nextTick(() => $refs.destinationInput.focus())" placeholder="Where to?" autocomplete="off" class="min-w-0 flex-1 bg-transparent text-[16px] font-semibold text-slate-900 outline-none placeholder:text-slate-500" aria-label="Search destination">
-            <span class="text-xs font-semibold text-slate-400">Search</span>
-          </label>
+            <span class="min-w-0 flex-1 text-[16px] font-semibold text-slate-700">Pick destination on map</span>
+            <span class="text-xs font-semibold text-blue-700">Pin</span>
+          </button>
           <p x-show="error" x-cloak x-text="error" class="mt-2 rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-700"></p>
           <div class="mt-6 flex items-center justify-between">
             <h2 class="text-xs font-bold uppercase tracking-[.16em] text-slate-500">Recent places</h2>
@@ -127,7 +148,11 @@
           </div>
         </section>
 
-        <section x-show="!expanded && mapPreview" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-3" x-transition:enter-end="opacity-100 translate-y-0" class="px-5 pb-4 sm:px-6">
+        <section x-show="!!pinTarget" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-3" x-transition:enter-end="opacity-100 translate-y-0" class="px-5 pb-4 sm:px-6">
+          <div class="flex items-start justify-between gap-3"><div><p class="text-[10px] font-bold uppercase tracking-[.16em] text-blue-700">Place a map pin</p><h2 class="mt-1 text-lg font-extrabold" x-text="pinTarget === 'origin' ? 'Tap your starting point' : 'Tap your destination'"></h2><p class="mt-1 text-xs text-slate-500">Pan and zoom the map, then tap the exact spot.</p></div><button type="button" @click="cancelPin()" class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600" aria-label="Cancel placing pin">✕</button></div>
+        </section>
+
+        <section x-show="!expanded && mapPreview && !pinTarget" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-3" x-transition:enter-end="opacity-100 translate-y-0" class="px-5 pb-4 sm:px-6">
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0"><p class="text-[10px] font-bold uppercase tracking-[.16em] text-blue-700" x-text="selectedMode === 'jeepney' ? 'Jeepney map guide' : 'Destination map'"></p><h2 class="mt-1 truncate text-lg font-extrabold" x-text="destination?.name"></h2><p class="mt-1 text-xs text-slate-500" x-text="selectedMode === 'jeepney' ? 'Road trace inferred from LPTRP map · verify locally' : 'Check local streets and conditions'"></p></div>
             <button type="button" @click="collapse()" class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600" aria-label="Clear trip">✕</button>
@@ -135,7 +160,7 @@
           <button type="button" @click="backToOptions()" class="mt-3 text-xs font-extrabold text-blue-700">↑ Route details and options</button>
         </section>
 
-        <section x-show="expanded && !tripStarted && !catalogOpen" x-cloak x-transition:enter="transition ease-out duration-300 delay-75" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-out duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="pb-4">
+        <section x-show="expanded && !tripStarted" x-cloak x-transition:enter="transition ease-out duration-300 delay-75" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-out duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="pb-4">
           <div class="px-5 sm:px-6">
             <div class="mb-4 flex items-center justify-between">
               <div><p class="text-[11px] font-bold uppercase tracking-[.18em] text-slate-500">Plan your ride</p><h1 class="mt-1 text-2xl font-extrabold tracking-[-.035em]">Choose your way</h1></div>
@@ -149,30 +174,17 @@
               <span class="absolute left-0 top-[19px] h-4 w-4 rounded-full border-[4px] border-blue-600 bg-white"></span>
               <span class="absolute left-0 top-[95px] h-4 w-4 rounded-[5px] bg-slate-900"></span>
               <div class="field mb-2 flex h-[60px] items-center justify-between rounded-2xl border border-slate-200 bg-[#f8f9fb] px-4 transition">
-                <div class="min-w-0 flex-1"><label for="origin-input" class="block text-[10px] font-bold uppercase tracking-widest text-slate-400">From</label><input id="origin-input" aria-label="Point A" :value="originLabel" @click="showOriginChoices = !showOriginChoices" readonly class="w-full truncate bg-transparent text-sm font-semibold text-slate-900 outline-none" title="Choose a starting area"></div>
-                <button type="button" @click="showOriginChoices = !showOriginChoices" class="ml-2 text-xs font-bold text-blue-600" :aria-expanded="showOriginChoices">Change</button>
+                <button type="button" @click="beginPin('origin')" class="min-w-0 flex-1 text-left"><span class="block text-[10px] font-bold uppercase tracking-widest text-slate-400">From · tap to move pin</span><span class="block truncate text-sm font-semibold text-slate-900" x-text="originLabel"></span></button>
                 <button type="button" @click="locateMe()" class="ml-3 text-xs font-bold text-blue-600">GPS</button>
               </div>
               <div class="field flex h-[60px] items-center rounded-2xl border border-slate-200 bg-[#f8f9fb] px-4 transition">
-                <div class="w-full min-w-0"><label for="destination-input" class="block text-[10px] font-bold uppercase tracking-widest text-slate-400">To</label><input id="destination-input" x-ref="destinationInput" x-model="search" @input="destination = null; routeData = null; tripStarted = false; requestId++; showSuggestions = true; updateMap()" @focus="showSuggestions = true; showOriginChoices = false" @keydown.escape="showSuggestions = false" placeholder="Search a place in Bacolod" autocomplete="off" class="w-full bg-transparent text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-400"></div>
+                <button type="button" @click="beginPin('destination')" class="w-full min-w-0 text-left"><span class="block text-[10px] font-bold uppercase tracking-widest text-slate-400">To · tap to move pin</span><span class="block truncate text-sm font-semibold text-slate-900" x-text="destination?.name || 'Tap map to pin destination'"></span></button>
               </div>
-            </div>
-
-            <div x-show="showOriginChoices" x-cloak class="mt-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg">
-              <p class="px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">Choose a starting area</p>
-              <template x-for="place in originChoices" :key="place.name"><button type="button" @click="chooseOrigin(place)" class="block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-slate-800 hover:bg-slate-50" x-text="place.name"></button></template>
-            </div>
-
-            <div x-show="showSuggestions && search.length > 0" x-cloak class="mt-2 rounded-2xl border border-slate-200 bg-white p-1 shadow-xl">
-              <template x-for="place in filteredPlaces" :key="place.name">
-                <button type="button" @click="selectDestination(place)" class="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-semibold hover:bg-slate-50"><span class="text-slate-400">⌖</span><span x-text="place.name"></span></button>
-              </template>
-              <p x-show="filteredPlaces.length === 0" class="px-3 py-2 text-xs text-slate-500">Choose one of the listed Bacolod places for this preview.</p>
             </div>
             <p x-show="error && !destination" x-cloak x-text="error" class="mt-2 rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-700"></p>
           </div>
 
-          <div x-show="destination && !showSuggestions" x-cloak class="mt-5">
+          <div x-show="destination" x-cloak class="mt-5">
             <div class="flex items-end justify-between px-5 sm:px-6"><div><p class="text-[11px] font-bold uppercase tracking-[.18em] text-slate-500">Ways to get there</p><h2 class="mt-1 text-[18px] font-extrabold tracking-tight">Your options</h2></div><span class="text-xs font-medium text-slate-500" x-text="routeData ? `~${routeData.distance_km} km` : ''"></span></div>
             <div x-show="loading" class="px-5 pt-4 text-sm text-slate-500">Finding local options…</div>
             <div x-show="error" x-text="error" class="mx-5 mt-4 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700"></div>
@@ -193,7 +205,7 @@
               <div x-show="selectedMode === 'jeepney'" class="mt-3 border-t border-slate-200 pt-3">
                 <p class="text-[10px] font-bold uppercase tracking-[.15em] text-slate-500" x-text="selectedOption?.itinerary?.ride_count === 1 ? 'Published line for this connection' : 'Take these lines in order'"></p>
                 <div class="mt-2 flex flex-wrap gap-1.5"><template x-for="line in selectedOption?.lines || []" :key="line.id"><span class="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-blue-700 ring-1 ring-blue-100" x-text="line.name"></span></template></div>
-                <div class="mt-3 space-y-2"><template x-for="(leg, index) in selectedOption?.itinerary?.legs || []" :key="index"><p class="text-xs leading-relaxed text-slate-700" x-text="`${index + 1}. Board ${leg.route_name} near ${leg.board_near}; alight near ${leg.alight_near}.`"></p></template></div>
+                <div class="mt-3 space-y-2"><p class="text-xs leading-relaxed text-slate-700" x-text="`Walk about ${Math.round((selectedOption?.itinerary?.access?.origin_walk_km || 0) * 1000)} m to the first jeepney line.`"></p><template x-for="(leg, index) in selectedOption?.itinerary?.legs || []" :key="index"><p class="text-xs leading-relaxed text-slate-700" x-text="`${index + 1}. Take line ${leg.route_number}: ${leg.route_name}.${index === 0 && selectedOption?.itinerary?.ride_count === 2 ? ` Then walk about ${Math.round((selectedOption?.itinerary?.access?.transfer_walk_km || 0) * 1000)} m to transfer.` : ''}`"></p></template><p class="text-xs leading-relaxed text-slate-700" x-text="`After alighting, walk about ${Math.round((selectedOption?.itinerary?.access?.destination_walk_km || 0) * 1000)} m to your pin.`"></p></div>
                 <p class="mt-3 text-[11px] leading-relaxed text-slate-500" x-text="selectedOption?.itinerary?.note"></p>
                 <a :href="selectedOption?.itinerary?.source_url" target="_blank" rel="noopener noreferrer" class="mt-2 inline-block text-[11px] font-bold text-blue-700 underline">Published LPTRP line map ↗</a>
               </div>
@@ -202,27 +214,16 @@
             <p x-show="routeData" class="mx-5 mt-3 text-[11px] leading-relaxed text-slate-500 sm:mx-6" x-text="routeData?.estimate_note"></p>
           </div>
 
-          <div x-show="!destination && !showSuggestions" class="mx-5 mt-5 rounded-2xl bg-blue-50 p-4 sm:mx-6"><p class="text-sm font-bold text-blue-900">Start with a destination</p><p class="mt-1 text-xs leading-relaxed text-blue-700">Search for a listed Bacolod place above to compare researched jeepney connections and estimated alternatives.</p></div>
+          <div x-show="!destination" class="mx-5 mt-5 rounded-2xl bg-blue-50 p-4 sm:mx-6"><p class="text-sm font-bold text-blue-900">Tap the map to place your destination</p><p class="mt-1 text-xs leading-relaxed text-blue-700">You can also move the starting pin. Detailed jeepney suggestions cover only a few mapped connections so far.</p><button type="button" @click="beginPin('destination')" class="mt-3 rounded-xl bg-blue-700 px-3 py-2 text-xs font-bold text-white">Place destination pin</button></div>
         </section>
 
-        <section x-show="expanded && catalogOpen" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="px-5 pb-6 sm:px-6">
-          <div class="mb-4 flex items-center justify-between"><div><p class="text-[11px] font-bold uppercase tracking-[.18em] text-slate-500">Bacolod LPTRP</p><h1 class="mt-1 text-2xl font-extrabold tracking-tight">Published routes</h1></div><button type="button" @click="closeCatalog()" class="grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-slate-600" aria-label="Close route catalog">✕</button></div>
-          <p class="text-xs leading-relaxed text-slate-600">These 24 lines are listed in Bacolod’s published route plan. Two have inferred street previews for a limited portion; the rest are names only. Current service may vary.</p>
-          <label class="mt-4 block"><span class="sr-only">Find a route</span><input x-model="catalogSearch" placeholder="Find a route or area" class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:border-slate-500"></label>
-          <p x-show="catalogLoading" class="mt-4 text-sm text-slate-500">Loading published routes…</p>
-          <p x-show="catalogError" x-text="catalogError" class="mt-4 text-sm text-rose-700"></p>
-          <div class="mt-3 divide-y divide-slate-100"><template x-for="line in filteredCatalog" :key="line.id"><div class="flex items-start gap-3 py-3"><span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-blue-50 text-xs font-extrabold text-blue-700" x-text="line.number"></span><span class="min-w-0 flex-1"><span class="block text-sm font-semibold leading-snug" x-text="line.name"></span><button x-show="line.mapped_portion" type="button" @click="previewCatalogLine(line)" class="mt-1.5 text-left text-[11px] font-bold text-blue-700" x-text="`View mapped portion: ${line.mapped_portion}`"></button></span><span class="shrink-0 text-[11px] text-slate-500" x-text="`${line.length_km} km`"></span></div></template></div>
-          <p x-show="catalogData && filteredCatalog.length === 0" class="py-4 text-sm text-slate-500">No routes match that search.</p>
-          <a x-show="catalogData" :href="catalogData?.source_url" target="_blank" rel="noopener noreferrer" class="mt-4 inline-block text-xs font-bold text-blue-700 underline">View the published line map ↗</a>
-        </section>
-
-        <section x-show="tripStarted && !catalogOpen" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="px-5 pb-5 sm:px-6">
+        <section x-show="tripStarted" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="px-5 pb-5 sm:px-6">
           <button type="button" @click="tripStarted = false; $nextTick(() => $refs.sheetBody.scrollTop = 0)" class="mb-4 flex items-center gap-1 text-xs font-bold text-slate-500"><span class="text-lg">‹</span> Back to options</button>
           <div class="mb-5 grid h-12 w-12 place-items-center rounded-2xl bg-slate-900 text-2xl text-white" x-text="selectedMode === 'jeepney' ? '🚌' : selectedMode === 'tricycle' ? '🛺' : '🚶'"></div>
           <p class="text-[11px] font-bold uppercase tracking-[.18em] text-slate-500">Trip preview</p>
           <h1 class="mt-1 text-2xl font-extrabold tracking-tight" x-text="destination?.name"></h1>
           <p class="mt-1 text-sm text-slate-500" x-text="`${selectedOption?.label} · about ${selectedOption?.duration_minutes} min · ${fareLabel(selectedOption)}`"></p>
-          <div x-show="selectedMode === 'jeepney'" class="mt-6 space-y-4 border-l-2 border-dashed border-blue-300 pl-5"><template x-for="(leg, index) in selectedOption?.itinerary?.legs || []" :key="index"><div><p class="text-sm font-bold" x-text="`${index + 1}. ${leg.route_name}`"></p><p class="mt-1 text-xs leading-relaxed text-slate-600" x-text="`Board along the line near ${leg.board_near} and alight near ${leg.alight_near}. Confirm direction with the driver.`"></p></div></template><p class="text-xs leading-relaxed text-slate-500">Numbered markers are reference landmarks, not designated stops. Street trace is inferred, not live navigation.</p></div>
+          <div x-show="selectedMode === 'jeepney'" class="mt-6 space-y-4 border-l-2 border-dashed border-blue-300 pl-5"><div><p class="text-sm font-bold">Walk to the jeepney corridor</p><p class="mt-1 text-xs text-slate-600" x-text="`About ${Math.round((selectedOption?.itinerary?.access?.origin_walk_km || 0) * 1000)} m from your starting pin.`"></p></div><template x-for="(leg, index) in selectedOption?.itinerary?.legs || []" :key="index"><div><p class="text-sm font-bold" x-text="`Ride line ${leg.route_number}: ${leg.route_name}`"></p><p class="mt-1 text-xs leading-relaxed text-slate-600" x-text="index === 0 && selectedOption?.itinerary?.ride_count === 2 ? `Alight at the highlighted transfer and walk about ${Math.round((selectedOption?.itinerary?.access?.transfer_walk_km || 0) * 1000)} m to line ${selectedOption.itinerary.legs[1].route_number}.` : 'Confirm the signboard and direction with the driver before boarding.'"></p></div></template><div><p class="text-sm font-bold">Walk to your destination</p><p class="mt-1 text-xs text-slate-600" x-text="`About ${Math.round((selectedOption?.itinerary?.access?.destination_walk_km || 0) * 1000)} m from the final jeepney line.`"></p></div><p class="text-xs leading-relaxed text-slate-500">Numbered markers are reference points, not designated stops. Street traces are inferred and are not live navigation.</p></div>
           <div x-show="selectedMode !== 'jeepney'" class="mt-6 space-y-4 border-l-2 border-dashed border-slate-300 pl-5">
             <div><p class="text-sm font-bold">Start from your location</p><p class="mt-1 text-xs text-slate-500">Check your surroundings before setting off.</p></div>
             <div><p class="text-sm font-bold" x-text="selectedMode === 'tricycle' ? 'Find a local tricycle stand' : 'Walk toward your destination'"></p><p class="mt-1 text-xs leading-relaxed text-slate-500" x-text="selectedMode === 'tricycle' ? 'Confirm the destination and fare with the driver before boarding.' : 'Use the map for orientation; this preview is not turn-by-turn navigation.'"></p></div>
@@ -231,32 +232,93 @@
         </section>
       </div>
 
-      <div x-show="expanded && destination && routeData && !showSuggestions && !catalogOpen" x-cloak class="sheet-footer">
+      <div x-show="expanded && destination && routeData" x-cloak class="sheet-footer">
         <button type="button" @click="tripStarted = !tripStarted; $nextTick(() => $refs.sheetBody.scrollTop = 0)" class="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 text-[15px] font-bold text-white shadow-lg shadow-slate-900/15 transition hover:bg-slate-800 active:scale-[.99]" x-text="tripStarted ? 'Back to options' : 'Let’s Go'" :aria-label="tripStarted ? 'Back to route options' : 'Open trip preview'"></button>
       </div>
     </main>
+
+    <section x-show="activeTab === 'routes'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="network-screen" aria-label="Jeepney routes">
+      <header class="network-heading flex items-center justify-between border-b border-slate-200 bg-white px-5 pb-3 pt-[calc(14px+env(safe-area-inset-top))] md:px-8">
+        <div><p class="text-[10px] font-bold uppercase tracking-[.18em] text-blue-700">Bacolod LPTRP · map-derived network</p><h1 class="text-xl font-extrabold tracking-tight">Jeepney routes</h1></div>
+        <span class="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-800">24 planned lines</span>
+      </header>
+      <div id="network-map" class="network-map" role="application" aria-label="Interactive Bacolod map with 24 colored jeepney corridors"></div>
+      <div class="network-details bg-[#f8fafc] pb-8">
+        <div class="border-b border-slate-200 bg-white px-5 py-3">
+          <p class="text-xs font-semibold text-slate-800">Tap a colored line to inspect its route.</p>
+          <p class="mt-1 text-[11px] leading-relaxed text-slate-500">These corridors are generated from LPTRP landmarks and OSM roads. Exact turns, operating direction, and current service still need local verification. Community notes are unverified.</p>
+        </div>
+        <div class="px-5 pt-4">
+          <label class="sr-only" for="network-search">Find a jeepney line</label>
+          <input id="network-search" x-model="catalogSearch" placeholder="Find a line or area" class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500">
+          <div x-show="catalogLoading" class="py-3 text-sm text-slate-500">Loading lines…</div>
+          <p x-show="catalogError" x-text="catalogError" class="py-3 text-sm text-rose-700"></p>
+          <div class="-mx-5 mt-3 flex gap-2 overflow-x-auto px-5 pb-3" aria-label="Select a jeepney line">
+            <template x-for="line in filteredCatalog" :key="line.id"><button type="button" @click="selectLine(line)" class="network-chip" :class="selectedLine?.id === line.id ? 'selected' : ''" :aria-pressed="selectedLine?.id === line.id"><span class="mb-2 grid h-6 w-6 place-items-center rounded-md text-[11px] font-extrabold text-white" :style="`background:${line.color}`" x-text="line.number"></span><strong x-text="line.name"></strong></button></template>
+          </div>
+          <p x-show="catalogData && filteredCatalog.length === 0" class="text-xs text-slate-500">No matching lines.</p>
+          <article x-show="selectedLine" x-cloak class="mt-1 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div class="flex gap-3"><span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-sm font-extrabold text-white" :style="`background:${selectedLine?.color}`" x-text="selectedLine?.number"></span><div><h2 class="text-sm font-extrabold leading-snug" x-text="selectedLine?.name"></h2><p class="mt-1 text-xs text-slate-500" x-text="`${selectedLine?.length_km} km in the route plan`"></p></div></div>
+            <p class="mt-3 text-xs leading-relaxed text-slate-600" x-text="`Mapped from ${selectedLine?.mapped_portion || 'LPTRP landmarks'} onto OSM roads. Exact alignment and operation need local confirmation.`"></p>
+            <button type="button" @click="focusSelectedLine()" class="mt-3 rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700">Fit route on map</button>
+            <a :href="catalogData?.source_url" target="_blank" rel="noopener noreferrer" class="mt-3 block text-xs font-semibold text-blue-700 underline">Route plan source ↗</a>
+          </article>
+          <section x-show="selectedLine" x-cloak class="mt-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="Community route comments">
+            <h3 class="text-sm font-extrabold">Community notes</h3>
+            <p class="mt-1 text-xs leading-relaxed text-slate-500">Share a recent observation, correction, or boarding tip. Avoid personal details. Notes are public and unverified.</p>
+            <form @submit.prevent="submitComment()" class="mt-3 space-y-2">
+              <label class="sr-only" for="comment-name">Your name</label><input id="comment-name" x-model="commentAuthor" maxlength="40" minlength="2" required placeholder="Your name" class="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500">
+              <label class="sr-only" for="comment-body">Your route note</label><textarea id="comment-body" x-model="commentBody" maxlength="600" minlength="10" required rows="3" placeholder="What did you notice about this route?" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500"></textarea>
+              <input x-model="commentWebsite" type="text" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true">
+              <button type="submit" :disabled="commentSaving" class="rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50" x-text="commentSaving ? 'Posting…' : 'Post note'"></button>
+              <p x-show="commentError" x-text="commentError" class="text-xs text-rose-700"></p>
+            </form>
+            <div class="mt-4 border-t border-slate-100 pt-3">
+              <p x-show="commentsLoading" class="text-xs text-slate-500">Loading notes…</p>
+              <p x-show="!commentsLoading && comments.length === 0" class="text-xs text-slate-500">No notes yet. Be the first to share a local observation.</p>
+              <template x-for="comment in comments" :key="comment.id"><div class="border-b border-slate-100 py-3 last:border-0"><div class="flex items-center justify-between gap-2"><strong class="text-xs" x-text="comment.author"></strong><time class="text-[10px] text-slate-400" x-text="formatCommentDate(comment.created_at)"></time></div><p class="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-700" x-text="comment.body"></p></div></template>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <nav class="tab-bar" aria-label="Main navigation">
+      <button type="button" @click="showPlanTab()" :class="activeTab === 'plan' ? 'active' : ''" :aria-current="activeTab === 'plan' ? 'page' : null"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 18 9 6l6 12 3-6 3 6"/><circle cx="9" cy="6" r="2"/></svg>Plan trip</button>
+      <button type="button" @click="openCatalog()" :class="activeTab === 'routes' ? 'active' : ''" :aria-current="activeTab === 'routes' ? 'page' : null"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 17V5l6 2 6-2 6 2v12l-6-2-6 2-6-2zM9 7v12M15 5v12"/></svg>Jeepney routes</button>
+    </nav>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script>
     function lugarApp() {
       return {
+        activeTab: 'plan',
         expanded: false,
         mapPreview: false,
         tripStarted: false,
-        search: '',
-        showSuggestions: false,
-        showOriginChoices: false,
+        pinTarget: null,
         loading: false,
         error: '',
         selectedMode: 'jeepney',
         destination: null,
         routeData: null,
-        catalogOpen: false,
         catalogData: null,
+        catalogNetwork: null,
         catalogLoading: false,
         catalogError: '',
         catalogSearch: '',
+        selectedLine: null,
+        comments: [],
+        commentsLoading: false,
+        commentAuthor: '',
+        commentBody: '',
+        commentWebsite: '',
+        commentSaving: false,
+        commentError: '',
+        networkMap: null,
+        networkLayers: {},
+        networkAnchorLayer: null,
         origin: { lat: 10.6765, lng: 122.9509 },
         originLabel: 'Bacolod City center',
         places: [
@@ -277,10 +339,6 @@
         dragStartY: null,
         requestId: 0,
 
-        get filteredPlaces() {
-          const term = this.search.trim().toLowerCase();
-          return this.places.filter(place => !term || place.name.toLowerCase().includes(term) || place.area.toLowerCase().includes(term));
-        },
         get selectedOption() {
           return this.routeData?.options.find(option => option.id === this.selectedMode) || null;
         },
@@ -295,7 +353,8 @@
         },
         init() {
           this.map = L.map('map', { zoomControl: false, attributionControl: true }).setView([10.6825, 122.9545], 14);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          this.map.on('click', event => this.placePin(event.latlng));
+          L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           }).addTo(this.map);
@@ -336,8 +395,7 @@
             const itinerary = this.selectedMode === 'jeepney' ? this.selectedOption?.itinerary : null;
             const waypoints = itinerary?.waypoints;
             if (waypoints?.length >= 2) {
-              const colors = ['#2563eb', '#7c3aed'];
-              (itinerary.legs || []).forEach((leg, index) => points.push(...this.addHighlightedLeg(leg, colors[index % colors.length])));
+              (itinerary.legs || []).forEach(leg => points.push(...this.addHighlightedLeg(leg, leg.color || '#2563eb')));
               waypoints.forEach((point, index) => {
                 const transfer = index > 0 && index < waypoints.length - 1;
                 const marker = L.marker([point.lat, point.lng], { icon: this.stopIcon(index, transfer), zIndexOffset: 300 }).addTo(this.routeLayers);
@@ -345,6 +403,10 @@
                 points.push([point.lat, point.lng]);
               });
               this.addAccessGuide([this.origin.lat, this.origin.lng], [waypoints[0].lat, waypoints[0].lng]);
+              if (itinerary.transfer_points?.length === 2) {
+                const first = itinerary.transfer_points[0], second = itinerary.transfer_points[1];
+                this.addAccessGuide([first.lat, first.lng], [second.lat, second.lng]);
+              }
               const last = waypoints[waypoints.length - 1];
               this.addAccessGuide([last.lat, last.lng], [this.destination.lat, this.destination.lng]);
             }
@@ -356,20 +418,16 @@
               paddingBottomRight: desktop ? [40, 50] : [20, this.mapPreview ? 190 : 250]
             });
           } else {
-            this.map.setView([10.6825, 122.9545], 14);
+            this.map.setView([this.origin.lat, this.origin.lng], 14);
           }
         },
         async selectDestination(place) {
           this.destination = place;
-          this.search = place.name;
+          this.pinTarget = null;
           this.expanded = true;
           this.mapPreview = false;
           this.tripStarted = false;
-          this.catalogOpen = false;
-          this.showSuggestions = false;
-          this.showOriginChoices = false;
           this.selectedMode = 'jeepney';
-          this.$refs.destinationInput.blur();
           this.$nextTick(() => this.$refs.sheetBody.scrollTop = 0);
           this.updateMap();
           await this.fetchRoutes();
@@ -397,29 +455,25 @@
           }
         },
         async openCatalog() {
-          this.expanded = true;
-          this.mapPreview = false;
-          this.catalogOpen = true;
-          this.tripStarted = false;
-          this.showSuggestions = false;
-          this.catalogSearch = '';
-          this.$nextTick(() => this.$refs.sheetBody.scrollTop = 0);
-          if (this.catalogData) return;
+          this.activeTab = 'routes';
+          this.$nextTick(() => this.initNetworkMap());
+          if (this.catalogData && this.catalogNetwork) return;
           this.catalogLoading = true;
           this.catalogError = '';
           try {
-            const response = await fetch('/api/jeepney-routes');
-            if (!response.ok) throw new Error('Catalog request failed');
-            this.catalogData = await response.json();
+            const [catalogResponse, networkResponse] = await Promise.all([
+              fetch('/api/jeepney-routes'), fetch('/api/jeepney-network')
+            ]);
+            if (!catalogResponse.ok || !networkResponse.ok) throw new Error('Catalog request failed');
+            this.catalogData = await catalogResponse.json();
+            this.catalogNetwork = await networkResponse.json();
+            this.drawNetwork();
+            this.selectLine(this.catalogData.routes.find(line => line.number === 2) || this.catalogData.routes[0]);
           } catch (error) {
             this.catalogError = 'Could not load the published routes. Please try again.';
           } finally {
             this.catalogLoading = false;
           }
-        },
-        closeCatalog() {
-          this.catalogOpen = false;
-          if (!this.destination) this.collapse();
         },
         async previewCatalogLine(line) {
           const trip = line.id === 'bata-libertad'
@@ -428,26 +482,17 @@
               ? { origin: this.originChoices[3], destination: this.places[2] }
               : null;
           if (!trip) return;
+          this.showPlanTab();
           this.origin = { lat: trip.origin.lat, lng: trip.origin.lng };
           this.originLabel = trip.origin.name;
           await this.selectDestination(trip.destination);
           if (this.routeData) this.showMapPreview();
-        },
-        chooseOrigin(place) {
-          this.origin = { lat: place.lat, lng: place.lng };
-          this.originLabel = place.name;
-          this.showOriginChoices = false;
-          this.routeData = null;
-          this.selectedMode = 'jeepney';
-          this.updateMap();
-          if (this.destination) this.fetchRoutes();
         },
         showMapPreview() {
           if (!this.destination || !this.routeData) { this.collapse(); return; }
           this.expanded = false;
           this.mapPreview = true;
           this.tripStarted = false;
-          this.showSuggestions = false;
           this.$nextTick(() => { this.map.invalidateSize(); this.updateMap(); });
         },
         backToOptions() {
@@ -460,21 +505,146 @@
           navigator.geolocation.getCurrentPosition(position => {
             this.origin = { lat: position.coords.latitude, lng: position.coords.longitude };
             this.originLabel = 'Your current location';
-            this.showOriginChoices = false;
+            this.pinTarget = null;
             this.routeData = null;
             this.updateMap();
             if (this.destination) this.fetchRoutes();
             else this.map.setView([this.origin.lat, this.origin.lng], 15);
           }, () => { this.error = 'Location access was denied. Using Bacolod City center.'; }, { enableHighAccuracy: true, timeout: 10000 });
         },
+        showPlanTab() {
+          this.activeTab = 'plan';
+          this.$nextTick(() => { this.map.invalidateSize(); this.updateMap(); });
+        },
+        initNetworkMap() {
+          if (this.networkMap) { this.networkMap.invalidateSize(); return; }
+          this.networkMap = L.map('network-map', { zoomControl: false, attributionControl: true }).setView([10.664, 122.967], 12);
+          L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(this.networkMap);
+          L.control.zoom({ position: 'topright' }).addTo(this.networkMap);
+          this.drawNetwork();
+        },
+        drawNetwork() {
+          if (!this.networkMap || !this.catalogNetwork || Object.keys(this.networkLayers).length) return;
+          const allBounds = [];
+          this.catalogNetwork.features.forEach(feature => {
+            const properties = feature.properties;
+            const points = feature.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+            const casing = L.polyline(points, { color: '#ffffff', weight: 7, opacity: .86, interactive: false }).addTo(this.networkMap);
+            const line = L.polyline(points, { color: properties.color, weight: 4, opacity: .82, lineCap: 'round', lineJoin: 'round' })
+              .bindTooltip(`${properties.number}. ${properties.name}`)
+              .on('click', () => {
+                const catalogLine = this.catalogData?.routes.find(item => item.id === properties.id);
+                if (catalogLine) this.selectLine(catalogLine);
+              }).addTo(this.networkMap);
+            this.networkLayers[properties.id] = { line, casing };
+            allBounds.push(...points);
+          });
+          if (allBounds.length) this.networkMap.fitBounds(L.latLngBounds(allBounds), { padding: [20, 20] });
+        },
+        focusSelectedLine() {
+          const layer = this.networkLayers[this.selectedLine?.id]?.line;
+          if (layer) this.networkMap.fitBounds(layer.getBounds(), { padding: [28, 28], maxZoom: 15 });
+        },
+        styleNetworkSelection() {
+          Object.entries(this.networkLayers).forEach(([id, layers]) => {
+            const selected = id === this.selectedLine?.id;
+            layers.line.setStyle({ weight: selected ? 7 : 4, opacity: selected ? 1 : .3 });
+            layers.casing.setStyle({ weight: selected ? 11 : 7, opacity: selected ? .96 : .35 });
+            if (selected) layers.line.bringToFront();
+          });
+        },
+        drawSelectedAnchors() {
+          if (!this.networkMap || !this.catalogNetwork) return;
+          if (this.networkAnchorLayer) this.networkMap.removeLayer(this.networkAnchorLayer);
+          this.networkAnchorLayer = L.layerGroup().addTo(this.networkMap);
+          const feature = this.catalogNetwork.features.find(item => item.properties.id === this.selectedLine?.id);
+          (feature?.properties?.anchors || []).forEach((anchor, index) => {
+            L.circleMarker([anchor.lat, anchor.lng], {
+              radius: index === 0 || index === feature.properties.anchors.length - 1 ? 6 : 4,
+              color: '#ffffff', weight: 2, fillColor: feature.properties.color, fillOpacity: 1
+            }).bindTooltip(anchor.name, { direction: 'top', className: 'route-stop-label' })
+              .addTo(this.networkAnchorLayer);
+          });
+        },
+        async selectLine(line) {
+          if (!line) return;
+          this.selectedLine = line;
+          this.styleNetworkSelection();
+          this.drawSelectedAnchors();
+          this.comments = [];
+          this.commentError = '';
+          this.commentsLoading = true;
+          try {
+            const response = await fetch(`/api/jeepney-routes/${encodeURIComponent(line.id)}/comments`);
+            if (!response.ok) throw new Error('Comments unavailable');
+            const data = await response.json();
+            if (this.selectedLine?.id === line.id) this.comments = data.comments;
+          } catch (error) {
+            if (this.selectedLine?.id === line.id) this.commentError = 'Could not load community notes.';
+          } finally {
+            if (this.selectedLine?.id === line.id) this.commentsLoading = false;
+          }
+        },
+        async submitComment() {
+          if (!this.selectedLine || this.commentSaving) return;
+          this.commentSaving = true;
+          this.commentError = '';
+          const lineId = this.selectedLine.id;
+          try {
+            const response = await fetch(`/api/jeepney-routes/${encodeURIComponent(lineId)}/comments`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ author: this.commentAuthor, body: this.commentBody, website: this.commentWebsite })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.detail || 'Could not post note.');
+            if (this.selectedLine?.id === lineId) this.comments.unshift(data);
+            this.commentBody = '';
+          } catch (error) {
+            this.commentError = error.message || 'Could not post note.';
+          } finally {
+            this.commentSaving = false;
+          }
+        },
+        formatCommentDate(value) {
+          return new Date(value).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+        },
+        beginPin(target) {
+          this.pinTarget = target;
+          this.expanded = false;
+          this.mapPreview = false;
+          this.tripStarted = false;
+          this.$nextTick(() => this.map.invalidateSize());
+        },
+        cancelPin() {
+          this.pinTarget = null;
+          this.expanded = !!this.destination;
+        },
+        async placePin(latlng) {
+          if (this.activeTab !== 'plan' || !this.pinTarget) return;
+          const target = this.pinTarget;
+          this.pinTarget = null;
+          if (target === 'origin') {
+            this.origin = { lat: latlng.lat, lng: latlng.lng };
+            this.originLabel = 'Pinned starting point';
+            this.routeData = null;
+            this.selectedMode = 'jeepney';
+            this.updateMap();
+            if (this.destination) {
+              this.expanded = true;
+              await this.fetchRoutes();
+            } else {
+              this.map.setView([latlng.lat, latlng.lng], 15);
+              this.beginPin('destination');
+            }
+          } else {
+            await this.selectDestination({ name: 'Pinned destination', area: 'Map pin', lat: latlng.lat, lng: latlng.lng });
+          }
+        },
         collapse() {
           this.expanded = false;
           this.mapPreview = false;
           this.tripStarted = false;
-          this.catalogOpen = false;
-          this.showSuggestions = false;
-          this.showOriginChoices = false;
-          this.search = '';
+          this.pinTarget = null;
           this.destination = null;
           this.routeData = null;
           this.requestId++;
@@ -489,6 +659,7 @@
           if (this.dragStartY === null) return;
           const delta = event.clientY - this.dragStartY;
           this.dragStartY = null;
+          if (this.pinTarget) return;
           if (delta < -35) this.backToOptions();
           else if (delta > 35) this.showMapPreview();
           else if (this.expanded) this.showMapPreview();

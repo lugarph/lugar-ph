@@ -1,16 +1,14 @@
-"""Published Bacolod LPTRP lines and limited road-aligned trip patterns.
+"""Published Bacolod LPTRP lines and map-derived road geometry.
 
 The 24 line names and lengths come from Table 1 of the Bacolod LPTRP study.
-The study's Figure 2 is a schematic, not street-level route geometry. The two
-MVP line corridors use inferred OpenStreetMap road alignments through the
-diagram's landmarks. Do not treat these as surveyed jeepney tracks or stops.
+The study's Figure 2 is a schematic, not street-level route geometry. Route
+shapes are inferred by routing its named landmarks over OpenStreetMap roads.
+Do not treat these as surveyed jeepney tracks or designated stops.
 """
 
 from __future__ import annotations
 
-from math import asin, cos, radians, sin, sqrt
-
-from road_geometry import trip_segment
+from transit_network import distance_km, match_trip, public_network
 
 
 LPTRP_SOURCE = (
@@ -25,11 +23,6 @@ CITY_2025_UPDATE = (
     "https://bacolodcity.gov.ph/bacolod-city-holds-local-public-"
     "transport-route-plan-lptrp-public-consultation-2025/"
 )
-LOCAL_TRIP_CORROBORATION = (
-    "https://www.reddit.com/r/LasalleBacolod/comments/1vsc3k8/"
-    "jeep_to_ride_from_ayala/"
-)
-
 # Approved LPTRP lines, rather than a claim that every line is running today.
 ROUTES = (
     (1, "banago-libertad", "Banago – Libertad Loop", 17.0),
@@ -63,120 +56,29 @@ ROUTE_BY_ID = {
     for number, slug, name, length in ROUTES
 }
 
-# Approximate landmark centroids. They identify a general boarding/alighting
-# area and are not official stop coordinates or a street-level route shape.
-LANDMARKS = {
-    "northterminal": {"name": "Bacolod North Terminal area", "lat": 10.70655, "lng": 122.96312},
-    "ayala": {"name": "Ayala Malls Capitol Central area", "lat": 10.6768, "lng": 122.9500},
-    "sm": {"name": "SM City Bacolod area", "lat": 10.6722, "lng": 122.9443},
-    "lasalle": {"name": "University of St. La Salle area", "lat": 10.6785, "lng": 122.9626},
-}
 
-
-def distance_km(a_lat: float, a_lng: float, b_lat: float, b_lng: float) -> float:
-    earth_radius_km = 6371.0
-    lat_delta = radians(b_lat - a_lat)
-    lng_delta = radians(b_lng - a_lng)
-    haversine = (
-        sin(lat_delta / 2) ** 2
-        + cos(radians(a_lat)) * cos(radians(b_lat)) * sin(lng_delta / 2) ** 2
-    )
-    return 2 * earth_radius_km * asin(sqrt(haversine))
-
-
-def nearby_landmark(lat: float, lng: float, radius_km: float = 0.35) -> str | None:
-    matches = sorted(
-        (
-            (distance_km(lat, lng, place["lat"], place["lng"]), key)
-            for key, place in LANDMARKS.items()
-        )
-    )
-    return matches[0][1] if matches and matches[0][0] <= radius_km else None
-
-
-def _leg(route_id: str, segment_id: str) -> dict:
-    segment = trip_segment(segment_id)
+def public_catalog() -> dict:
+    network_routes = {
+        feature["properties"]["id"]: feature["properties"]
+        for feature in public_network()["features"]
+    }
     return {
-        "route_id": route_id,
-        "route_name": ROUTE_BY_ID[route_id]["name"],
-        "board_near": segment["properties"]["anchors"][0],
-        "alight_near": segment["properties"]["anchors"][-1],
-        "geometry": segment["geometry"],
-        "geometry_status": segment["properties"]["status"],
-        "road_distance_km": segment["properties"]["distance_m"] / 1000,
+        "routes": [
+            {
+                **route,
+                "color": network_routes[route["id"]]["color"],
+                "mapped_portion": f"{len(network_routes[route['id']]['anchors'])} LPTRP map anchors",
+                "geometry_status": network_routes[route["id"]]["status"],
+            }
+            for route in ROUTE_BY_ID.values()
+        ],
+        "source_url": LPTRP_SOURCE,
+        "city_notice_url": CITY_SOURCE,
+        "status_note": "All 24 planned lines are mapped from LPTRP landmarks onto OSM roads. Geometry and current operation still need local verification.",
     }
 
 
 def match_jeepney(
     origin_lat: float, origin_lng: float, destination_lat: float, destination_lng: float
 ) -> dict | None:
-    """Match only researched landmark directions; never infer citywide service."""
-    start = nearby_landmark(origin_lat, origin_lng)
-    end = nearby_landmark(destination_lat, destination_lng)
-    if (start, end) == ("ayala", "sm"):
-        route_ids = ["bata-libertad"]
-        legs = [_leg("bata-libertad", "ayala-sm")]
-        points = ["ayala", "sm"]
-    elif (start, end) == ("northterminal", "ayala"):
-        route_ids = ["bata-libertad"]
-        legs = [_leg("bata-libertad", "northterminal-ayala")]
-        points = ["northterminal", "ayala"]
-    elif (start, end) == ("northterminal", "sm"):
-        route_ids = ["bata-libertad"]
-        legs = [_leg("bata-libertad", "northterminal-sm")]
-        points = ["northterminal", "sm"]
-    elif (start, end) == ("northterminal", "lasalle"):
-        route_ids = ["bata-libertad", "shopping-libertad-lasalle"]
-        legs = [
-            _leg("bata-libertad", "northterminal-sm"),
-            _leg("shopping-libertad-lasalle", "sm-lasalle"),
-        ]
-        points = ["northterminal", "sm", "lasalle"]
-    elif (start, end) == ("sm", "lasalle"):
-        route_ids = ["shopping-libertad-lasalle"]
-        legs = [_leg("shopping-libertad-lasalle", "sm-lasalle")]
-        points = ["sm", "lasalle"]
-    elif (start, end) == ("ayala", "lasalle"):
-        route_ids = ["bata-libertad", "shopping-libertad-lasalle"]
-        legs = [
-            _leg("bata-libertad", "ayala-sm"),
-            _leg("shopping-libertad-lasalle", "sm-lasalle"),
-        ]
-        points = ["ayala", "sm", "lasalle"]
-    else:
-        return None
-
-    waypoint_coordinates = [legs[0]["geometry"]["coordinates"][0]]
-    waypoint_coordinates.extend(leg["geometry"]["coordinates"][-1] for leg in legs)
-    waypoints = [
-        {"name": LANDMARKS[key]["name"], "lat": coordinate[1], "lng": coordinate[0]}
-        for key, coordinate in zip(points, waypoint_coordinates)
-    ]
-
-    return {
-        "ride_count": len(legs),
-        "lines": [ROUTE_BY_ID[route_id] for route_id in route_ids],
-        "legs": legs,
-        "waypoints": waypoints,
-        "geometry_type": "inferred_road_alignment",
-        "road_distance_km": round(sum(leg["road_distance_km"] for leg in legs), 2),
-        "source_url": LPTRP_SOURCE,
-        "local_corroboration_url": LOCAL_TRIP_CORROBORATION,
-        "note": "Markers are reference landmarks, not designated stops. Street alignment is inferred from the route map and OpenStreetMap; confirm the jeepney's direction locally.",
-    }
-
-
-def public_catalog() -> dict:
-    mapped_portions = {
-        "bata-libertad": "North Terminal → Ayala → SM",
-        "shopping-libertad-lasalle": "SM → La Salle",
-    }
-    return {
-        "routes": [
-            {**route, "mapped_portion": mapped_portions.get(route["id"])}
-            for route in ROUTE_BY_ID.values()
-        ],
-        "source_url": LPTRP_SOURCE,
-        "city_notice_url": CITY_SOURCE,
-        "status_note": "Published Bacolod LPTRP routes. Two lines have inferred street previews for limited portions; current operation and alignments may vary.",
-    }
+    return match_trip(origin_lat, origin_lng, destination_lat, destination_lng)

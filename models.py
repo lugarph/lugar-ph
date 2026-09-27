@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Float, Integer, String, create_engine
+from sqlalchemy import DateTime, Float, Integer, String, Text, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
 
@@ -33,6 +33,18 @@ class Route(Base):
     # Future PostGIS integration: add a Geography(LineString, srid=4326)
     # column using geoalchemy2 and a GiST index. Query route proximity with
     # ST_DWithin and order candidate boarding points by walking distance.
+
+
+class RouteComment(Base):
+    __tablename__ = "route_comments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    route_slug: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    author: Mapped[str] = mapped_column(String(40), nullable=False)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+    )
 
 
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
