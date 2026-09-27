@@ -224,16 +224,18 @@ class RouteCatalogTests(unittest.TestCase):
         listed = {trip["legs"][0]["route_number"] for trip in trips[1:] if trip["ride_count"] == 1}
         self.assertFalse(listed & set(numbers))
 
-    def test_bacolod_lines_mapped_in_openstreetmap_keep_their_credit(self):
-        for feature in NETWORK["features"]:
-            properties = feature["properties"]
-            if properties["status"] != "osm_route_relation":
-                continue
-            with self.subTest(route=properties["id"]):
-                self.assertTrue(properties["osm_relations"])
-                self.assertIn("OpenStreetMap contributors", properties["attribution"])
-                self.assertTrue(LINE_BY_ID[properties["id"]].circuit)
-                self.assertGreaterEqual(len(properties["anchors"]), 2)
+    def test_lines_mapped_in_openstreetmap_keep_their_credit(self):
+        expected = {"bacolod": 11, "iloilo": 10, "cebu": 28, "tacloban": 6}
+        for city, network in NETWORKS.items():
+            mapped = [feature for feature in network["features"] if feature["properties"]["status"] == "osm_route_relation"]
+            self.assertEqual(len(mapped), expected[city], city)
+            for feature in mapped:
+                properties, coordinates = feature["properties"], feature["geometry"]["coordinates"]
+                with self.subTest(route=properties["id"]):
+                    self.assertTrue(properties["osm_relations"])
+                    self.assertIn("OpenStreetMap contributors", properties["attribution"])
+                    self.assertTrue(LINE_BY_ID[properties["id"]].circuit)
+                    self.assertLess(max(distance_km(a[1], a[0], b[1], b[0]) for a, b in zip(coordinates, coordinates[1:])), 0.5)
 
     def test_uv_express_routes_are_not_priced_as_jeepneys(self):
         uv = {line.id for line in LINES_BY_CITY["bacolod"] if line.mode == "uv_express"}

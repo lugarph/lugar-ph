@@ -25,12 +25,12 @@ Open <http://localhost:8000>. Run the tests with `pytest`.
 
 Each city's jeepney network is one GeoJSON file in `data/`:
 
-| City | File | Lines |
-| --- | --- | --- |
-| Bacolod | `jeepney_network.geojson` | 24 |
-| Iloilo | `iloilo_jeepney_network.geojson` | 25 |
-| Cebu | `cebu_jeepney_network.geojson` | 64 |
-| Tacloban | `tacloban_jeepney_network.geojson` | 19 |
+| City | File | Lines | Mapped in OpenStreetMap |
+| --- | --- | --- | --- |
+| Bacolod | `jeepney_network.geojson` | 24 | 11 |
+| Iloilo | `iloilo_jeepney_network.geojson` | 25 | 10 |
+| Cebu | `cebu_jeepney_network.geojson` | 64 | 28 |
+| Tacloban | `tacloban_jeepney_network.geojson` | 19 | 6 |
 
 The file is a `FeatureCollection` with one `LineString` feature per jeepney line:
 
@@ -137,7 +137,7 @@ cost = ride km + 2.2 × walk to and from the pins + 3 × walk between lines + 2 
 
 ## Contributing route data
 
-1. **Best: map it in OpenStreetMap.** Add or fix the line's public-transport route relations in OSM (one per direction, following the [PTv2 scheme](https://wiki.openstreetmap.org/wiki/Public_transport)). Then list the relation ids in `OSM_ROUTES` in [`scripts/build_route_network.py`](scripts/build_route_network.py) and rerun it with the line's id. The fix then helps every OSM-based app too. Eleven Bacolod lines already come from OSM.
+1. **Best: map it in OpenStreetMap.** Add or fix the line's public-transport route relations in OSM (one per direction, following the [PTv2 scheme](https://wiki.openstreetmap.org/wiki/Public_transport)). Then list the relation ids in `OSM_ROUTES`: in [`scripts/build_route_network.py`](scripts/build_route_network.py) for Bacolod (rerun it with the line's id), or in [`scripts/build_additional_city_networks.py`](scripts/build_additional_city_networks.py) for the other cities (rerun it with `--osm-only`). The shared import code is in [`scripts/osm_routes.py`](scripts/osm_routes.py). The fix then helps every OSM-based app too.
 2. **Or fix the GeoJSON directly.** Edit the city's file in [geojson.io](https://geojson.io), QGIS, or JOSM. Trace the roads the jeep actually takes, in riding order, and add anchors for the landmarks riders use.
 3. **Or change the anchors and regenerate.** Lines without a mapped path are generated from anchors by [`scripts/build_route_network.py`](scripts/build_route_network.py) and [`scripts/build_additional_city_networks.py`](scripts/build_additional_city_networks.py).
    - Each line is routed out through its anchors, then back.
@@ -151,4 +151,4 @@ Sources and known limitations are in [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md
 
 ### Licence of the route data
 
-Geometry imported from OpenStreetMap is © OpenStreetMap contributors and available under the [Open Database Licence](https://opendatacommons.org/licenses/odbl/). Because `data/jeepney_network.geojson` includes it, that file is shared under the ODbL too. Keep the credit when you reuse it.
+Geometry imported from OpenStreetMap is © OpenStreetMap contributors and available under the [Open Database Licence](https://opendatacommons.org/licenses/odbl/). Because every city's file in `data/` includes it, those files are shared under the ODbL too. Keep the credit when you reuse it.

@@ -6,7 +6,9 @@ is drawn as a full circuit in riding order (out to the far terminal and back),
 with the way back routed separately so one-way streets are respected; list
 known return landmarks in RETURN_VIA. Cebu
 uses the archived DOTC GTFS shapes and keeps codes found in the 74-line Cebu
-Bus Spotters directory. Generated geometry is committed so runtime is offline.
+Bus Spotters directory. Lines mapped in OpenStreetMap (OSM_ROUTES) then
+replace the generated ones; pass --osm-only to refresh just those. Generated
+geometry is committed so runtime is offline.
 """
 
 from __future__ import annotations
@@ -18,6 +20,8 @@ import urllib.parse
 import urllib.request
 from collections import defaultdict
 from pathlib import Path
+
+from osm_routes import overlay
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -143,6 +147,64 @@ def osrm(anchor_ids: list[str], places: dict[str, tuple[float, float]]) -> dict:
     raise RuntimeError("unreachable")
 
 
+# Lines mapped street by street in OpenStreetMap, overlaid on the generated
+# files: relation ids in riding order (outbound, then return), the starting
+# terminal, and the far terminal, from the relations' from/to tags. Iloilo's
+# OSM routes use an older numbering, so only clear name matches are listed.
+OSM_ROUTES: dict[str, dict[str, tuple[list[int], str | None, str | None]]] = {
+    "iloilo": {
+        "iloilo-02": ([15029087, 15029088], "City Proper", "Barrio Obrero"),
+        "iloilo-04": ([15029083, 15029084], "City Proper", "Ungka"),
+        "iloilo-05": ([15029082], "Ungka", "City Proper"),
+        "iloilo-06": ([15029080, 15029081], "City Proper", "Festive Walk Transport Hub"),
+        "iloilo-08": ([15029076, 15029077], "City Proper", "Compania"),
+        "iloilo-11": ([15029070, 15029071], "City Proper", "Tagbak"),
+        "iloilo-15": ([15029062, 15029063], "Jaro", "Hibao-an"),
+        "iloilo-16": ([15029060, 15029061], "City Proper", "Molo"),
+        "iloilo-17": ([15029058, 15029059], "Jaro", "Bitoon"),
+        "iloilo-18": ([15029056, 15029057], "City Proper", "Villa Baybay"),
+    },
+    "tacloban": {
+        "tacloban-01": ([19847427, 19847428], "Tacloban City Proper", "Kassel City"),
+        "tacloban-02": ([19847425, 19847426], "San Roque", "Tacloban City Proper"),
+        "tacloban-03": ([19847423, 19847424], "Tacloban City Proper", "Manlurip"),
+        "tacloban-04": ([19847421, 19847422], "Tacloban City Proper", "Cabalawan"),
+        "tacloban-05": ([19847419, 19847420], "Imelda Village", "Tacloban City"),
+        "tacloban-07": ([19847876, 19847877], "Marasbaras", "Tacloban City Proper"),
+    },
+    "cebu": {
+        "cebu-01b": ([20587182, 20587183], "Pier 1 & 2", "Sambag 1"),
+        "cebu-01c": ([21251283, 21251284], "Robinsons", "Sambag"),
+        "cebu-01k": ([21251289, 21251290], "Parkmall", "Urgello"),
+        "cebu-02b": ([21251287, 21251288], "San Nicolas", "Robinsons"),
+        "cebu-03a": ([21251279, 21251280], "Carbon Market", "Mabolo"),
+        "cebu-03b": ([21251277, 21251278], "Mabolo", "Carbon Market"),
+        "cebu-03l": ([21251273, 21251274], "Carbon Market", "Mabolo"),
+        "cebu-03q": ([21267107, 21267108], None, None),
+        "cebu-04c": ([21251269, 21251270], "Campo Lahug", "Carbon Market"),
+        "cebu-04d": ([21254495, 21254496], "Carbon Market", "Plaza Housing"),
+        "cebu-04l": ([14991302, 14991303], None, None),
+        "cebu-06b": ([21142705, 21142706], "Carbon Market", "Guadalupe"),
+        "cebu-06c": ([21265626, 21265627], "Carbon Market", "Guadalupe"),
+        "cebu-06f": ([21267111, 21267112], "Magallanes", "Guadalupe"),
+        "cebu-06g": ([21142707, 21142708], "San Nicolas", "Guadalupe"),
+        "cebu-06h": ([21267109, 21267110], "SM City Cebu", "Guadalupe"),
+        "cebu-07b": ([21267105, 21267106], "Carbon Market", "Banawa"),
+        "cebu-08g": ([21241370, 21241371], "Colon", "Alumnos"),
+        "cebu-09c": ([21267103, 21267104], "Carbon Market", "Pardo"),
+        "cebu-09f": ([21267101, 21267102], "Colon", "Pardo"),
+        "cebu-09g": ([21241368, 21241369], "Colon", "Basak"),
+        "cebu-10f": ([21267099, 21267100], "Colon", "Bulacao"),
+        "cebu-10g": ([21251285, 21251286], "Pardo", "Magallanes"),
+        "cebu-10h": ([21267097, 21267098], "North Reclamation", "Bulacao"),
+        "cebu-10m": ([21267095, 21267096], "SM City Cebu", "Bulacao"),
+        "cebu-11a": ([21363724, 21363725], "Colon", "Inayawan"),
+        "cebu-13b": ([21251281, 21251282], "Talamban", "Carbon Market"),
+        "cebu-13c": ([21251275, 21251276], "Colon", "Talamban"),
+    },
+}
+
+
 # Landmarks a line passes on its way back, when they differ from the outbound
 # ones in reverse. Keyed by "city-code", for example "iloilo-02".
 RETURN_VIA: dict[str, list[str]] = {}
@@ -214,8 +276,13 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--cebu-gtfs", type=Path, help="Directory containing the Cebu GTFS text files")
+    parser.add_argument("--osm-only", action="store_true", help="Only re-import the OpenStreetMap lines into the existing files")
     args = parser.parse_args()
-    build_inferred("iloilo", ILOILO_ROUTES, I, ILOILO_SOURCE)
-    build_inferred("tacloban", TACLOBAN_ROUTES, T, TACLOBAN_SOURCE)
-    if args.cebu_gtfs:
-        build_cebu(args.cebu_gtfs)
+    if not args.osm_only:
+        build_inferred("iloilo", ILOILO_ROUTES, I, ILOILO_SOURCE)
+        build_inferred("tacloban", TACLOBAN_ROUTES, T, TACLOBAN_SOURCE)
+        if args.cebu_gtfs:
+            build_cebu(args.cebu_gtfs)
+    # Mapped lines replace the generated ones, so rebuilding never loses them.
+    for city, routes in OSM_ROUTES.items():
+        overlay(ROOT / "data" / f"{city}_jeepney_network.geojson", routes)
