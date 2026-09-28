@@ -149,6 +149,10 @@ cost = ride km + 2.2 × walk to and from the pins + 3 × walk between lines + 2 
 
 Sources and known limitations are in [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md).
 
-### Licence of the route data
+## Licence
+
+The code is free and open source under the [MIT Licence](LICENSE): use it, change it, run your own version, or build on it commercially, as long as you keep the copyright notice.
+
+### Route data
 
 Geometry imported from OpenStreetMap is © OpenStreetMap contributors and available under the [Open Database Licence](https://opendatacommons.org/licenses/odbl/). Because every city's file in `data/` includes it, those files are shared under the ODbL too. Keep the credit when you reuse it.
