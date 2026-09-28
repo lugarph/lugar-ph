@@ -62,6 +62,9 @@
     .network-screen { position: fixed; z-index: 700; inset: 0 0 calc(65px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; background: #f8fafc; }
     .network-map { flex: 0 0 min(40dvh, 390px); min-height: 220px; background: #e8eef1; }
     .network-details { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+    .contribute-tab[aria-selected="true"] { color: #1d4ed8; border-color: #1d4ed8; }
+    .edit-tool[aria-pressed="true"] { background: #dbeafe; color: #1d4ed8; border-color: #93c5fd; }
+    .edit-vertex { width: 18px; height: 18px; border: 3px solid #fff; border-radius: 50%; background: #e11d48; box-shadow: 0 2px 8px #0f172a80; }
     .network-chip { flex: none; width: 116px; border: 1px solid #e2e8f0; background: #fff; border-radius: 15px; padding: 9px; text-align: left; }
     .network-chip.selected { border-color: #0f172a; box-shadow: 0 0 0 1px #0f172a; }
     .network-chip strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
@@ -372,11 +375,15 @@
       </header>
       <div id="network-map" class="network-map" role="application" aria-label="Interactive city map with colored jeepney corridors"></div>
       <div class="network-details bg-[#f8fafc] pb-8">
-        <div class="border-b border-slate-200 bg-white px-5 py-3">
+        <div class="flex border-b border-slate-200 bg-white px-5" role="tablist" aria-label="Jeepney route sections">
+          <button type="button" role="tab" class="contribute-tab border-b-2 border-transparent px-3 py-3 text-xs font-extrabold text-slate-500" :aria-selected="communityView === 'routes'" @click="communityView = 'routes'; closeProposalEditor()">Mapped lines</button>
+          <button type="button" role="tab" class="contribute-tab border-b-2 border-transparent px-3 py-3 text-xs font-extrabold text-slate-500" :aria-selected="communityView === 'contribute'" @click="openContributions()">Suggest a route</button>
+        </div>
+        <div x-show="communityView === 'routes'" class="border-b border-slate-200 bg-white px-5 py-3">
           <p class="text-xs font-semibold text-slate-800">Tap a colored line to inspect its route.</p>
           <p class="mt-1 text-[11px] leading-relaxed text-slate-500">Lines come from published route plans or documented route geometry. Exact turns, operating direction, and current service still need local verification. Community notes are unverified.</p>
         </div>
-        <div class="px-5 pt-4">
+        <div x-show="communityView === 'routes'" class="px-5 pt-4">
           <label class="sr-only" for="network-search">Find a jeepney line</label>
           <input id="network-search" x-model="catalogSearch" placeholder="Find a line or area" class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500">
           <div x-show="catalogLoading" class="py-3 text-sm text-slate-500">Loading lines…</div>
@@ -390,7 +397,7 @@
             <p x-show="selectedLine?.mode === 'uv_express'" class="mt-3 inline-block rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold text-amber-800">UV Express van, not a jeepney</p>
             <p class="mt-3 text-xs leading-relaxed text-slate-600" x-text="`Path ${selectedLine?.mapped_portion || 'from published route data'}. Confirm current service locally.`"></p>
             <a x-show="selectedLine?.osm_relations?.length" :href="`https://www.openstreetmap.org/relation/${selectedLine?.osm_relations?.[0]}`" target="_blank" rel="noopener noreferrer" class="mt-2 block text-xs font-semibold text-blue-700 underline">Route © OpenStreetMap contributors; improve it there ↗</a>
-            <div class="mt-3 flex gap-2"><button type="button" @click="focusSelectedLine()" class="rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700">Fit route on map</button><button type="button" @click="clearLineSelection()" class="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700">Show all lines</button></div>
+            <div class="mt-3 flex flex-wrap gap-2"><button type="button" @click="focusSelectedLine()" class="rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700">Fit route on map</button><button type="button" @click="startProposal('correction', selectedLine)" class="rounded-xl bg-slate-900 px-3 py-2 text-xs font-bold text-white">Suggest correction</button><button type="button" @click="clearLineSelection()" class="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700">Show all lines</button></div>
             <a :href="catalogData?.source_url" target="_blank" rel="noopener noreferrer" class="mt-3 block text-xs font-semibold text-blue-700 underline">Route plan source ↗</a>
           </article>
           <section x-show="selectedLine" x-cloak class="mt-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="Community route comments">
@@ -409,6 +416,56 @@
               <template x-for="comment in comments" :key="comment.id"><div class="border-b border-slate-100 py-3 last:border-0"><div class="flex items-center justify-between gap-2"><strong class="text-xs" x-text="comment.author"></strong><time class="text-[10px] text-slate-400" x-text="formatCommentDate(comment.created_at)"></time></div><p class="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-700" x-text="comment.body"></p></div></template>
             </div>
           </section>
+        </div>
+        <div x-show="communityView === 'contribute'" x-cloak class="space-y-4 px-5 pt-4" aria-label="Community route proposals">
+          <div x-show="!editorOpen" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h2 class="text-base font-extrabold">Help improve the routes</h2>
+            <p class="mt-1 text-xs leading-relaxed text-slate-600">Edit a mapped line or draw a missing route. Your suggestion and its support votes are public. A reviewer checks it before any map or trip directions change.</p>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <button type="button" @click="startProposal('new')" class="rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white">+ Add a new route</button>
+              <button type="button" @click="communityView = 'routes'" class="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-700">Choose a line to correct</button>
+            </div>
+          </div>
+          <form x-show="editorOpen" x-cloak @submit.prevent="submitProposal()" class="space-y-3 rounded-2xl border border-blue-200 bg-white p-4 shadow-sm" aria-label="Route proposal editor">
+            <div class="flex items-start justify-between gap-3"><div><p class="text-[10px] font-bold uppercase tracking-widest text-blue-700" x-text="proposalForm.kind === 'new' ? 'New route' : 'Route correction'"></p><h2 class="mt-1 text-base font-extrabold" x-text="proposalForm.kind === 'new' ? 'Draw a missing route' : `Edit ${selectedLine?.name || 'route'}`"></h2></div><button type="button" @click="closeProposalEditor()" class="text-xs font-bold text-slate-500">Cancel</button></div>
+            <div class="grid grid-cols-[100px_1fr] gap-2">
+              <label class="text-xs font-bold text-slate-700">Line no.<input x-model="proposalForm.number" required maxlength="24" class="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm font-medium outline-none focus:border-blue-500"></label>
+              <label class="text-xs font-bold text-slate-700">Route name<input x-model="proposalForm.name" required minlength="3" maxlength="160" placeholder="Terminal – Terminal" class="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm font-medium outline-none focus:border-blue-500"></label>
+            </div>
+            <label class="block text-xs font-bold text-slate-700">Vehicle type<select x-model="proposalForm.mode" class="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none"><option value="jeepney">Jeepney</option><option value="uv_express">UV Express</option></select></label>
+            <div class="rounded-xl bg-blue-50 p-3">
+              <p class="text-xs font-bold text-blue-900">Edit the path on the map</p>
+              <p class="mt-1 text-[11px] leading-relaxed text-blue-800">Tap the route to choose a point, then drag it. Use Insert to add a point in the middle or Extend to add points at the end. New routes start with Extend. The line preview is straight between points; trace each turn before submitting.</p>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <button type="button" @click="editMode = 'select'" :aria-pressed="editMode === 'select'" class="edit-tool rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold">Move</button>
+                <button type="button" @click="editMode = 'insert'" :aria-pressed="editMode === 'insert'" class="edit-tool rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold">Insert</button>
+                <button type="button" @click="editMode = 'append'" :aria-pressed="editMode === 'append'" class="edit-tool rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold">Extend</button>
+                <button type="button" @click="deleteEditPoint()" :disabled="selectedEditPoint === null" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold disabled:opacity-40">Delete point</button>
+                <button type="button" @click="undoEdit()" :disabled="!previousCoordinates" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold disabled:opacity-40">Undo</button>
+                <button type="button" @click="resetEdit()" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold">Reset path</button>
+              </div>
+              <p class="mt-2 text-[11px] text-blue-800" x-text="`${proposalForm.coordinates.length} path points${selectedEditPoint === null ? '' : ` · point ${selectedEditPoint + 1} selected`}`"></p>
+            </div>
+            <label class="block text-xs font-bold text-slate-700">Your name<input x-model="proposalForm.author" required minlength="2" maxlength="40" autocomplete="name" class="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500"></label>
+            <label class="block text-xs font-bold text-slate-700">What changed, and how do you know?<textarea x-model="proposalForm.reason" required minlength="20" maxlength="2000" rows="3" placeholder="For example, I rode this route last week; it now turns at…" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500"></textarea></label>
+            <label class="block text-xs font-bold text-slate-700">Source link (optional)<input x-model="proposalForm.source_url" type="url" maxlength="500" placeholder="https://…" class="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500"></label>
+            <input x-model="proposalForm.website" type="text" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true">
+            <p x-show="proposalError" x-text="proposalError" role="alert" class="rounded-lg bg-rose-50 p-2 text-xs text-rose-700"></p>
+            <button type="submit" :disabled="proposalSaving" class="w-full rounded-xl bg-blue-700 px-4 py-3 text-sm font-bold text-white disabled:opacity-50" x-text="proposalSaving ? 'Submitting…' : 'Submit for review'"></button>
+          </form>
+          <div x-show="!editorOpen" class="space-y-2">
+            <h2 class="text-sm font-extrabold">Community suggestions</h2>
+            <p x-show="proposalsLoading" class="text-xs text-slate-500">Loading suggestions…</p>
+            <p x-show="proposalsError" x-text="proposalsError" class="text-xs text-rose-700"></p>
+            <p x-show="!proposalsLoading && proposals.length === 0" class="text-xs text-slate-500">No suggestions yet for this city.</p>
+            <template x-for="proposal in proposals" :key="proposal.id"><article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div class="flex items-start justify-between gap-2"><div><p class="text-[10px] font-bold uppercase tracking-widest text-blue-700" x-text="proposal.kind === 'new' ? 'New route' : 'Correction'"></p><h3 class="mt-1 text-sm font-extrabold" x-text="`${proposal.number} · ${proposal.name}`"></h3></div><span class="rounded-full px-2 py-1 text-[10px] font-bold" :class="proposal.status === 'pending' ? 'bg-amber-50 text-amber-800' : proposal.status === 'accepted' ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-100 text-slate-600'" x-text="proposal.status === 'accepted' ? 'Reviewed' : proposal.status"></span></div>
+              <p class="mt-2 whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-700" x-text="proposal.reason"></p>
+              <p class="mt-2 text-[11px] text-slate-500" x-text="`By ${proposal.author} · ${formatCommentDate(proposal.created_at)}`"></p>
+              <p x-show="proposal.review_note" class="mt-2 rounded-lg bg-slate-50 p-2 text-[11px] text-slate-600" x-text="`Review: ${proposal.review_note}`"></p>
+              <div class="mt-3 flex flex-wrap items-center gap-2"><button type="button" @click="previewProposal(proposal)" class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700">View proposed path</button><button type="button" @click="voteProposal(proposal)" :disabled="proposal.status !== 'pending' || votingProposalId === proposal.id" :aria-pressed="proposal.voted" class="rounded-lg px-3 py-2 text-xs font-bold disabled:opacity-50" :class="proposal.voted ? 'bg-blue-100 text-blue-800' : 'bg-blue-700 text-white'" x-text="`${proposal.voted ? 'Supported' : 'Support'} · ${proposal.votes}`"></button><a x-show="proposal.source_url" :href="proposal.source_url" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-blue-700 underline">Evidence ↗</a></div>
+            </article></template>
+          </div>
         </div>
       </div>
     </section>
@@ -440,7 +497,7 @@
 
     // Leaflet objects and the raw network GeoJSON stay outside Alpine's
     // reactive state: proxying them slows every draw and can confuse Leaflet.
-    const maps = { map: null, networkMap: null, networkLayers: {}, networkAnchorLayer: null, originMarker: null, destinationMarker: null, routeLayers: null, catalogNetwork: null, networkCache: {} };
+    const maps = { map: null, networkMap: null, networkLayers: {}, networkAnchorLayer: null, editorLayer: null, previewLayer: null, originMarker: null, destinationMarker: null, routeLayers: null, catalogNetwork: null, networkCache: {} };
 
     function lugarApp() {
       return {
@@ -478,6 +535,19 @@
         commentWebsite: '',
         commentSaving: false,
         commentError: '',
+        communityView: 'routes',
+        proposals: [],
+        proposalsLoading: false,
+        proposalsError: '',
+        votingProposalId: null,
+        editorOpen: false,
+        proposalForm: { city: '', kind: 'new', route_slug: null, number: '', name: '', mode: 'jeepney', coordinates: [], author: '', reason: '', source_url: '', website: '' },
+        proposalSaving: false,
+        proposalError: '',
+        editMode: 'append',
+        selectedEditPoint: null,
+        previousCoordinates: null,
+        originalCoordinates: [],
         city: {{ city | tojson }},
         cities: {{ cities | tojson }},
         cityProfiles: {
@@ -746,6 +816,12 @@
           this.catalogSearch = '';
           this.selectedLine = null;
           this.comments = [];
+          this.closeProposalEditor();
+          this.communityView = 'routes';
+          this.proposals = [];
+          this.proposalsError = '';
+          if (maps.previewLayer) maps.networkMap?.removeLayer(maps.previewLayer);
+          maps.previewLayer = null;
           Object.values(maps.networkLayers).forEach(layers => {
             maps.networkMap?.removeLayer(layers.line);
             maps.networkMap?.removeLayer(layers.casing);
@@ -950,6 +1026,7 @@
         async openCatalog() {
           this.activeTab = 'routes';
           this.$nextTick(() => this.initNetworkMap());
+          this.loadProposals();
           if (this.catalogData && maps.catalogNetwork) return;
           const requestedCity = this.city;
           this.catalogLoading = true;
@@ -1018,6 +1095,9 @@
         initNetworkMap() {
           if (maps.networkMap) { maps.networkMap.invalidateSize(); return; }
           maps.networkMap = L.map('network-map', { zoomControl: false, attributionControl: true }).setView(this.currentCity.center, this.currentCity.zoom);
+          maps.networkMap.on('click', event => {
+            if (this.editorOpen && this.editMode === 'append') this.appendEditPoint(event.latlng);
+          });
           L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' })
             .on('load', () => { this.networkSettling = false; })
             .addTo(maps.networkMap);
@@ -1034,6 +1114,7 @@
             const line = L.polyline(points, { color: strokeColor(properties.color), weight: 4, opacity: .82, lineCap: 'round', lineJoin: 'round' })
               .bindTooltip(`${properties.number}. ${properties.name}`)
               .on('click', () => {
+                if (this.editorOpen) return;
                 const catalogLine = this.catalogData?.routes.find(item => item.id === properties.id);
                 if (catalogLine) this.selectLine(catalogLine);
               }).addTo(maps.networkMap);
@@ -1121,6 +1202,191 @@
             this.commentError = error.message || 'Could not post note.';
           } finally {
             this.commentSaving = false;
+          }
+        },
+        openContributions() {
+          this.communityView = 'contribute';
+          this.loadProposals();
+        },
+        async loadProposals() {
+          const city = this.city;
+          this.proposalsLoading = true;
+          this.proposalsError = '';
+          try {
+            const response = await fetch(`/api/route-proposals?city=${encodeURIComponent(city)}`);
+            if (!response.ok) throw new Error('Could not load community suggestions.');
+            const data = await response.json();
+            if (this.city === city) this.proposals = data.proposals;
+          } catch (error) {
+            if (this.city === city) this.proposalsError = error.message;
+          } finally {
+            if (this.city === city) this.proposalsLoading = false;
+          }
+        },
+        startProposal(kind, line = null) {
+          if (!maps.catalogNetwork || !maps.networkMap) return;
+          if (maps.previewLayer) maps.networkMap.removeLayer(maps.previewLayer);
+          maps.previewLayer = null;
+          const feature = kind === 'correction' ? maps.catalogNetwork.features.find(item => item.properties.id === line?.id) : null;
+          if (kind === 'correction' && !feature) return;
+          this.communityView = 'contribute';
+          this.editorOpen = true;
+          this.selectedLine = kind === 'correction' ? line : null;
+          this.styleNetworkSelection();
+          if (maps.networkAnchorLayer) maps.networkMap.removeLayer(maps.networkAnchorLayer);
+          maps.networkAnchorLayer = null;
+          this.originalCoordinates = feature ? feature.geometry.coordinates.map(point => [...point]) : [];
+          this.previousCoordinates = null;
+          this.selectedEditPoint = null;
+          this.editMode = kind === 'new' ? 'append' : 'select';
+          this.proposalError = '';
+          this.proposalForm = {
+            city: this.city, kind, route_slug: line?.id || null,
+            number: kind === 'correction' ? String(line.number) : '',
+            name: kind === 'correction' ? line.name : '',
+            mode: kind === 'correction' ? line.mode : 'jeepney',
+            coordinates: this.originalCoordinates.map(point => [...point]),
+            author: this.commentAuthor || '', reason: '', source_url: '', website: ''
+          };
+          this.$nextTick(() => {
+            document.querySelector('.network-details').scrollTop = 0;
+            this.drawEditor();
+            if (feature) this.focusSelectedLine();
+            else maps.networkMap.setView(this.currentCity.center, this.currentCity.zoom);
+          });
+        },
+        closeProposalEditor() {
+          this.editorOpen = false;
+          this.selectedEditPoint = null;
+          this.previousCoordinates = null;
+          if (maps.editorLayer && maps.networkMap) maps.networkMap.removeLayer(maps.editorLayer);
+          maps.editorLayer = null;
+        },
+        rememberEdit() {
+          this.previousCoordinates = this.proposalForm.coordinates.map(point => [...point]);
+        },
+        appendEditPoint(latlng) {
+          if (this.proposalForm.coordinates.length >= 3000) { this.proposalError = 'A route can have at most 3,000 points.'; return; }
+          this.rememberEdit();
+          this.proposalForm.coordinates.push([latlng.lng, latlng.lat]);
+          this.selectedEditPoint = this.proposalForm.coordinates.length - 1;
+          this.drawEditor();
+        },
+        editLineClick(latlng) {
+          const points = this.proposalForm.coordinates;
+          if (!points.length || this.editMode === 'append') return;
+          const target = maps.networkMap.latLngToLayerPoint(latlng);
+          if (this.editMode === 'select') {
+            let nearest = 0, best = Infinity;
+            points.forEach(([lng, lat], index) => {
+              const pixel = maps.networkMap.latLngToLayerPoint([lat, lng]);
+              const distance = pixel.distanceTo(target);
+              if (distance < best) { best = distance; nearest = index; }
+            });
+            this.selectedEditPoint = nearest;
+          } else if (this.editMode === 'insert' && points.length < 3000) {
+            let nearest = 0, best = Infinity;
+            for (let index = 0; index < points.length - 1; index++) {
+              const a = maps.networkMap.latLngToLayerPoint([points[index][1], points[index][0]]);
+              const b = maps.networkMap.latLngToLayerPoint([points[index + 1][1], points[index + 1][0]]);
+              const dx = b.x - a.x, dy = b.y - a.y;
+              const fraction = Math.max(0, Math.min(1, ((target.x - a.x) * dx + (target.y - a.y) * dy) / (dx * dx + dy * dy || 1)));
+              const distance = L.point(a.x + fraction * dx, a.y + fraction * dy).distanceTo(target);
+              if (distance < best) { best = distance; nearest = index; }
+            }
+            this.rememberEdit();
+            points.splice(nearest + 1, 0, [latlng.lng, latlng.lat]);
+            this.selectedEditPoint = nearest + 1;
+          }
+          this.drawEditor();
+        },
+        drawEditor() {
+          if (!maps.networkMap || !this.editorOpen) return;
+          if (maps.editorLayer) maps.networkMap.removeLayer(maps.editorLayer);
+          maps.editorLayer = L.layerGroup().addTo(maps.networkMap);
+          const points = this.proposalForm.coordinates;
+          if (points.length > 1) {
+            L.polyline(points.map(([lng, lat]) => [lat, lng]), { color: '#e11d48', weight: 5, opacity: .95, bubblingMouseEvents: false })
+              .on('click', event => this.editLineClick(event.latlng)).addTo(maps.editorLayer);
+          }
+          if (points.length) {
+            [0, points.length - 1].forEach((index, position) => {
+              L.circleMarker([points[index][1], points[index][0]], { radius: 5, color: '#fff', weight: 2, fillColor: '#e11d48', fillOpacity: 1, bubblingMouseEvents: false })
+                .bindTooltip(position ? 'End' : 'Start').on('click', () => { this.selectedEditPoint = index; this.drawEditor(); }).addTo(maps.editorLayer);
+            });
+          }
+          if (this.selectedEditPoint !== null && points[this.selectedEditPoint]) {
+            const [lng, lat] = points[this.selectedEditPoint];
+            L.marker([lat, lng], { draggable: true, bubblingMouseEvents: false, icon: L.divIcon({ className: '', html: '<div class="edit-vertex"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }) })
+              .on('dragstart', () => this.rememberEdit())
+              .on('dragend', event => {
+                const position = event.target.getLatLng();
+                points[this.selectedEditPoint] = [position.lng, position.lat];
+                this.drawEditor();
+              }).addTo(maps.editorLayer);
+          }
+        },
+        deleteEditPoint() {
+          if (this.selectedEditPoint === null) return;
+          this.rememberEdit();
+          this.proposalForm.coordinates.splice(this.selectedEditPoint, 1);
+          this.selectedEditPoint = null;
+          this.drawEditor();
+        },
+        undoEdit() {
+          if (!this.previousCoordinates) return;
+          this.proposalForm.coordinates = this.previousCoordinates;
+          this.previousCoordinates = null;
+          this.selectedEditPoint = null;
+          this.drawEditor();
+        },
+        resetEdit() {
+          this.rememberEdit();
+          this.proposalForm.coordinates = this.originalCoordinates.map(point => [...point]);
+          this.selectedEditPoint = null;
+          this.drawEditor();
+        },
+        async submitProposal() {
+          if (this.proposalSaving) return;
+          if (this.proposalForm.coordinates.length < 2) { this.proposalError = 'Draw at least two points on the map.'; return; }
+          this.proposalSaving = true;
+          this.proposalError = '';
+          try {
+            const response = await fetch('/api/route-proposals', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.proposalForm)
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(typeof data.detail === 'string' ? data.detail : 'Please check the route details and try again.');
+            this.closeProposalEditor();
+            await this.loadProposals();
+            this.previewProposal(data);
+          } catch (error) {
+            this.proposalError = error.message || 'Could not submit the route.';
+          } finally {
+            this.proposalSaving = false;
+          }
+        },
+        previewProposal(proposal) {
+          if (!maps.networkMap) return;
+          if (maps.previewLayer) maps.networkMap.removeLayer(maps.previewLayer);
+          const points = proposal.coordinates.map(([lng, lat]) => [lat, lng]);
+          maps.previewLayer = L.polyline(points, { color: '#7c3aed', weight: 6, opacity: .9, dashArray: '8 6', interactive: false }).addTo(maps.networkMap);
+          maps.networkMap.fitBounds(maps.previewLayer.getBounds(), { padding: [28, 28], maxZoom: 15 });
+        },
+        async voteProposal(proposal) {
+          if (proposal.status !== 'pending' || this.votingProposalId) return;
+          this.votingProposalId = proposal.id;
+          this.proposalsError = '';
+          try {
+            const response = await fetch(`/api/route-proposals/${proposal.id}/vote`, { method: 'POST' });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.detail || 'Could not save your vote.');
+            proposal.votes = data.votes;
+            proposal.voted = data.voted;
+          } catch (error) {
+            this.proposalsError = error.message || 'Could not save your vote.';
+          } finally {
+            this.votingProposalId = null;
           }
         },
         formatCommentDate(value) {

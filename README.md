@@ -50,6 +50,14 @@ Lugar.ph is free to copy for any city with jeepneys or other fixed-route transit
 
    Community notes need a Postgres database set in `DATABASE_URL` to be kept; without one, a Vercel deployment keeps them only temporarily. Run `alembic upgrade head` against it once.
 
+## Community route suggestions
+
+Open a city's **Jeepney routes** screen and select **Suggest a route**. Riders can draw a missing line, or select a mapped line and choose **Suggest correction** to edit its name, number, vehicle type, or path. The map editor lets them select and drag a point, insert one in the middle, extend the path, delete a point, undo, and reset. Submissions include an explanation and an optional evidence link. Other visitors can support or remove support for a pending suggestion once per browser. Browser cookies are used for this lightweight voting; it is not identity verification.
+
+Suggestions are stored in the database with `pending` status and are **not** used by the route planner. Set `DATABASE_URL` to persistent Postgres for production and run `alembic upgrade head` to create the proposal and vote tables. Without persistent storage, serverless submissions and votes can disappear when an instance is recycled.
+
+Reviewers can inspect suggestions with `GET /api/route-proposals?city=bacolod` and set a decision with `PATCH /api/route-proposals/{id}/review`. Set a private `ROUTE_REVIEW_TOKEN` environment variable, then pass it in the `X-Review-Token` header with JSON such as `{"status":"accepted","note":"Checked against the city route plan."}`. An accepted decision records the review outcome; incorporating the route into the GeoJSON network still requires a data change and deployment. When importing a new line, add the required anchors and source attribution described below. The editor's straight line segments are proposals for review, not automatically road snapped geometry.
+
 ## Route data
 
 Each city's jeepney network is one GeoJSON file in `data/`:

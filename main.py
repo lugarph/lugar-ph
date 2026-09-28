@@ -2,18 +2,23 @@
 
 from __future__ import annotations
 
+import json
+import math
+import os
+import secrets
 from pathlib import Path
 from threading import Lock
 from time import monotonic
+from urllib.parse import urlparse
 
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 
-from models import RouteComment, SessionLocal
+from models import ProposalVote, RouteComment, RouteProposal, SessionLocal
 from osm_services import search_places, walking_matrix, walking_route
 from route_catalog import ROUTE_BY_ID, distance_km, public_catalog
 from transit_network import CITY_METADATA, LINES_BY_CITY, landmarks, plan_trips, public_network, trip_help
@@ -25,12 +30,33 @@ app = FastAPI(title="Lugar.ph", version="0.3.0")
 app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=6)
 _comment_times: dict[str, float] = {}
 _comment_lock = Lock()
+_proposal_times: dict[str, float] = {}
+_proposal_lock = Lock()
 
 
 class CommentInput(BaseModel):
     author: str = Field(min_length=2, max_length=40)
     body: str = Field(min_length=10, max_length=600)
     website: str = ""  # Quiet honeypot for simple automated form submissions.
+
+
+class ProposalInput(BaseModel):
+    city: str
+    kind: str
+    route_slug: str | None = None
+    number: str = Field(min_length=1, max_length=24)
+    name: str = Field(min_length=3, max_length=160)
+    mode: str = "jeepney"
+    coordinates: list[list[float]] = Field(min_length=2, max_length=3000)
+    author: str = Field(min_length=2, max_length=40)
+    reason: str = Field(min_length=20, max_length=2000)
+    source_url: str | None = Field(default=None, max_length=500)
+    website: str = ""
+
+
+class ReviewInput(BaseModel):
+    status: str
+    note: str = Field(min_length=10, max_length=1000)
 
 
 def _known_line(route_slug: str) -> None:
@@ -53,6 +79,41 @@ def _comment_json(comment: RouteComment) -> dict:
         "body": comment.body,
         "created_at": comment.created_at.isoformat(),
     }
+
+
+def _proposal_json(proposal: RouteProposal, votes: int = 0, voted: bool = False) -> dict:
+    return {
+        "id": proposal.id, "city": proposal.city, "kind": proposal.kind,
+        "route_slug": proposal.route_slug, "number": proposal.number, "name": proposal.name,
+        "mode": proposal.mode, "coordinates": json.loads(proposal.coordinates_json),
+        "author": proposal.author, "reason": proposal.reason, "source_url": proposal.source_url,
+        "status": proposal.status, "review_note": proposal.review_note,
+        "created_at": proposal.created_at.isoformat(), "votes": votes, "voted": voted,
+    }
+
+
+def _voter_id(request: Request, response: Response) -> str:
+    voter = request.cookies.get("lugar_voter")
+    if voter and len(voter) == 43 and all(char.isalnum() or char in "-_" for char in voter):
+        return voter
+    voter = secrets.token_urlsafe(32)
+    response.set_cookie("lugar_voter", voter, max_age=31536000, httponly=True, samesite="lax", secure=request.url.scheme == "https")
+    return voter
+
+
+def _proposal_counts(session, proposal_ids: list[int], voter: str) -> tuple[dict[int, int], set[int]]:
+    if not proposal_ids:
+        return {}, set()
+    counts = dict(session.execute(
+        select(ProposalVote.proposal_id, func.count(ProposalVote.id))
+        .where(ProposalVote.proposal_id.in_(proposal_ids))
+        .group_by(ProposalVote.proposal_id)
+    ).all())
+    voted = set(session.scalars(
+        select(ProposalVote.proposal_id)
+        .where(ProposalVote.proposal_id.in_(proposal_ids), ProposalVote.voter_id == voter)
+    ).all())
+    return counts, voted
 
 # Other spellings of a city's page address, sent on to its canonical one.
 CITY_ALIASES = {"cagayan-de-oro": "cdo", "cagayandeoro": "cdo", "cagayan": "cdo", "naga-city": "naga", "davao-city": "davao"}
@@ -152,6 +213,119 @@ def add_route_comment(route_slug: str, payload: CommentInput, request: Request):
         session.commit()
         session.refresh(comment)
         return _comment_json(comment)
+
+
+@app.get("/api/route-proposals")
+def route_proposals(request: Request, response: Response, city: str = "bacolod"):
+    city = _known_city(city)
+    voter = _voter_id(request, response)
+    with SessionLocal() as session:
+        proposals = session.scalars(
+            select(RouteProposal).where(RouteProposal.city == city)
+            .order_by(RouteProposal.created_at.desc(), RouteProposal.id.desc()).limit(200)
+        ).all()
+        counts, voted = _proposal_counts(session, [item.id for item in proposals], voter)
+        return {"proposals": [
+            _proposal_json(item, counts.get(item.id, 0), item.id in voted) for item in proposals
+        ]}
+
+
+@app.post("/api/route-proposals", status_code=201)
+def add_route_proposal(payload: ProposalInput, request: Request):
+    city = _known_city(payload.city)
+    if payload.website or payload.kind not in {"correction", "new"} or payload.mode not in {"jeepney", "uv_express"}:
+        raise HTTPException(status_code=422, detail="Invalid route proposal")
+    route_slug = payload.route_slug if payload.kind == "correction" else None
+    if payload.kind == "correction":
+        if not route_slug or not any(line.id == route_slug for line in LINES_BY_CITY[city]):
+            raise HTTPException(status_code=422, detail="Select a route in this city to correct")
+    elif payload.route_slug:
+        raise HTTPException(status_code=422, detail="New routes cannot have an existing route ID")
+    number, name = payload.number.strip(), " ".join(payload.name.split())
+    author, reason = " ".join(payload.author.split()), " ".join(payload.reason.split())
+    if not number or len(name) < 3 or len(author) < 2 or len(reason) < 20:
+        raise HTTPException(status_code=422, detail="Complete the route name, number, your name, and explanation")
+    source_url = (payload.source_url or "").strip() or None
+    if source_url:
+        parsed = urlparse(source_url)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            raise HTTPException(status_code=422, detail="Evidence link must be an HTTP or HTTPS URL")
+    center_lat, center_lng = CITY_METADATA[city]["center"]
+    for point in payload.coordinates:
+        if len(point) != 2 or not all(math.isfinite(value) for value in point):
+            raise HTTPException(status_code=422, detail="Route points must have finite longitude and latitude")
+        lng, lat = point
+        if not (-180 <= lng <= 180 and -90 <= lat <= 90) or distance_km(center_lat, center_lng, lat, lng) > 80:
+            raise HTTPException(status_code=422, detail="Route points must be near the selected city")
+    if all(point == payload.coordinates[0] for point in payload.coordinates):
+        raise HTTPException(status_code=422, detail="Draw at least two different route points")
+    if payload.kind == "correction":
+        original = next(feature for feature in public_network(city)["features"] if feature["properties"]["id"] == route_slug)
+        props = original["properties"]
+        if (number == str(props["number"]) and name == props["name"] and payload.mode == props.get("mode", "jeepney")
+                and payload.coordinates == original["geometry"]["coordinates"]):
+            raise HTTPException(status_code=422, detail="Change the route details or path before submitting")
+    client = request.client.host if request.client else "unknown"
+    now = monotonic()
+    with _proposal_lock:
+        if now - _proposal_times.get(client, 0) < 60:
+            raise HTTPException(status_code=429, detail="Please wait before submitting another route")
+        _proposal_times[client] = now
+        if len(_proposal_times) > 1000:
+            _proposal_times.clear()
+    with SessionLocal() as session:
+        proposal = RouteProposal(
+            city=city, kind=payload.kind, route_slug=route_slug, number=number, name=name,
+            mode=payload.mode, coordinates_json=json.dumps(payload.coordinates, separators=(",", ":")),
+            author=author, reason=reason, source_url=source_url,
+        )
+        session.add(proposal)
+        session.commit()
+        session.refresh(proposal)
+        return _proposal_json(proposal)
+
+
+@app.post("/api/route-proposals/{proposal_id}/vote")
+def vote_route_proposal(proposal_id: int, request: Request, response: Response):
+    voter = _voter_id(request, response)
+    with SessionLocal() as session:
+        proposal = session.get(RouteProposal, proposal_id)
+        if not proposal:
+            raise HTTPException(status_code=404, detail="Unknown route proposal")
+        if proposal.status != "pending":
+            raise HTTPException(status_code=409, detail="Voting has closed for this proposal")
+        existing = session.scalar(select(ProposalVote).where(
+            ProposalVote.proposal_id == proposal_id, ProposalVote.voter_id == voter
+        ))
+        if existing:
+            session.delete(existing)
+        else:
+            session.add(ProposalVote(proposal_id=proposal_id, voter_id=voter))
+        session.commit()
+        counts, voted = _proposal_counts(session, [proposal_id], voter)
+        return {"votes": counts.get(proposal_id, 0), "voted": proposal_id in voted}
+
+
+@app.patch("/api/route-proposals/{proposal_id}/review")
+def review_route_proposal(proposal_id: int, payload: ReviewInput, x_review_token: str | None = Header(default=None)):
+    configured = os.getenv("ROUTE_REVIEW_TOKEN")
+    if not configured or not x_review_token or not secrets.compare_digest(x_review_token, configured):
+        raise HTTPException(status_code=403, detail="Review token required")
+    if payload.status not in {"accepted", "rejected"}:
+        raise HTTPException(status_code=422, detail="Review status must be accepted or rejected")
+    note = " ".join(payload.note.split())
+    if len(note) < 10:
+        raise HTTPException(status_code=422, detail="Please explain the review decision")
+    with SessionLocal() as session:
+        proposal = session.get(RouteProposal, proposal_id)
+        if not proposal:
+            raise HTTPException(status_code=404, detail="Unknown route proposal")
+        proposal.status = payload.status
+        proposal.review_note = note
+        session.commit()
+        session.refresh(proposal)
+        votes = session.scalar(select(func.count(ProposalVote.id)).where(ProposalVote.proposal_id == proposal_id)) or 0
+        return _proposal_json(proposal, votes)
 
 
 @app.get("/api/routes")
