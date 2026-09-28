@@ -31,6 +31,10 @@ CITY_VIEWBOXES = {
     "iloilo": (122.45, 10.82, 122.64, 10.63),
     "cebu": (123.78, 10.49, 124.04, 10.17),
     "tacloban": (124.88, 11.40, 125.10, 11.12),
+    "baguio": (120.52, 16.48, 120.66, 16.33),
+    "naga": (123.13, 13.71, 123.34, 13.54),
+    "cdo": (124.50, 8.60, 124.82, 8.33),
+    "davao": (125.40, 7.20, 125.72, 6.95),
 }
 class _PublicServiceClient:
     """Serialize requests per service and retain a small in-process cache."""

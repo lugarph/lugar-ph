@@ -1,0 +1,772 @@
+{
+ "city": "cdo",
+ "source": "Cagayan de Oro City Local Public Transport Route Plan (Roads and Traffic Administration), District 1 and District 2 pages",
+ "source_urls": [
+  "https://sites.google.com/view/cdo-routes-lptrp/district-1",
+  "https://sites.google.com/view/cdo-routes-lptrp/district-2"
+ ],
+ "retrieved": "2026-09-28",
+ "note": "Route titles and street sequences as published, including their typos. Inbound runs from the barangay to the city market; outbound returns.",
+ "routes": [
+  {
+   "district": "District 1",
+   "title": "Baikingon – Carmen Public Market",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 12.8,
+   "inbound": "Centro Baikingon – Baikingon Road – E. Jabulin St. – Bulao steel Bridge – Bulao-Canitoan Road Macapagal Road – Zayas Road – C. Diel St. – Villarin St. – Max Suniel St. – V. Neri St. – V. Castro St. - Carmen Public Market",
+   "outbound_km": 13.5,
+   "outbound": "Carmen Public Market – Ipil St. - Max Suniel St. – Villarin St. – Avanceña St. – Rabanes St. – C. Diel St. – Macapagal Road – Canitoan-Bulao Road – Bulao steel Bridge – E. Jabulin St. - Baikingon Road – Centro Baikingon"
+  },
+  {
+   "district": "District 1",
+   "title": "Balulang R1 Centro – Carmen Public Market (11.9km Roundtrip)",
+   "roundtrip_km": 11.9,
+   "operational": true,
+   "inbound_km": 6.9,
+   "inbound": "Centro Balulang – Balulang Road – M. Velez St. – Masterson Ave. – C. Diel St. – Villarin St. – Max Suniel St. – V. Neri St. – Carmen Public Market",
+   "outbound_km": 5.0,
+   "outbound": "Carmen Public Market – Castro St. – Vamenta Blvd. – Masterson Ave. – M. Velez St. – Balulang Road – Centro Balulang"
+  },
+  {
+   "district": "District 1",
+   "title": "Balulang (R2) Villa Verde – Cogon Public Market (15.5km Roundtrip)",
+   "roundtrip_km": 15.5,
+   "operational": true,
+   "inbound_km": 7.8,
+   "inbound": "Villa Verde Subd. – Balulang Road – M. Velez St. – Masterson Ave. – Kagay-an Bridge – Rodelsa Circle – Fernandez St. – Corrales Ave. – Hayes St. – Osmeña St. – Yacapin St. – Cogon Public Market",
+   "outbound_km": 7.7,
+   "outbound": "Cogon Public Market – V. Roa St. – 8 th St. (Nazareth) – 2 nd St. (Nazareth) – 21st St. (Nazareth) – 6 th St. – (Nazareth) – Rodelsa Circle – Kagay-an Bridge – Masterson Ave. – M. Velez St. – Balulang Road – Villa Verde Subd."
+  },
+  {
+   "district": "District 1",
+   "title": "Balulang (R3) Xavier Heights – Cogon Public Market",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 8.0,
+   "inbound": "Xavier Heights Subd. – Masterson Ave. – Kagay-an Bridge – Rodelsa Circle – Fernandez St. – Corrales Ave. – JR Borja St. – Osmeña St. – Yacapin St. – Cogon Public Market",
+   "outbound_km": 7.9,
+   "outbound": "Cogon Public Market – V. Roa St. – JR Borja St. – Pabayo St. – Hayes St. – Velez St. – Rodelsa Circle – Kagayan Bridge – Masterson Ave. – Xavier Heights Subd"
+  },
+  {
+   "district": "District 1",
+   "title": "Bayabas (R1) – Cogon Public Market (12.7km Roundtrip)",
+   "roundtrip_km": 12.7,
+   "operational": true,
+   "inbound_km": 6.6,
+   "inbound": "Brgy. Bayabas – Bayabas Road – San Pedro St. – RN Pelaez Blvd. – Marcos Bridge – CapistranoSt. – T. Chaves St. – Corrales Ave. – Hayes St. - Daumar St. - Cogon Public Market",
+   "outbound_km": 6.1,
+   "outbound": "JR Borja Ave. – A. Velez St. – C.M. Recto Ave. – Marcos Bridge - RN Pelaez Blvd. – San Pedro St. – Bayabas Road – Brgy. Bayabas"
+  },
+  {
+   "district": "District 1",
+   "title": "Bayabas (R2) – Carmen Public Market (14.3km Roundtrip)",
+   "roundtrip_km": 14.3,
+   "operational": true,
+   "inbound_km": 8.1,
+   "inbound": "Brgy. Bayabas – Bayabas Road – San Pedro St. – San Lucas St. – Eagle St. - RN Pelaez Blvd. – PN. Roa Ave.– Villarin St. – C. Diel St. – Masterson Ave. - Vamenta Blvd. – V. Castro St. – Ipil St. – Carment Public Market",
+   "outbound_km": 6.2,
+   "outbound": "Carmen Public Market – Max Suniel St. – Villarin St. – PN Roa Ave. – RN Pelaez Blvd. – Eagle St. – San Lucas St. - San Pedro St. – Bayabas Road – Brgy. Bayabas"
+  },
+  {
+   "district": "District 1",
+   "title": "Bayabas (R3) – Carmen Public Market (12.9km Roundtrip)",
+   "roundtrip_km": 12.9,
+   "operational": true,
+   "inbound_km": 8.1,
+   "inbound": "Brgy. Bayabas – Bayabas Road – San Pedro St. – RN Pelaez Blvd. – Vamenta Blvd. – Masterson Ave. - C. Diel St. – Villarin St. – Max Suniel St. – V. Neri St. – Carmen Public Market",
+   "outbound_km": 4.8,
+   "outbound": "Carmen Public Market – Castro St. – Ipil St. – Max. Suniel St. – Villarin St. – C. Diel St. – Masterson Ave. Vamenta Blvd. – RN Pelaez Blvd. – San Pedro St. – Bayabas Road – Brgy. Bayabas"
+  },
+  {
+   "district": "District 1",
+   "title": "Bayabas (R4) – Carmen Public Market (17.8km Roundtrip)",
+   "roundtrip_km": 17.8,
+   "operational": true,
+   "inbound_km": 10.5,
+   "inbound": "Barangay Bayabas – Bayabas Road – Coastal Road – WTPM – Saarenas Avenue – CM Recto Ave. – PN Roa Ave. – Vamenta Blvd. – Seriña St. – Villarin St. – Max Suniel St. – V. Neri St. – V. Castro St. - Carmen Public Market.",
+   "outbound_km": 7.3,
+   "outbound": "Carmen Public Market – Ipil St. – Max Suniel St. – Yakal St. – Rosal St. – Ferrabrel St. – PN Roa Ave. – CM Recto Ave. – Saarenas Ave. – WTPM – Coastal Road – Bayabas Road – Brgy. Bayabas"
+  },
+  {
+   "district": "District 1",
+   "title": "Bayabas (R5) – Agora Market City and Terminal (13.6 KM Roundtrip)",
+   "roundtrip_km": 13.6,
+   "operational": true,
+   "inbound_km": 9.1,
+   "inbound": "Brgy. Bayabas – Bayabas Road – San Pedro St. – RN Peleaz Blvd. – Vamenta Blvd. – Max Suniel St. – V. Neri St. – Castro St. –Carmen Public Market – Vamenta Blvd. – JR Borja Bridge – JR Borja Ave. – Cogon Public Market – Roxas St. – Yacapin St. – Quirino St. – Ramonal St. – Limketkai Drive - Limketkai Center – CM Recto Ave. – Valenzuela Ave. – Agora Market City & Terminal",
+   "outbound_km": 4.5,
+   "outbound": "– Agora Market City & Terminal - Gaabucayan St. – J. Pacana St. – Puntod/Kauswagan Bridge – San Pedro St. – Bayabas Road – Brgy. Bayabas"
+  },
+  {
+   "district": "District 1",
+   "title": "Bonbon (R1) - Cogon Public Market (11.5 KM Roundtrip)",
+   "roundtrip_km": 11.5,
+   "operational": true,
+   "inbound_km": 6.1,
+   "inbound": "Brgy. Bonbon – Bonbon Road – RN Pelaez Blvd. – Marcos Bridge – Capistrano St. - T. Chaves St. – Corrales Ave. – Hayes St. – Daumar St. – Cogon Public Market",
+   "outbound_km": 5.4,
+   "outbound": "– JR Borja Ave. – A. Velez St. – C.M. Recto Ave. – Marcos Bridge - RN Pelaez Blvd. – Bonbon Road – Brgy. Bonbon"
+  },
+  {
+   "district": "District 1",
+   "title": "Bonbon (R2) – Carmen Public Market (13.2km Roundtrip)",
+   "roundtrip_km": 13.2,
+   "operational": true,
+   "inbound_km": 8.3,
+   "inbound": "Brgy. Bonbon – Bonbon Road – Bonbon-Pasil Road - The Baptist Extn. – The Baptist St. - RN Pelaez Blvd. – Vamenta Blvd. – Masterson Ave. – C. Diel St. – Villarin St. – Max Suniel St. – V. Neri St. – Carmen Public Market",
+   "outbound_km": 4.9,
+   "outbound": "Carmen Public Market – Castro St. – Ipil St. – Max Suniel St. – Villarin St. C. Diel St. – Masterson Ave. - Vamenta Blvd. – RN Pelaez Blvd. – The Baptist St. – The Baptist Extn. St. – Bonbon-Pasil Road - Bonbon Road – Brgy. Bonbon"
+  },
+  {
+   "district": "District 1",
+   "title": "Bonbon (R3) – Agora Market City and Terminal (13.9km Roundtrip)",
+   "roundtrip_km": 13.9,
+   "operational": true,
+   "inbound_km": 9.8,
+   "inbound": "Brgy. Bonbon – Bonbon Road – RN Pelaez Blvd. – Vamenta Blvd. – Max Suniel St. – V. Neri St. – Carmen Public Market – Castro St. – Vamenta Blvd. – Kagay-an Bridge – Rodelsa Circle – Tomas Saco St. – Fernandez St. – Corrales St. – Hayes St. – Roxas St. – Cogon Public Market – Yacapin St. – Quirino St. – Ramonal St. – Limketkai Drive – Limketkai center – C.M. Recto Ave. - Valenzuela Ave. – Agora Market City & Terminal",
+   "outbound_km": 4.1,
+   "outbound": "Agora Market City & Terminal – Gaabucayan St. – J. Pacana St. – Puntod/Kauswagan Bridge – San Pedro St. – RN Pelaez Blvd. – Bonbon Road - Brgy. Bonbon"
+  },
+  {
+   "district": "District 1",
+   "title": "Bonbon (R4) – Carmen Public Market (25.1Km Roundtrip)",
+   "roundtrip_km": 25.1,
+   "operational": true,
+   "inbound_km": 12.7,
+   "inbound": "Brgy. Bonbon – Bonbon Road – Bonbon Pasil Road – John the Baptist Extn.St. - John the Baptist St. – Saint Paul St. – RN Pelaez Blvd. – CM Recto Ave. – Saarenas Ave. – Coastal Road – Westbound Terminal – Saarenas Ave. – CM Recto Ave. – PN Roa St. – Vamenta Blvd. – Max Suniel St. – V. Neri St. – Carmen Public Market",
+   "outbound_km": 12.4,
+   "outbound": "Carmen Public Market –V. Castro St. - Ipil St. – Max Suniel St. – Yakal St. – Rosal St. – Ferrabrel St. – PN Roa St. – CM Recto Ave – Saarenas Ave. – Coastal Road – WTPM – Saarenas Ave. – CM Recto Ave. – RN Pelaez Blvd. – Saint. Paul St. - John the Baptist St. – John the Baptist Extn. - Bonbon-Pasil Road – Bonbon Road – Brgy. Bonbon"
+  },
+  {
+   "district": "District 1",
+   "title": "Bulua (R1) – Agora Market City and Terminal (17.8 Km Roundtrip)",
+   "roundtrip_km": 17.8,
+   "operational": true,
+   "inbound_km": 11.4,
+   "inbound": "Westbound Terminal and Public Market – Saarenas Ave. – CM Recto Ave. – Brgy. Bulua – CM Recto Ave. U-turn Fronting LTO – CM Recto Ave. - Marcos Bridge – CM Recto Ave. – Limketkai Drive – Limketkai Center – Limketkai Drive – CM Recto Ave. – Valenzuela Ave. – Agora Market City & Terminal",
+   "outbound_km": 6.4,
+   "outbound": "Agora Market City & Terminal – Valenzuela Ave. – CM Recto Ave. – Marcos Bridge – CM Recto Ave. – Saarenas Ave. – Westbound Terminal"
+  },
+  {
+   "district": "District 1",
+   "title": "Bulua (R2) – Agora Market City and Terminal (16.9Kilometer Roundtrip)",
+   "roundtrip_km": 16.9,
+   "operational": true,
+   "inbound_km": 8.7,
+   "inbound": "Bulua LTO - CM Recto Ave. – PN Roa Ave. – RN Pelaez Blvd. – Marcos Bridge – CM Recto Ave. – Limketkai Drive – Limketkai Center – Limketkai Drive – CM Recto Ave. – Valenzuela Ave. – Agora Market City Terminal",
+   "outbound_km": 8.2,
+   "outbound": "Agora Market City Terminal – Valenzuela Ave.– CM Recto Ave. - Marcos Bridge – RN Pelaez Blvd. – PN Roa Ave. – CM Recto Ave. – Bulua LTO"
+  },
+  {
+   "district": "District 1",
+   "title": "Bulua (R3) – Carmen Public Market (13.3Km Roundtrip)",
+   "roundtrip_km": 13.3,
+   "operational": true,
+   "inbound_km": 7.9,
+   "inbound": "Westbound Terminal and Public Market – Saarenas Ave. – CM Recto Ave. – PN Roa Ave. – Vamenta Blvd. – J. Seriña St. – Villarin St. – Max Suniel St. – V. Neri St. – Carmen Public Market",
+   "outbound_km": 5.4,
+   "outbound": "Carmen Public Market – Castro St. – Vamenta Blvd. – PN Roa Ave. – CM Recto Ave. – Saarenas Ave. – Coastal Road – Westbound Terminal and Public Market"
+  },
+  {
+   "district": "District 1",
+   "title": "Bulua (R4) – Cogon Public Market (15.2Km Roundtrip)",
+   "roundtrip_km": 15.2,
+   "operational": true,
+   "inbound_km": 7.8,
+   "inbound": "Westbound Terminal and Public Market – Coastal Road – San Pedro St. – Kauswagan / Puntod Bridge – J. Pacana St. – Velez St. – Yacapin St. – Rizal St. – RN Abejuela St. – Corrales Ave. – JR Borja St. – Osmeña St. – Cogon Public Market",
+   "outbound_km": 7.4,
+   "outbound": "Cogon Public Market – Yacapin St. – V. Roa St. – JR Borja St. – A. Velez St. – J. Pacana St. – Puntod / Kauswagan Bridge – San Pedro St. – Coastal Road – Westbound Terminal and Public Market"
+  },
+  {
+   "district": "District 1",
+   "title": "Bulua (R5) – Divisoria Park (15.6Km Roundtrip)",
+   "roundtrip_km": 15.6,
+   "operational": true,
+   "inbound_km": 9.7,
+   "inbound": "Westbound Terminal and Public Market – Saarenas Ave. – CM Recto Ave. – U-turn Bulua LTO – CM Recto Ave. – Marcos Bridge – Capistrano St. – Chaves St. – Corrales Ave. – Divisoria Park",
+   "outbound_km": 5.9,
+   "outbound": "Divisoria Park – T. Neri St. – Velez St. – CM Recto Ave. – Marcos Bridge – CM Recto Ave. – Saarenas Ave. – Westbound Terminal and Public Market"
+  },
+  {
+   "district": "District 1",
+   "title": "Bulua (R6) – Carmen Public Market (26.5Km roundtrip)",
+   "roundtrip_km": 26.5,
+   "operational": true,
+   "inbound_km": 12.8,
+   "inbound": "Westbound Terminal and Public Market – Saarenas Ave. – CM Recto Ave. – Macapagal Drive – C. Diel St. – Villarin St. – Max Suniel St. – V. Neri St. – Carmen Public Market",
+   "outbound_km": 13.7,
+   "outbound": "Carmen Public Market – Castro St. – Vamenta Blvd. – Masterson Ave. – C. Diel St. – Macapagal Drive – CM Recto Ave. – Saarenas Ave. – Westbound Terminal and Public Market"
+  },
+  {
+   "district": "District 1",
+   "title": "Bulua (R7) – Terry Hills Subdivision - Divisoria Park (11.4Km Roundtrip)",
+   "roundtrip_km": 11.4,
+   "operational": true,
+   "inbound_km": 5.7,
+   "inbound": "(Terry Hills Subd.) - Galaxy St.- Eva Velez St. – L. Velez St. (Apovel Subdivision) – PN Roa St. – Vamenta Blvd. – Seriña St. - Ysalina Bridge – Gaerlan St. – Rizal St. - San Agustin St. – Pabayo St. – Fernandez St. – Corrales Ave. – T. Neri St. (Divisoria Park)",
+   "outbound_km": 5.7,
+   "outbound": "Divisoria Park – T. Neri St. – Rizal St. – Gaerlan St. – Ysalina Bridge –St. – Seriña St - Vamenta Blvd. – Castro St. – Ipil St. – Max Suniel St. – Yakal St. – Rosal St. – Ferrabrel St. – PN Roa St. – (Apovel Subdivision )L. Velez St. – E. Velez St. – Galaxy St. (Terry Hills Subd.)"
+  },
+  {
+   "district": "District 1",
+   "title": "Canitoan (R1) – Cogon Public Market (16.9km Roundtrip)",
+   "roundtrip_km": 16.9,
+   "operational": true,
+   "inbound_km": 8.4,
+   "inbound": "Canitoan High School– Canitoan Road - Macapagal Road – C. Diel St. – Masterson Ave. – Kagay-an Bridge – Rodelsa Circle – Tomas Saco St. – 16 th St. (Nazareth) – 12 th St. (Nazareth) – 22 nd St. (Nazareth) – 8 th St. (Nazareth) – Hayes St. – Daumar St.",
+   "outbound_km": 8.5,
+   "outbound": "J.R. Borja St. -V. Roa St. – 8 th St. (Nazareth) – 2 nd St. (Nazareth) – 21 st St. (Nazareth) – 12th St. (Nazareth) – 16 th St. (Nazareth) – Tomas Saco St. – Rodelsa Circle – Kagay-an Bridge – Masterson Ave. – C. Diel St. – Macapagal Road – Canitoan Road – Canitoan High School"
+  },
+  {
+   "district": "District 1",
+   "title": "Canitoan (R2) Calaanan (Relocation) – Cogon Public Market (18.5km Roundtrip)",
+   "roundtrip_km": 18.5,
+   "operational": true,
+   "inbound_km": 9.2,
+   "inbound": "Calaanan (Relocation) – Calaanan Road – Macapagal Road – C. Diel St. – Masterson Ave. – Kagay-an Bridge – Rodelsa Circle – Tomas Saco St. – 16 th St. (Nazareth) – 12 th St. (Nazareth) – 22 nd St. (Nazareth) – 8 th St. (Nazareth) – Hayes St. – Osmena St – Cogon Public Market",
+   "outbound_km": 9.3,
+   "outbound": "Cogon Public Market-Yacapin St. - V. Roa St. – 8 th St. (Nazareth) – 2 nd St. (Nazareth) – 21st St. (Nazareth) – 6th St. (Nazareth) – Tomas Saco St. – Rodelsa Circle – Kagay-an Bridge – Masterson Ave. – C. Diel St. – Macapagal Road – Calaanan Road – Calaanan (Relocation)"
+  },
+  {
+   "district": "District 1",
+   "title": "Carmen (R1) Silver Creek Subdivision - Cogon Public Market (12.5Km Roundtrip)",
+   "roundtrip_km": 12.5,
+   "operational": true,
+   "inbound_km": 6.3,
+   "inbound": "(Silver Creek) – C. Diel St. – Masterson Ave. – Kagay-an Bridge – Rodelsa Circle – Fernandez St. – Corrales Ave. – JR Borja St. – Osmeña St. – Yacapin St. (Cogon Public Market)",
+   "outbound_km": 6.2,
+   "outbound": "Cogon Public Market – V. Roa St. – 8 th St. (Nazareth) – 2 nd St. (Nazareth) – 18th St. (Nazareth) – Fernandez St. – Corrales Ave. – Hayes St. – Velez St. – Rodelsa Circle – Kagay-an Bridge – Masterson Ave. - C. Diel St. (Silver Creek)"
+  },
+  {
+   "district": "District 1",
+   "title": "Carmen (R2) San Agustin – Cogon Public Market (17.2 Km Roundtrip)",
+   "roundtrip_km": 17.2,
+   "operational": true,
+   "inbound_km": 8.8,
+   "inbound": "San Agustin Valley – San Agustin Valley Road – Macapagal Road – Masterson Ave. – Vamenta Blvd. – JR Borja Bridge – JR Borja Ave. – Mortola St. – Hayes St.- Daumar St - Cogon Public Market",
+   "outbound_km": 8.4,
+   "outbound": "– Cogon Public Market - J.R. Borja St. – Pabayo St. – Cruz Taal St. – Rizal St. – Gaerlan St. – Ysalina Bridge – Seriña St. - Vamenta Blvd. – Masterson Ave. – Macapagal Road – San Agustin Valley Road – San Agustin Valley"
+  },
+  {
+   "district": "District 1",
+   "title": "Carmen (R3) Pueblo de Oro (Xavier Estates Gate 3) – Carmen Public Market (12.9 Km Roundtrip)",
+   "roundtrip_km": 12.9,
+   "operational": true,
+   "inbound_km": 7.6,
+   "inbound": "Pueblo de Oro (Xavier Estates Gate 3)– Masterson Ave. – Vamenta Blvd. – PN Roa St. – Villarin St. – M. Suniel St. – V. Neri St. - Carmen Public Market",
+   "outbound_km": 5.3,
+   "outbound": "Carmen Public Market – V. Castro St. – Vamenta Blvd. – Masterson Ave. – Pueblo de Oro (Xavier Estates Gate 3)"
+  },
+  {
+   "district": "District 1",
+   "title": "Carmen (R4) Pueblo de Oro (Xavier Estates Gate 3) – Agora Market City and Terminal (17.8Km RT)",
+   "roundtrip_km": 17.8,
+   "operational": true,
+   "inbound_km": 8.7,
+   "inbound": "Pueblo de Oro (Xavier Estates) – Masterson Ave. – Kagay-an Bridge – Rodelsa Circle – Fernandez St. – Corrales Ave. – CM Recto Ave. – Valenzuela Ave. – Agora Market City and Terminal",
+   "outbound_km": 9.1,
+   "outbound": "Agora Market City and Terminal – Valenzuela Ave. – CM Recto Ave. – Corrales Ave. – Yacapin St. – Rizal St. – Fernandez St. – Rodelsa Circle – Kagay-an Bridge – Masterson Ave. – Pueblo de Oro (Xavier Estates Gate 3)"
+  },
+  {
+   "district": "District 1",
+   "title": "Carmen (R5) Carmen Public Market – Agora Market City and Terminal (11.5km Roundtrip)",
+   "roundtrip_km": 11.5,
+   "operational": true,
+   "inbound_km": 6.2,
+   "inbound": "Carmen Public Market – Max Suniel St. – Villarin St. – J. Seriña St. – Ysalina Bridge – Gaerlan St. – Pabayo St. – Fernandez St. – Corrales Ave. – Hayes St. – Roxas St. – Yacapin St. – Quirino St. – J. Ramonal St. – Limketkai Drive – CM Recto Ave. – Valenzuela Ave.– Agora Market City and Terminal",
+   "outbound_km": 5.3,
+   "outbound": "Agora Market City and Terminal – Valenzuela Ave. – CM Recto Ave. – Limketkai Drive – J. Ramonal St. – V. Roa St. – JR Borja St. – Rizal St. – Gaerlan St. – Ysalina Bridge – Seriña St. - Vamenta Blvd. – Castro St.- Ipil St.– Carmen Public Market"
+  },
+  {
+   "district": "District 1",
+   "title": "Carmen (R6) Zone 10 – Cogon Public Market (10.1km Roundtrip)",
+   "roundtrip_km": 10.1,
+   "operational": true,
+   "inbound_km": 5.2,
+   "inbound": "Carmen Zone 10 – Zone 10 Road – C. Diel St. – Masterson Ave. – Kagay-an Bridge – Rodelsa Circle – Tomas Saco St. – Fernandez St. – Corrales Ave. – Hayes St. – Osmena St. - Cogon Public Market",
+   "outbound_km": 4.9,
+   "outbound": "Cogon Public Market –Yacapin St. – V. Roa St. - 8 th St. (Nazareth) – 2 nd St. (Nazareth) – 18 th St. (Nazareth) – Fernandez St. – Corrales Ave. – Hayes St. – Velez St. – Rodelsa Circle – Kagay-an Bridge – Masterson Ave. – C. Diel St. – Zone 10 Road – Carmen Zone 10"
+  },
+  {
+   "district": "District 1",
+   "title": "Dansolihon (R1) – Carmen Public Market (69.0km Roundtrip)",
+   "roundtrip_km": 69.0,
+   "operational": true,
+   "inbound_km": 5.2,
+   "inbound": "Carmen Zone 10 – Zone 10 Road – C. Diel St. – Masterson Ave. – Kagay-an Bridge – Rodelsa Circle – Tomas Saco St. – Fernandez St. – Corrales Ave. – Hayes St. – Osmena St. - Cogon Public Market",
+   "outbound_km": 4.9,
+   "outbound": "Cogon Public Market –Yacapin St. – V. Roa St. - 8 th St. (Nazareth) – 2 nd St. (Nazareth) – 18 th St. (Nazareth) – Fernandez St. – Corrales Ave. – Hayes St. – Velez St. – Rodelsa Circle – Kagay-an Bridge – Masterson Ave. – C. Diel St. – Zone 10 Road – Carmen Zone 10"
+  },
+  {
+   "district": "District 1",
+   "title": "Dansolihon (R2) – Carmen Public Market (55.0km Roundtrip)",
+   "roundtrip_km": 55.0,
+   "operational": true,
+   "inbound_km": 22.0,
+   "inbound": "Uguiaban – Brgy. Dansolihon – CdeO-Airport-Bukidnon Road – Masterson Ave. – Macapagal Drive – SM Bypass Road – C. Diel St. – Villarin St. – Max Suniel St. – Carmen Public Market (V. Neri St.)",
+   "outbound_km": 33.0,
+   "outbound": "Carmen Public Market (V. Neri St.) – Castro St. – Ipil St. – Max Suniel St. – Villarin St. – C. Diel St. – SM Bypass Road – Macapagal Drive – Masterson Ave. – CdeO-Airport-Bukidnon Road – Brgy. Dansolihon – Uguiaban"
+  },
+  {
+   "district": "District 1",
+   "title": "Iponan (R1) Bulao – Carmen Public Market 27.1 Km Roundtrip",
+   "roundtrip_km": 27.1,
+   "operational": true,
+   "inbound_km": 14.8,
+   "inbound": "Bulao – Jabulin St. – Saarenas St. – Centro Iponan Road – CM Recto Ave. – Baculio St. – Caballero St. - Salvador St. – Coastal Road – WTPM Road – Saaranes St. – CM Recto Ave. – PN Roa Ave.– Vamental Blvd. – J. Seriña St. – Villarin St. – Max Suniel St. – V. Neri St. – Carmen Public Market",
+   "outbound_km": 12.3,
+   "outbound": "Carmen Public Market – Castro St. - Ipil St. – Max Suniel St. – Yakal St. – Lirio St. - Vamenta Blvd. – RN Pelaez Blvd. – CM Recto Ave. – Saarenas St. (WTPM) – Coastal Road – Salvador St. – CM Recto Ave. – Centro Iponan Road – Saarenas St. – Jabulin St. - Bulao"
+  },
+  {
+   "district": "District 1",
+   "title": "Iponan (R3) Kinasanghan Iponan – Limketkai via Agora Market City and Terminal (22.0km Roundtrip)",
+   "roundtrip_km": 22.0,
+   "operational": true,
+   "inbound_km": 11.0,
+   "inbound": "Kinasanghan Iponan – CM Recto Ave. –Baculio St- Caballero St. – Salvador St. – Coastal Road– WTPM – Saarenas Ave. – Coastal Road - San Pedro St. – Puntod / Kauswagan Bridge – Coastal Road – Valenzuela Ave. – Gaabucayan St. (Agora Market City and Terminal) – Valenzuela Ave. – Recto Ave. – Limketkai Drive- Limketkai Center",
+   "outbound_km": 11.0,
+   "outbound": "Limketkai Center- Limketkai Drive – C.M. Recto Ave. -Valenzuela Ave. – Gaabucayan St. – J. Pacana St. – Puntod / Kauswagan Bridge – San Pedro St. – Coastal Road – Salvador St. – CM Recto Ave – Kinasanghan Iponan"
+  },
+  {
+   "district": "District 1",
+   "title": "Iponan (R4) Kisanlu/Regency - Gaisano City (20.0km Roundtrip)",
+   "roundtrip_km": 20.0,
+   "operational": true,
+   "inbound_km": 11.0,
+   "inbound": "Kisanlu Subd. – Regency Road – CM Recto Ave. –Marcos Bridge – Capistrano St. – RN Abejuela St. – Corrales Ave. – C.M. Recto Ave. – Gaisano City",
+   "outbound_km": 9.0,
+   "outbound": "Gaisano City – CM Recto Ave. – Marcos Bridge – CM Recto Ave. – Regency Road – Kisanlu Subdivision"
+  },
+  {
+   "district": "District 1",
+   "title": "Iponan (R5) Bulao – Cogon Public Market (25.5km Roundtrip)",
+   "roundtrip_km": 25.5,
+   "operational": true,
+   "inbound_km": 13.0,
+   "inbound": "Iponan Bulao – Jabulin St. – Saarenas St. – CM Recto Ave. – Marcos Bridge – Capistrano St. – T. Chaves St. – Corrales St. – Hayes St. – Daumar St. (Cogon Public Market)",
+   "outbound_km": 12.5,
+   "outbound": "JR Borja St. – A. Velez St. – C.M. Recto Ave. - Marcos Bridge – C.M. Recto Ave. – Saarenas St. – Jabulin St. – Iponan Bulao"
+  },
+  {
+   "district": "District 1",
+   "title": "Kauswagan (R1) NHA – Agora Terminal (10.4km Roundtrip)",
+   "roundtrip_km": 10.4,
+   "operational": true,
+   "inbound_km": 5.3,
+   "inbound": "Phase 2 NHA Health Center Kauswagan (San Restituto St.) – Saint Michael St. - F. Pacana St. – CM Recto Ave. – Marcos Bridge – CM Recto Ave. – Valenzuela ave. – Agora Market City & Terminal",
+   "outbound_km": 5.1,
+   "outbound": "Agora Market City & Terminal – Valenzuela Ave. – CM Recto Ave. – Marcos Bridge – CM Recto Ave. – F. Pacana St. – Saint Michael St. - Phase 2 NHA Health Center Kauswagan (San Restituto St.)"
+  },
+  {
+   "district": "District 1",
+   "title": "Kauswagan (R2) NHA – Carmen Public Market (11.1km Roundtrip)",
+   "roundtrip_km": 11.1,
+   "operational": true,
+   "inbound_km": 7.1,
+   "inbound": "Phase 2 NHA Health Center Kauswagan (San Restituto St.) – Saint Michael St. – Eagle St. – St. Ignatius Extn. – St. Ignatius St. – RN Pelaez Blvd. – Vamenta Blvd. – C.- Diel St. – Villarin St. – Max Suniel St. – V. Neri St. – Carmen Public Market",
+   "outbound_km": 4.0,
+   "outbound": "Carmen Public Market – V. Castro St. – Vamenta Blvd. – RN Pelaez Blvd. – St. Ignatius St. – St. Ignatius Extn. – Eagle St. – Saint Michael St. – Phase 2 NHA Health Center Kauswagan (San Restituto St.)"
+  },
+  {
+   "district": "District 1",
+   "title": "Kauswagan (R3) – Carmen Public Market (21.4km Roundtrip)",
+   "roundtrip_km": 21.4,
+   "operational": true,
+   "inbound_km": 12.0,
+   "inbound": "Kauswagan Pasil Road (Gasoline Station)– San Pedro St. – San Restituto St. – St. Michael St. – CM Recto Ave. – Saarenas Ave. – WTPM – Saarenas Ave. – CM Recto Ave. – PN Roa Ave. – Vamenta Blvd. – Seriña St. – Villarin St. – Max Suniel St. – V. Neri St. – Carmen Public Market",
+   "outbound_km": 9.4,
+   "outbound": "Carmen Public Market – V. Castro St. - Ipil St. – Max Suniel St. – Yakal St. – Rosal St. – Ferrabrel St. – PN Roa Ave. – CM Recto Ave. – Saarenas Ave. – WTPM – Saarenas Ave. – CM Recto Ave. – St. Michael St. – San Restituto St. – San Pedro St. – Kauswagan Pasil Road (Gasoline Station)"
+  },
+  {
+   "district": "District 1",
+   "title": "Kauswagan (R4) Eagle St. (Kauswagan Brgy. Hall) – Agora Terminal (20.0km Roundtrip)",
+   "roundtrip_km": 20.0,
+   "operational": false,
+   "inbound_km": 10.2,
+   "inbound": "Eagles St. (Kauswagan Brgy. Hall) – St. Michael St. – F. Pacana St. – CM Recto Ave. – Marcos Bridge – C.M. Recto Ave. - A. Velez St – Rodelsa Circle – Tomas Saco St. – Fernandez St. – Corrales Ave. – Hayes St. – Roxas St. – Yacapin St. – Quirino St. – J. Ramonal St. – Limketkai Drive – Limketkai Center – CM Recto Ave. – Valenzuela Ave.– Gaabucayan St. – Agora Market city & Terminal",
+   "outbound_km": 9.8,
+   "outbound": "Agora Market city & Terminal – Valezuela Ave. – CM Recto Ave. – Limketkai Drive – Limketkai Center – J. Ramonal St. – V. Roa St. – 8 th St. (Nazareth) – 2 nd St. (Nazareth) – 21st St. (Nazareth) – 6 th St. (Nazareth) – Tomas Saco St. – Rodelsa Circle – A. Velez St. – CM Recto Ave. - Marcos Bridge – CM Recto Ave. – F. Pacana St. – St. Michael St. – Eagles St. (Kauswagan Brgy. Hall)"
+  },
+  {
+   "district": "District 1",
+   "title": "Lumbia (R1) – Cogon Public Market (29.7km Roundtrip)",
+   "roundtrip_km": 29.7,
+   "operational": true,
+   "inbound_km": 14.8,
+   "inbound": "Centro Brgy. Lumbia – Lumbia Diversion Palalan Road – Masterson Ave. – Kagay-an Bridge – Rodelsa Circle – Tomas Saco St. – Fernandez St. – Corrales Ave. – Hayes St. – Daumar St. (Cogon)",
+   "outbound_km": 14.9,
+   "outbound": "J.R. Borja St. – V. Roa St. – 8 th St. (Nazareth) – 2 nd St. (Nazareth) – 21st St. (Nazareth) – 6 th St. (Nazareth) – Tomas Saco St. – Rodelsa Circle – Kagay-an Bridge – Masterson Ave. – Lumbia Diversion Palalan Road – Centro Brgy. Lumbia"
+  },
+  {
+   "district": "District 1",
+   "title": "Lumbia (R2) – Carmen Public Market (30.3km Roundtrip)",
+   "roundtrip_km": 30.3,
+   "operational": true,
+   "inbound_km": 15.1,
+   "inbound": "Centro Brgy. Lumbia – F. Delima St. – Masterson Ave. – Macapagal Drive – SM By pass Road - C. Diel St. – Villarin St. – Max Suniel St. – V. Neri St. – Carmen Public Market",
+   "outbound_km": 15.2,
+   "outbound": "Carmen Public Market – V. Castro St. - Ipil St. – Max Suniel St. – Villarin St. – Avanceña St. – Rabanes St. - C. Diel St. – SM by pass Road – Macapagal Drive – Masterson Ave. – F. Delima St. – Centro Brgy. Lumbia"
+  },
+  {
+   "district": "District 1",
+   "title": "Lumbia (R3) Gran Europa – Carmen Public Market (20.0km Roundtrip)",
+   "roundtrip_km": 20.0,
+   "operational": true,
+   "inbound_km": 11.0,
+   "inbound": "Gran Europa – Masterson Ave. – Vamenta Blvd. – PN Roa St. – Villarin St.- M. Suniel St. – V. Neri St. – Carmen Public Market (Ororama)",
+   "outbound_km": 9.0,
+   "outbound": "(Ororama) Carmen Public Market – Castro St. – Vamenta Blvd. – Masterson Ave. – Gran Europa"
+  },
+  {
+   "district": "District 1",
+   "title": "Lumbia (R4) Gran Europa – Cogon Public Market via Taguanao (26.3km Roundtrip)",
+   "roundtrip_km": 26.3,
+   "operational": true,
+   "inbound_km": 13.1,
+   "inbound": "Gran Europa – Masterson Ave. – South Diversion Road (Taguanao Road) – Tibasak Road – P. Chavez St. – Fernhill St. – T. Saco St. – Fernandez St. – Corrales Ave. – Hayes St. – Cogon Public Market - Daumar St. -",
+   "outbound_km": 13.2,
+   "outbound": "J. R. Borja St. – V. Roa St. Hayes St. - 12th St. (Nazareth) – 21st St. (Nazareth) – 15th St. (Nazareth) – 26th St. (Nazareth) – Fernhill St. –P. Chavez St. – Tibasak Road – South Diversion Road (Taguanao Road) – Masterson Ave. – Gran Europa"
+  },
+  {
+   "district": "District 1",
+   "title": "Pagalungan – Carmen Public Market (41.0km Roundtrip)",
+   "roundtrip_km": 41.0,
+   "operational": false,
+   "inbound_km": 20.4,
+   "inbound": "Brgy. Pagalungan – Pagalungan Road – F. Delima St. – Masterson Ave. – Macapagal Drive – SM by pass Road – C. Diel St. – Villarin St. – Max Suniel St. – V. Neri St. – V. Castro St. - Carmen Public Market",
+   "outbound_km": 20.6,
+   "outbound": "Carmen Public Market – Ipil St. – Max Suniel St. – Villarin St. –Avancena St. – Rabanes St. - C. Diel St. – SM by pass Road – Macapagal Drive – Masterson Ave. – F. Delima St. – Pagalungan Road – Centro Brgy. Pagalungan"
+  },
+  {
+   "district": "District 1",
+   "title": "Pagatpat (R1) Centro – Westbound Terminal (21.3km Roundtrip)",
+   "roundtrip_km": 21.3,
+   "operational": true,
+   "inbound_km": 11.7,
+   "inbound": "Pagatpat Centro – Pagatpat Road – Canitoan Road – Macapagal Drive – CM Recto Ave. – Saarenas Ave. – Westbound Terminal and Public Market",
+   "outbound_km": 11.9,
+   "outbound": "Westbound Terminal and Public Market – Saarenas Ave. – CM Recto Ave. – Macapagal Drive – Canitoan Road – Pagatpat Road – Pagatpat Centro"
+  },
+  {
+   "district": "District 1",
+   "title": "Pagatpat (R2) – Carmen Public Market (22.5km Roundtrip)",
+   "roundtrip_km": 22.5,
+   "operational": true,
+   "inbound_km": 11.4,
+   "inbound": "Centro Brgy. Pagatpat – Pagatpat Road – Canitoan Road –Macapagal Drive – C. Diel St. – Villarin St. – Max Suniel St. – V. Neri St. – V. Castro St. - Carmen Public Market",
+   "outbound_km": 11.1,
+   "outbound": "Carmen Public Market – Ipil St. – Max Suniel St. – Villarin St. – Avanceña St. – Rabanes St. - C. Diel St. – Macapagal Drive – Canitoan Road – Pagatpat Road – Centro Brgy. Pagatpat"
+  },
+  {
+   "district": "District 1",
+   "title": "Pagatpat (R3) Pamalihi – Carmen Public Market (24.2km Roundtrip)",
+   "roundtrip_km": 24.2,
+   "operational": true,
+   "inbound_km": 12.0,
+   "inbound": "Centro Pamalihi – Pamalihi Road - Pagatpat Road – Canitoan Road –Macapagal Drive – C. Diel St. – Villarin St. – Max Suniel St. – V. Neri St. – V. Castro St. - Carmen Public Market",
+   "outbound_km": 12.2,
+   "outbound": "Carmen Public Market – Ipil St. – Max Suniel St. – Villarin St. – Avanceña St. – Rabanes St. - C. Diel St. – Macapagal Drive – Canitoan Road – Pagatpat Road – Pamalihi Road – Centro Pamalihi"
+  },
+  {
+   "district": "District 1",
+   "title": "Patag Camp Evangelsita – Divisoria Park (7.5km Roundtrip)",
+   "roundtrip_km": 7.5,
+   "operational": true,
+   "inbound_km": 4.2,
+   "inbound": "Camp Evangelista – Cadre Road – PN Roa St. – RN Pelaez Blvd. – Marcos Bridge – A. Velez St. – Cruz Taal St. – Rizal St. – (Divisoria Park)",
+   "outbound_km": 3.3,
+   "outbound": "(Divisoria Park) – Rizal St. – Gaerlan St. – Ysalina Bridge – Seriña St. Vamenta Blvd. – Castro St. – Ipil St. – Carmen Public Market – Max Suniel St. – Yakal St. – Rosal St. – Ferrabrel St. – PN Roa St. – Cadre Road – Camp Evangelista"
+  },
+  {
+   "district": "District 1",
+   "title": "Pigsag-an – Carmen Public Market (72.6km Roundtrip)",
+   "roundtrip_km": 72.6,
+   "operational": false,
+   "inbound_km": 36.3,
+   "inbound": "Centro Brgy. Pigsag-an – Pigsag-an Road – Tuburan Road – Taglimao Road – Pagalungan Road – F. Delima St. – Masterson Ave. – Macapagal Drive – SM by pass Road – C. Diel St. – Villarin St. – Max Suniel St. – V. Neri St. – V. Castro St. - Carmen Public Market",
+   "outbound_km": 36.3,
+   "outbound": "Carmen Public Market – Ipil St. – Max Suniel St. – Villarin St. – Avanceña St. – Rabanes St. - C. Diel St. – SM by pass Road – Macapagal Drive – Masterson Ave. – F. Delima St. – Pagalungan Road – Taglimao Road – Tuburan Road – Pigsag-an Road – Centro Brgy. Pigsag-an"
+  },
+  {
+   "district": "District 1",
+   "title": "San Simon – Carmen Public Market (31.9km Roundtrip)",
+   "roundtrip_km": 31.9,
+   "operational": true,
+   "inbound_km": 16.1,
+   "inbound": "Centro San Simon – Pagatpat Road – Canitoan Road – Macapagal Road – C. Diel St. – Villarin St. – Max Suniel St. – V. Neri St. – V. Castro St. - Carmen Public Market",
+   "outbound_km": 15.8,
+   "outbound": "Carmen Public Market – Ipil St. – Max Suniel St. – Villarin St. – Avanceña St. – Rabanes St. - C. Diel St. – Macapagal Road – Canitoan Road – Pagatpat Road – San Simon"
+  },
+  {
+   "district": "District 1",
+   "title": "Taglimao – Carmen Public Market (54.0km Roundtrip)",
+   "roundtrip_km": 54.0,
+   "operational": false,
+   "inbound_km": 27.0,
+   "inbound": "Centro Brgy. Taglimao – Taglimao Road – Pagalungan Road – F. Delima St. – Masterson Ave. – Macapagal Drive – SM by pass Road – C. Diel St. – Villarin St. – Max Suniel St. – V. Neri St. – V. Castro - Carmen Public Market",
+   "outbound_km": 27.0,
+   "outbound": "Carmen Public Market – Ipil St. – Max Suniel St. – Villarin St. – Avanceña St. – Rabanes St. - C. Diel St. – SM by pass Road – Macapagal Drive – Masterson Ave. – F. Delima St. – Pagalungan Road – Taglimao Road – Centro Brgy. Taglimao"
+  },
+  {
+   "district": "District 1",
+   "title": "Tuburan – Carmen Public Market (62.1km Roundtrip)",
+   "roundtrip_km": 62.1,
+   "operational": true,
+   "inbound_km": 31.0,
+   "inbound": "Centro Brgy. Tuburan – Tuburan Road – Taglimao Road – Pagalungan Road – F. Delima St. – Masterson Ave. – Macapagal Drive – SM by pass Road – C. Diel St. – Villarin St. – Max Suniel St. – V. Neri St. – V. Castro St. - Carmen Public Market",
+   "outbound_km": 31.1,
+   "outbound": "Carmen Public Market – Ipil St. – Max Suniel St. – Villarin St. – Avanceña St. – Rabanes St. - C. Diel St. – SM by pass Road – Macapagal Drive – Masterson Ave. – F. Delima St. – Pagalungan Road – Taglimao Road – Tuburan Road – Centro Brgy. Tuburan"
+  },
+  {
+   "district": "District 1",
+   "title": "Tagpangi – Carmen Public Market (52.0km Roundtrip)",
+   "roundtrip_km": 52.0,
+   "operational": true,
+   "inbound_km": 26.0,
+   "inbound": "Centro Tagpangi – Tagpangi Road – Pagalungan Road – F. Delima St. – Masterson Ave. – Macapagal Drive – SM Bypass Road – C. Diel St. – Villarin St. – Max Suniel St. – V. Neri St. – V. Castro - Carmen Public Market",
+   "outbound_km": 26.0,
+   "outbound": "Carmen Public Market – Ipil St. – Max Suniel St. – Villarin St. – Avanceña St. – Rabanes St. - C. Diel St. – SM Bypass Road – Macapagal Drive – Masterson Ave. – F. Delima St. – Pagalungan Road – Tagpangi Road – Tagpangi"
+  },
+  {
+   "district": "District 1",
+   "title": "Tignapoloan – Carmen Public Market (69.0km Roundtrip)",
+   "roundtrip_km": 69.0,
+   "operational": false,
+   "inbound_km": 37.8,
+   "inbound": "Brgy. Besigan/Brgy. Tignapoloan – Tignapoloan Road - Masterson Ave. – Macapagal Drive – SM Bypass Road – C. Diel St. – Villarin St. – Max Suniel St. – V. Neri St. – V. Castro St. - Carmen Public Market",
+   "outbound_km": 31.2,
+   "outbound": "Carmen Public Market – Ipil St. – Max Suniel St. – Villarin St. – Avanceña St. – Rabanes St. - C. Diel St. – SM Bypass Road – Macapagal Drive – Masterson Ave. – Tignapoloan Road- Centro Tignapoloan - Besigan Road – Centro Besigan"
+  },
+  {
+   "district": "District 1",
+   "title": "Tumpagon – Carmen Public Market (83.3km Roundtrip)",
+   "roundtrip_km": 83.3,
+   "operational": true,
+   "inbound_km": 41.6,
+   "inbound": "Centro Brgy. Tumpagon – Pigsag-an Road - Tuburan Road – Taglimao Road – Pagalungan Road – F. Delima St. – Masterson Ave. – Macapagal Drive – SM Bypass Road – C. Diel St. – Villarin St. – Max Suniel St. – V. Neri St. – V. Castro St. - Carmen Public Market",
+   "outbound_km": 41.7,
+   "outbound": "Carmen Public Market – Ipil St. – Max Suniel St. – Villarin St. – Avanceña St. – Rabanes St. - C. Diel St. – SM Bypass Road – Macapagal Drive – Masterson Ave. – F. Delima St. – Pagalungan Road – Taglimao Road – Tuburan Road – Pigsag-an Road – Centro Brgy. Tumpagon"
+  },
+  {
+   "district": "District 2",
+   "title": "Balubal (R1) – Puerto Public Market",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 8.6,
+   "inbound": "Centro Balubal – Balubal Road (Eastern) – Sayre Highway – Puerto Public Market Road (Eastern)- Puerto Public Market",
+   "outbound_km": 9.0,
+   "outbound": "Puerto Public Market – Puerto Public Market Road (Northern) - CM Recto Avenue – U-turn Underneath of Flyover – C.M. Recto Ave.- Agusan-Balubal Road – Balubal Road (Northern) - Centro Balubal"
+  },
+  {
+   "district": "District 2",
+   "title": "Balubal (R2) – Puerto Public Market",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 9.0,
+   "inbound": "Centro Balubal – Balubal Road (Northern)– Balubal-Agusan Road – C.M. Recto Ave. - Puerto Public Market Road (Northern) – Puerto Public Market",
+   "outbound_km": 8.6,
+   "outbound": "Puerto Public Market (Eastern) – Sayre Highway – Balubal Road (Eastern) – Centro Balubal"
+  },
+  {
+   "district": "District 2",
+   "title": "Bugo (R1) – Agora Market City and Terminal",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 15.0,
+   "inbound": "Villa Trinitas Subd. – Villa Trinitas Subd. Main Road – Cabilogan Senior St. – Acacia St. – Narra St. - CM Recto Ave. – Valenzuela Ave. – Agora Market City & Terminal",
+   "outbound_km": 16.0,
+   "outbound": "Agora Market City & Terminal – Gaabucayan St. – J. Pacana St. – C.M. Recto Ave. – U-turn (Delmonte Gate 2) – Greymar Subd. Road – Jamero St. – Cabilogan Sr. St. – Villa Trinitas Subd. Main Road – Villa Trinitas Subd."
+  },
+  {
+   "district": "District 2",
+   "title": "Bugo (R2) – Cogon Public Market",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 16.0,
+   "inbound": "Villa Trinitas Subd. – Villa Trinitas Subd. Main Road – Cabilogan Senior St. – Acacia St. – Narra St. - CM Recto Ave. – JR Borja Avenue – Osmeña St. – Cogon Public Market",
+   "outbound_km": 16.0,
+   "outbound": "Cogon Public Market – Yacapin St. – Garcia St. – JR Borja Ave – CM Recto Ave. – U-turn (Delmonte Gate 2) – Greymar Subd. Road – Jamero St. – Cabilogan Sr. St. – Villa Trinitas Subd. Main Road – Villa Trinitas Subd."
+  },
+  {
+   "district": "District 2",
+   "title": "Cugman – Cogon Public Market",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 9.0,
+   "inbound": "Centro Brgy. Cugman– CM Recto Ave. – A. Velez St. – Echem St. – Capistrano St. – T. Chavez St. – Corrales Ave. – JR Borja St. – Daumar St. - Cogon Public Market",
+   "outbound_km": 8.0,
+   "outbound": "Yacapin St. – A. Velez St. – CM Recto Ave. – Cugman Old Road – Centro Brgy. Cugman"
+  },
+  {
+   "district": "District 2",
+   "title": "FS Catanico – Agora Market City and Terminal",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 11.3,
+   "inbound": "Barangay FS Catanico – FS Catanico Road – Brgy. Cugman Zone 2 Road – CM Recto Ave. – J. Pacana St. – Gaabucayan St. – Agora Market City & Terminal",
+   "outbound_km": 8.9,
+   "outbound": "Agora Market City & Terminal – Valenzuela Ave. – CM Recto Ave. – Brgy. Cugman Zone 2 Road – FS Catanico Road – Centro Barangay FS Catanico"
+  },
+  {
+   "district": "District 2",
+   "title": "Gusa (R1) – Puerto Public Market",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 9.0,
+   "inbound": "Gusa Brgy. Hall– Gusa Old Road - Coastal Road – CM Recto Ave. – Puerto Public Market (Northern) – Puerto Public Market",
+   "outbound_km": 9.0,
+   "outbound": "Puerto Public Market Road (Eastern) - Sayre Highway – CM Recto Ave. – Emerald St. – Gusa Brgy. Hall"
+  },
+  {
+   "district": "District 2",
+   "title": "Gusa (R2) – Divisoria Park",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 5.6,
+   "inbound": "Gusa Old Road (Corner C.M. Recto Ave.)– Coastal Road – JR Borja Ave.– Cogon Public Market – JR Borja Ave. – Rizal St. – T. Chaves St. – Divisoria Park",
+   "outbound_km": 5.3,
+   "outbound": "Divisoria Park – Corrales Ave. – JR Borja Ave. – Cogon Market – JR Borja Ave. – CM Recto Ave. – Gusa Old Road"
+  },
+  {
+   "district": "District 2",
+   "title": "Indahag (R1) – Cogon Public Market",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 7.6,
+   "inbound": "Centro Brgy. Indahag – Camaman-an / Indahag Road – Hayes St. – Roxas St. (Cogon Public Market)",
+   "outbound_km": 7.7,
+   "outbound": "J.R. Borja Ave. – Quirino St. – Hayes St. – Camaman-an / Indahag Road – Centro Brgy. Indahag"
+  },
+  {
+   "district": "District 2",
+   "title": "Indahag (R2) – Cogon Public Market",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 8.1,
+   "inbound": "Indahag Centro – Indahag Road – Indahag/Macasandig Road – Mandumol Road - P. Chaves St. – Fernhill St. - Tomas Saco – Fernandez St. – Corrales Ave. – Hayes St.",
+   "outbound_km": 7.6,
+   "outbound": "Hayes St. – 12th St. (Nazareth) – 21st St. (Nazareth) – 15th St. (Nazareth) – 26th St. (Nazareth) – Fernhill St. – P. Chaves – Mandumol Road – – Indahag/Macasandig Road - Centro Brgy. Indahag"
+  },
+  {
+   "district": "District 2",
+   "title": "Indahag (R3) Taguanao – Cogon Public Market",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 8.6,
+   "inbound": "Centro Taguanao – South Diversion Road – Buena Oro Road – Madumol Road – P. Chavez St. – Fernhill St. - Tomas Saco St. – Fernandez St. – Corrales Ave. – Hayes St.",
+   "outbound_km": 8.2,
+   "outbound": "Hayes St. – 12th St. (Nazareth) – 22nd St. (Nazareth) – 8 th St. (Nazareth) – 2 nd St. (Nazareth) – 21st St. (Nazareth) – 6 th St. (Nazareth) – Tomas Saco St. – P. Chaves St. - Mandumol Road – Buena Oro Road – South Diversion Road – Centro Taguanao"
+  },
+  {
+   "district": "District 2",
+   "title": "Camaman-an (R3) Macapaya – Cogon Public Market",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 5.7,
+   "inbound": "Centro Sitio Macapaya - Sitio Macapaya Road – Hayes St. – Roxas St. (Cogon Public Market)",
+   "outbound_km": 5.5,
+   "outbound": "JR Borja Ave. – Camaman-an Road – Imburnal Road – Hayes St. - Sitio Macapaya Road- Centro Sitio Macapaya"
+  },
+  {
+   "district": "District 2",
+   "title": "Lapasan (R1) – Carmen Public Market",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 7.8,
+   "inbound": "Agora Market City & Terminal – Valenzuela Ave. – CM Recto Ave. – Marcos Bridge – RN Pelaez Blvd. – Vamenta Blvd. – C. Diel St. – Villarin St. – Max Suniel St. – V. Neri St. – V. Castro St. - Carmen Public Market",
+   "outbound_km": 8.9,
+   "outbound": "Carmen Public Market - Ipil St. – Max Suniel St. – Villarin St. – C. Diel St. – Masterson Ave. – Rodelsa Circle – Vamenta Blvd. – RN Pelaez Blvd. – Marcos Bridge – CM Recto Ave. – Valenzuela Ave. – Agora Market City & Terminal"
+  },
+  {
+   "district": "District 2",
+   "title": "Lapasan (R2) – Cogon Public Market",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 4.5,
+   "inbound": "Agora Market City & Terminal – Gaabucayan St. – Corrales Ave. – C.M. Recto Ave. - A. Velez St. – Echem St. – Capistrano St. – Chavez St. – Corrales Ave. – JR Borja Ave. – Osmeña St. – Cogon Public Market",
+   "outbound_km": 3.5,
+   "outbound": "Cogon Public Market – Yacapin St. – V. Roa St. – JR Borja Ave. – A. Velez St. – CM Recto Ave. – Valenzuela Ave. – Agora Market City & Terminal"
+  },
+  {
+   "district": "District 2",
+   "title": "Lapasan (R3) – Cogon Public Market",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 6.6,
+   "inbound": "Agora Market City & Terminal –Valenzuela Ave. – Sto. Niño St. – Baconga St. – CM Recto Ave. – A. Velez St. – Yacapin St. – Rizal St. – RN Abejuela St. – Corrales Ave. – JR Borja St. – Cogon Public Market",
+   "outbound_km": 2.6,
+   "outbound": "Cogon Public Market – Osmeña St. – J. Ramonal St. – Limketkai Drive – Limketkai Center – CM Recto Ave. – Valenzuela ave. – Agora Market City & Terminal"
+  },
+  {
+   "district": "District 2",
+   "title": "Macabalan (R1) Centro – Cogon Public Market",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 5.2,
+   "inbound": "Centro Macabalan – J. Pacana St. – Corrales Extn. – Coastal Road – Valenzuela Ave. – Gaabucayan St. Agora Market City & Terminal Terminal – Valenzuela ave. – CM Recto Ave. – Limketkai Drive – Limketkai Center – J. Ramonal St. – V. Roa St. – Cogon Public Market",
+   "outbound_km": 5.8,
+   "outbound": "Cogon Public Market – Hayes St. – Osmeña St. – J. Ramonal St. – Limketkai Drive – Limketkai Center – CM Recto Ave. – Valenzuela Ave. – Gaabucayan St. - Agora Market City & Terminal –– Valenzuela Ave. - Coastal Road Corrales Extn. – J. Pacana St. – Centro Macabalan"
+  },
+  {
+   "district": "District 2",
+   "title": "Macabalan (R2) Centro – Westbound Terminal and Public Market",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 6.5,
+   "inbound": "Centro Macabalan – J. Pacana St. – Puntod / Kauswagan Bridge – San Pedro St. – Coastal Road – Westbound Terminal & Public Market",
+   "outbound_km": 6.7,
+   "outbound": "Westbound Terminal & Public Market – Saarenas Ave. - Coastal Road – San Pedro St. – Puntod / Kauswagan Bridge – J. Pacana St. – Centro Macabalan"
+  },
+  {
+   "district": "District 2",
+   "title": "Macabalan (R3) Centro – Cogon Public Market",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 5.8,
+   "inbound": "Centro Macabalan - J. Pacana St. – Corrales Extn. – Corrales Ave. – T. Neri St. - Rizal St. – T. Chaves St. – Corrales Ave. – JR. Borja Ave. – Osmeña St. - Cogon Public Market",
+   "outbound_km": 4.8,
+   "outbound": "Cogon Public Market – Yacapin St. – Corrales Ave. – Corrales Extn. – J. Pacana St. – Centro Macabalan"
+  },
+  {
+   "district": "District 2",
+   "title": "Macabalan (R4) Centro – Cogon Public Market",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 5.8,
+   "inbound": "Centro Macabalan – J. Pacana St. – A. Velez St. – T. Neri St. – Rizal St. – RN Abejuela St. – Corrales Ave. – JR Borja St. – Osmena St. Cogon Public Market",
+   "outbound_km": 5.1,
+   "outbound": "Cogon Public Market – Yacapin St. – A. Velez St. – J. Pacana St. – Centro Macabalan"
+  },
+  {
+   "district": "District 2",
+   "title": "Macabalan (R5) Centro – Carmen Public Market",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 6.3,
+   "inbound": "Centro Macabalan – J. Pacana St. – Marcos Bridge – RN Pelaez Blvd. – Vamenta Blvd. – Serina St. - Villarin St. - Max Suniel St. – V. Neri St. – Carmen Public Market",
+   "outbound_km": 6.2,
+   "outbound": "Carmen Public Market – Castro St. – Vamenta Blvd. – RN Pelaez Blvd. – Marcos Bridge – J. Pacana St. – Centro Macabalan"
+  },
+  {
+   "district": "District 2",
+   "title": "Macasandig (Centro Buena Oro) – Cogon Public Market",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 4.4,
+   "inbound": "Buena Oro –Mandumol Road – P. Chavez St. – Fernhill St. – Tomas Saco St. – 16th St. (Nazareth) – 12th St. (Nazareth) – 22nd St. (Nazareth) – 8 th St. (Nazareth) – Hayes St. – Osmeña St. – Yacapin St. – Cogon Public Market",
+   "outbound_km": 4.2,
+   "outbound": "Cogon Public Market – V. Roa St. – 8 th St. (Nazareth) – 2 nd St. (Nazareth) – 21st St. (Nazareth) – 6 th St. (Nazareth) – Tomas Saco St. – P. Chaves St. - Mandumol Road – Centro Buena Oro"
+  },
+  {
+   "district": "District 2",
+   "title": "Puerto (R1) Puerto Public Market – Agora Terminal",
+   "roundtrip_km": null,
+   "operational": true,
+   "inbound_km": 14.0,
+   "inbound": "Puerto Public Market – Puerto Public Market Road (Eastern) - Sayre Higway – CM Recto Ave. Corrales Extn. – Gaabucayan St. – Agora Market City & Terminal",
+   "outbound_km": 12.0,
+   "outbound": "Agora Market City & Terminal – Valenzuela Ave. – CM Recto Ave. – Puerto Public Market Road (Northern) – Puerto Public Market"
+  }
+ ]
+}

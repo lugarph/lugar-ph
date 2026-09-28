@@ -1,0 +1,147 @@
+{{PlaceFeature
+| feature     = Public transport
+| place       = Davao City
+| area        = Philippines
+| description = Mapping Davao City's public transport network
+| image       =
+| status      = In progress
+}}
+
+This page covers mapping progress for public transportation routes in [[Davao City]] in the [[Philippines]]. Public transit services in the region are formed by jeepneys, van shuttles (UV Express), city buses, provincial buses and ferries. The system has been mapped, but many routes if mapped continue to use the older PTv1 scheme, and stops are missing.
+
+==Jeepneys==
+Jeepney routes in Davao City are either numbered (in the Poblacion and surrounding districts) or named (elsewhere)
+
+===Numbered routes===
+
+{| class="wikitable sortable"
+|- style="background:#E0E0E0;"
+! Route no. !! Route description !! Operator !! Relation !! Notes
+|-
+| '''1''' 
+|| 
+* Marfori Heights – Chinatown via Lopez Jaena, General Luna, Pelayo, Magallanes, C.M. Recto, Emilio Jacinto, Quezon Boulevard
+* Chinatown – Marfori Heights via Magsaysay, Chavez, Sobrecary, Guzman, Bangoy, San Pedro, Ilustre
+|| || ||
+|-
+| '''2''' 
+|| 
+* Ecoland Terminal – Chinatown via Quezon Boulevard
+* Chinatown – Ecoland Terminal via Magsaysay, C. Bangoy, Bonifacio, Bolton, San Pedro, Marfori, Datu Bago Drive, Generoso Bridge
+|| || ||
+|-
+| '''3''' 
+|| 
+* Marfori Heights – Santa Ana via Lopez Jaena, General Luna, Pelayo, Magallanes, C.M. Recto, dela Cruz,  Emilio Jacinto, Aurora Quezon, J. Luna, Sales
+* Chinatown – Marfori Heights via Magsaysay, Chavez, Sobrecary, Guzman, Bangoy, San Pedro, Ilustre
+|| || || loop
+|-
+| '''4''' 
+|| Claveria – SPMC loop (via C.M. Recto, J.P. Laurel, Cabaguio Road, Aurora Quezon, Quezon Boulevard, San Pedro) || || ||
+|-
+| '''5''' 
+|| Bankerohan – Agdao loop (via Magallanes, J.P. Laurel, Magsaysay, Guzman, Sobrecary, Monteverde, F. Bangoy, Leon Garcia, Quezon Boulevard, Aurora Quezon, San Pedro) || || ||
+|}
+
+===Named routes===
+{| class="wikitable sortable"
+|- style="background:#E0E0E0;"
+! Route name !! Route description !! Operator !! Relation !! Notes
+|-
+| '''Barrio Obrero Route''' 
+|| 
+* Claveria – C.M. Recto — J.P. Laurel – Palma Gil – Nicasio Torres – New Burgos Street – San Roque
+* San Roque – Porras – Palma Gil – J.P. Laurel – Quirino Avenue – C. Bangoy – Magsaysay – Emilio Jacinto — Aurora Quezon – Quezon Boulevard – San Pedro – Claveria 
+|| || ||
+|-
+| '''Sasa Route''' 
+|| 
+* Claveria – C.M. Recto — J.P. Laurel – Maharlika Highway – Sasa
+* Sasa – Maharlika Highway – R. Castillo – Leon Garcia – Aurora Quezon – Quezon Boulevard — Rizal – Claveria
+|| || ||
+|-
+| '''Sasa via R. Castillo Route''' 
+|| 
+* Claveria – C.M. Recto — J.P. Laurel – Maharlika Highway – Sasa
+* Sasa – Maharlika Highway – R. Castillo – Leon Garcia – Quezon Boulevard — Rizal – Claveria
+|| || ||
+|}
+
+==City bus==
+All listed routes are part of Davao High-Priority Bus, tagged with {{tag|network||LTFRB Region XII}}.
+
+{| class="wikitable sortable"
+|- style="background:#E0E0E0;"
+! Route name !! Route description !! Operator !! Relation !! Notes
+|-
+| '''Calinan Route''' 
+|| 
+Calinan – Davao-Bukidnon Highway — MacArthur Highway – Governor Generoso Bridge – E. Quirino Avenue – A. Pichon Street – Quimpo Boulevard – MacArthur Highway – Davao-Bukidnon Highway – Calinan
+|| Annil Trans. || ||
+|-
+| '''C.P. Garcia Route''' 
+|| Crossing Bangkal – Carlos P. Garcia Highway — Crossing Panacan – Maharlika Highway – Sasa Pier – vice versa || Annil Trans. || ||
+|-
+| '''Toril Route''' 
+|| 
+Toril – MacArthur Highway – Governor Generoso Bridge – E. Quirino Avenue – A. Pichon Street – Quimpo Boulevard – MacArthur Highway – Davao-Bukidnon Highway – Calinan
+|| Mindanao Star || ||
+|}
+
+==Provincial bus==
+All provincial buses terminate at the Davao City Overland Transport Terminal (DCOTT).
+
+{| class="wikitable sortable"
+|- style="background:#E0E0E0;"
+! Service nos. !! Route name !! Stops !! Network !! Operator !! Relation !! Notes
+|-
+| || Davao City - Alabang || DCOTT, Panabo, Tagum, Nabunturan, Trento, Bunawan, Rosario, San Francisco , Prosperidad, Bayugan, Sibagat, Butuan, Cabadbaran, Santiago, Kitcharao, Tubod, Sison, Surigao City, San Ricardo, Pintuyan, San Francisco, Liloan, Libagon, Mahaplag, Abuyog, MacArthur, Mayorga, Dulag, Tolosa, Tanauan, Palo, Tacloban, Calbiga, Hinabangan, Paranas, Catbalogan, San Jorge, Gandara, Santa Margarita, Calbayog, San Isidro, Victoria, Allen, Matnog, Sorsogon City, Daraga, Naga, Lucena, Calamba, Alabang (Starmall)  || LTFRB Interregional Bus || Philtranco || N: S: || via Benit–Lipata RORO
+|-
+|
+|| Davao City – Bansalan || || LTFRB Interregional Bus  || Davao Metro Shuttle || E: W: ||
+|-
+|
+|| Davao City - Butuan City || || LTFRB Interregional Bus  || Bachelor Express, Davao Metro Shuttle || N: S: ||
+|-
+| || Davao City - Cagayan de Oro City || || LTFRB Interregional Bus  || Rural Transit Mindanao Inc. || N: S: ||
+|-
+| 
+|| Davao City - Cotabato City || || LTFRB Interregional Bus  || Mindanao Star Bus Inc. || E: W: ||
+|-
+| || Davao City – Digos City || || LTFRB Region XII || Davao Metro Shuttle || E: W: ||
+|-
+| 
+|| Davao City - General Santos City || || LTFRB Interregional Bus || Mindanao Star Bus Inc. || N: S: ||
+|-
+| 
+|| Davao City - Kaputian, Samal || || LTFRB Region XII || Mindanao Star Bus Inc. || N: S: ||
+|-
+| || Davao City - Koronadal City via General Santos || || LTFRB Interregional Bus || Mindanao Star Bus Inc., Yellow Bus Line || N: S: ||
+|-
+| || Davao City - Laak || || LTFRB Region XII || Davao Metro Shuttle || N: S: ||
+|-
+| || Davao City - Malita || || LTFRB Region XII || Davao Metro Shuttle || N: S: ||
+|-
+| || Davao City - Mangagoy || || LTFRB Interregional Bus  || Bachelor Express || N: S: || 
+|-
+| || Davao City - Mati || || LTFRB Region XII || Bachelor Express, Land Car Inc. || N: S: ||
+|-
+| || Davao City - New Bataan || || LTFRB Region XII || Davao Metro Shuttle || N: S: ||
+|-
+| || Davao City - Ormoc City || || LTFRB Interregional Bus  || Bachelor Express || N: S: || via Benit–Lipata RORO
+|-
+| || Davao City - PITX || || LTFRB Interregional Bus  || Davao Metro Shuttle; PP Bus Line || N: S: || via Benit–Lipata RORO
+|-
+| || Davao City - Surigao City || || LTFRB Interregional Bus  ||  Bachelor Express || N: S: ||
+|-
+| || Davao City - Tagbilaran City via Butuan City || || LTFRB Interregional Bus  || Bachelor Express || N: S: ||
+* Tagbilaran-bound: Sundays, Tuesdays, Thursdays, Saturdays.
+* Davao-bound: Monday, Wednesday, Friday, Sunday.
+|-
+| || Davao City - Tagum || || LTFRB Region XII || Davao Metro Shuttle, Bachelor Express || N: S: ||
+|}
+
+==Ferry==
+
+[[Category:Bus routes in the Philippines|Davao City]]
+[[Category:Public transport in the Philippines|Davao City]]

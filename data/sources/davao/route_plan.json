@@ -1,0 +1,76 @@
+{
+ "city": "davao",
+ "source": "OpenStreetMap Wiki: Davao City/Public transportation (jeepney tables)",
+ "source_urls": [
+  "https://wiki.openstreetmap.org/wiki/Davao_City/Public_transportation"
+ ],
+ "retrieved": "2026-09-28",
+ "note": "Only downtown (Poblacion) routes are documented. Davao's many named routes to Toril, Mintal, Calinan, Bangkal, Buhangin, Panacan, and elsewhere are not covered yet. Street lists are 'via' lists, so turns between them are estimated.",
+ "routes": [
+  {
+   "code": "1",
+   "name": "Marfori Heights – Chinatown",
+   "start": "Marfori Heights",
+   "far": "Chinatown",
+   "inbound": "Lopez Jaena – General Luna – Pelayo – Magallanes – C.M. Recto – Emilio Jacinto – Quezon Boulevard",
+   "outbound": "Magsaysay – Chavez – Sobrecary – Guzman – Bangoy – San Pedro – Ilustre",
+   "source_url": "https://wiki.openstreetmap.org/wiki/Davao_City/Public_transportation"
+  },
+  {
+   "code": "2",
+   "name": "Ecoland Terminal – Chinatown",
+   "start": "Ecoland Terminal",
+   "far": "Chinatown",
+   "inbound": "Generoso Bridge – Quezon Boulevard",
+   "outbound": "Magsaysay – C. Bangoy – Bonifacio – Bolton – San Pedro – Marfori – Datu Bago Drive – Generoso Bridge",
+   "source_url": "https://wiki.openstreetmap.org/wiki/Davao_City/Public_transportation",
+   "note": "The wiki gives only Quezon Boulevard for the way in; Generoso Bridge is added because the way back uses it."
+  },
+  {
+   "code": "3",
+   "name": "Marfori Heights – Santa Ana",
+   "start": "Marfori Heights",
+   "far": "Santa Ana",
+   "inbound": "Lopez Jaena – General Luna – Pelayo – Magallanes – C.M. Recto – dela Cruz – Emilio Jacinto – Aurora Quezon – J. Luna – Sales",
+   "outbound": "Magsaysay – Chavez – Sobrecary – Guzman – Bangoy – San Pedro – Ilustre",
+   "source_url": "https://wiki.openstreetmap.org/wiki/Davao_City/Public_transportation"
+  },
+  {
+   "code": "4",
+   "name": "Claveria – SPMC Loop",
+   "start": "Claveria",
+   "far": "SPMC",
+   "inbound": "C.M. Recto – J.P. Laurel",
+   "outbound": "Cabaguio Road – Aurora Quezon – Quezon Boulevard – San Pedro",
+   "source_url": "https://wiki.openstreetmap.org/wiki/Davao_City/Public_transportation"
+  },
+  {
+   "code": "5",
+   "name": "Bankerohan – Agdao Loop",
+   "start": "Bankerohan",
+   "far": "Agdao",
+   "inbound": "Magallanes – J.P. Laurel – Magsaysay – Guzman – Sobrecary – Monteverde – F. Bangoy – Leon Garcia",
+   "outbound": "Quezon Boulevard – Aurora Quezon – San Pedro",
+   "source_url": "https://wiki.openstreetmap.org/wiki/Davao_City/Public_transportation"
+  },
+  {
+   "code": "Barrio Obrero",
+   "name": "Claveria – San Roque (Barrio Obrero)",
+   "start": "Claveria",
+   "far": "San Roque",
+   "inbound": "C.M. Recto – J.P. Laurel – Palma Gil – Nicasio Torres – New Burgos Street",
+   "outbound": "Porras – Palma Gil – J.P. Laurel – Quirino Avenue – C. Bangoy – Magsaysay – Emilio Jacinto – Aurora Quezon – Quezon Boulevard – San Pedro",
+   "source_url": "https://wiki.openstreetmap.org/wiki/Davao_City/Public_transportation"
+  },
+  {
+   "code": "Sasa",
+   "name": "Claveria – Sasa via R. Castillo",
+   "start": "Claveria",
+   "far": "Sasa",
+   "inbound": "C.M. Recto – J.P. Laurel – Maharlika Highway",
+   "outbound": "Maharlika Highway – R. Castillo – Leon Garcia – Aurora Quezon – Quezon Boulevard – Rizal",
+   "source_url": "https://wiki.openstreetmap.org/wiki/Davao_City/Public_transportation",
+   "note": "The wiki lists a second Sasa route that skips Aurora Quezon on the way back; it is not drawn separately."
+  }
+ ]
+}

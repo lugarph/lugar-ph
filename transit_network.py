@@ -14,16 +14,24 @@ from typing import Callable
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
 CITY_METADATA = {
-    "bacolod": {"name": "Bacolod City", "center": [10.6825, 122.9545], "zoom": 13, "source_label": "Bacolod LPTRP", "source_url": "https://ncts.upd.edu.ph/tssp/wp-content/uploads/2024/01/TSSP2023-09-Tiglao-1.pdf"},
-    "iloilo": {"name": "Iloilo City", "center": [10.7130, 122.5570], "zoom": 13, "source_label": "Iloilo LPTRP 2023", "source_url": "https://ilonggoengineer.com/wp-content/uploads/2025/04/mc-2023-036.pdf"},
-    "cebu": {"name": "Cebu City", "center": [10.3157, 123.8854], "zoom": 13, "source_label": "Cebu DOTC GTFS", "source_url": "https://www.transit.land/feeds/f-wcb4-cebu~dotc"},
-    "tacloban": {"name": "Tacloban City", "center": [11.2440, 125.0000], "zoom": 13, "source_label": "Tacloban LPTRP 2024", "source_url": "https://tacloban.gov.ph/ordinance/page/5/"},
+    "bacolod": {"region": "Visayas", "name": "Bacolod City", "center": [10.6825, 122.9545], "zoom": 13, "source_label": "Bacolod LPTRP", "source_url": "https://ncts.upd.edu.ph/tssp/wp-content/uploads/2024/01/TSSP2023-09-Tiglao-1.pdf"},
+    "iloilo": {"region": "Visayas", "name": "Iloilo City", "center": [10.7130, 122.5570], "zoom": 13, "source_label": "Iloilo LPTRP 2023", "source_url": "https://ilonggoengineer.com/wp-content/uploads/2025/04/mc-2023-036.pdf"},
+    "cebu": {"region": "Visayas", "name": "Cebu City", "center": [10.3157, 123.8854], "zoom": 13, "source_label": "Cebu DOTC GTFS", "source_url": "https://www.transit.land/feeds/f-wcb4-cebu~dotc"},
+    "tacloban": {"region": "Visayas", "name": "Tacloban City", "center": [11.2440, 125.0000], "zoom": 13, "source_label": "Tacloban LPTRP 2024", "source_url": "https://tacloban.gov.ph/ordinance/page/5/"},
+    "baguio": {"region": "Luzon", "name": "Baguio City", "center": [16.4124, 120.5960], "zoom": 14, "source_label": "OpenStreetMap", "source_url": "https://wiki.openstreetmap.org/wiki/Philippines/Public_transportation"},
+    "naga": {"region": "Luzon", "name": "Naga City", "center": [13.6218, 123.1948], "zoom": 14, "source_label": "Naga LPTRP 2025", "source_url": "https://www2.naga.gov.ph/wp-content/uploads/2025/10/Ordno-2025-070-Institutionalizing-the-Approved-LPTRP.pdf"},
+    "cdo": {"region": "Mindanao", "name": "Cagayan de Oro", "center": [8.4800, 124.6450], "zoom": 13, "source_label": "CDO LPTRP 2025", "source_url": "https://sites.google.com/view/cdo-routes-lptrp/home"},
+    "davao": {"region": "Mindanao", "name": "Davao City", "center": [7.0731, 125.6128], "zoom": 14, "source_label": "OpenStreetMap Wiki", "source_url": "https://wiki.openstreetmap.org/wiki/Davao_City/Public_transportation", "coverage_note": "Downtown routes only so far"},
 }
 NETWORK_FILES = {
     "bacolod": DATA_DIR / "jeepney_network.geojson",
     "iloilo": DATA_DIR / "iloilo_jeepney_network.geojson",
     "cebu": DATA_DIR / "cebu_jeepney_network.geojson",
     "tacloban": DATA_DIR / "tacloban_jeepney_network.geojson",
+    "baguio": DATA_DIR / "baguio_jeepney_network.geojson",
+    "naga": DATA_DIR / "naga_jeepney_network.geojson",
+    "cdo": DATA_DIR / "cdo_jeepney_network.geojson",
+    "davao": DATA_DIR / "davao_jeepney_network.geojson",
 }
 NETWORKS = {city: json.loads(path.read_text(encoding="utf-8")) for city, path in NETWORK_FILES.items()}
 NETWORK = NETWORKS["bacolod"]

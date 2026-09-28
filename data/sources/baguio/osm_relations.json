@@ -1,0 +1,2554 @@
+{
+ "city": "baguio",
+ "source": "OpenStreetMap route relations (public_transport:version 2), jeepney routes around Baguio and La Trinidad",
+ "retrieved": "2026-09-28",
+ "query": "relation[type=route][route~bus|share_taxi] in 16.37,120.55,16.45,120.63; tags as fetched",
+ "licence": "© OpenStreetMap contributors, ODbL",
+ "relations": [
+  {
+   "id": 7402943,
+   "tags": {
+    "bus": "share_taxi",
+    "from": "Motorpool/Swamp Terminal",
+    "name": "Jeepney: Baguio → Pico-Puguis",
+    "public_transport:version": "2",
+    "ref": "Pico-Puguis",
+    "route": "bus",
+    "to": "Motorpool Terminal",
+    "type": "route"
+   },
+   "way_members": 80,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 10813981,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "15 PHP",
+    "colour": "#008000",
+    "duration": "15",
+    "fee": "yes",
+    "from": "Lower Kitma",
+    "name": "Jeepney: Kitma → Baguio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 06:00-19:00",
+    "public_transport:version": "2",
+    "ref": "Kitma",
+    "route": "bus",
+    "to": "Kitma PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 41,
+   "roles": [
+    "",
+    "hail_and_ride",
+    "platform"
+   ]
+  },
+  {
+   "id": 10814471,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "15 PHP",
+    "colour": "#008000",
+    "duration": "13",
+    "fee": "yes",
+    "from": "Kitma PUJ Terminal",
+    "name": "Jeepney: Baguio → Kitma",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 06:00-20:00",
+    "public_transport:version": "2",
+    "ref": "Kitma",
+    "route": "bus",
+    "to": "Lower Kitma",
+    "type": "route"
+   },
+   "way_members": 27,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 10822347,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#008000",
+    "duration": "18",
+    "fee": "yes",
+    "from": "Monticello Road",
+    "name": "Jeepney: Bakakeng Norte / Sur → Baguio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 06:00-20:00",
+    "public_transport:version": "2",
+    "ref": "Bakakeng Norte / Sur",
+    "route": "bus",
+    "to": "Bakakeng Norte / Sur PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 41,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 10822449,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#008000",
+    "fee": "yes",
+    "from": "Scout Barrio PUJ Terminal",
+    "name": "Jeepney: Baguio → Scout Barrio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 06:00-17:00",
+    "public_transport:version": "2",
+    "ref": "Scout Barrio",
+    "route": "bus",
+    "to": "Upper Scout Barrio",
+    "type": "route"
+   },
+   "way_members": 49,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 10822551,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#008000",
+    "fee": "yes",
+    "from": "Scout Barrio Station",
+    "name": "Jeepney: Scout Barrio → Baguio",
+    "network": "LTFRB Cordillera Administrative Region",
+    "network:short": "LTFRB CAR",
+    "network:wikidata": "Q6483998",
+    "opening_hours": "Mo-Su 06:00-17:00",
+    "public_transport:version": "2",
+    "ref": "Scout Barrio",
+    "route": "bus",
+    "to": "Scout Barrio PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 37,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 10827541,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#008000",
+    "duration": "16",
+    "fee": "yes",
+    "from": "Bakakeng Norte / Sur PUJ Terminal",
+    "name": "Jeepney: Baguio → Bakakeng Norte / Sur",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 06:00-20:00",
+    "public_transport:version": "2",
+    "ref": "Bakakeng Norte / Sur",
+    "route": "bus",
+    "to": "Monticello Road",
+    "type": "route"
+   },
+   "way_members": 31,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 10827706,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "9 PHP",
+    "colour": "#008000",
+    "duration": "9",
+    "fee": "yes",
+    "from": "Military Cut-Off PUJ Terminal",
+    "name": "Jeepney: Baguio → Military Cut-Off",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "ref": "Military Cut-Off",
+    "route": "bus",
+    "to": "Military Cut-Off",
+    "type": "route"
+   },
+   "way_members": 37,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 10827746,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "9 PHP",
+    "colour": "#008000",
+    "duration": "9",
+    "fee": "yes",
+    "from": "Military Cut-Off",
+    "name": "Jeepney: Military Cut-Off → Baguio",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "ref": "Military Cut-Off",
+    "route": "bus",
+    "to": "Military Cut-Off PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 43,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 10827821,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#008000",
+    "duration": "11",
+    "fee": "yes",
+    "from": "Greenwater PUJ Terminal",
+    "name": "Jeepney: Baguio → Greenwater",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 07:00-19:00",
+    "public_transport:version": "2",
+    "ref": "Greenwater South",
+    "route": "bus",
+    "to": "Greenwater",
+    "type": "route"
+   },
+   "way_members": 35,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 10827822,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#008000",
+    "duration": "11",
+    "fee": "yes",
+    "from": "Greenwater Village Barangay Hall",
+    "name": "Jeepney: Greenwater → Baguio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 07:00-19:00",
+    "public_transport:version": "2",
+    "ref": "Greenwater",
+    "route": "bus",
+    "to": "Greenwater PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 45,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 10828037,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "16 PHP",
+    "fee": "yes",
+    "from": "PMA Kias PUJ Terminal",
+    "name": "Jeepney: Baguio → PMA Kias",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "ref": "PMA Kias",
+    "route": "bus",
+    "to": "Ipil",
+    "type": "route"
+   },
+   "way_members": 64,
+   "roles": [
+    "",
+    "platform"
+   ]
+  },
+  {
+   "id": 10831305,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "16 PHP",
+    "colour": "#008000",
+    "fee": "yes",
+    "from": "Kias Station",
+    "name": "Jeepney: PMA Kias → Baguio",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "ref": "PMA Kias",
+    "route": "bus",
+    "to": "PMA Kias PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 56,
+   "roles": [
+    "",
+    "platform"
+   ]
+  },
+  {
+   "id": 10831360,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "11 PHP",
+    "colour": "#FF0000",
+    "duration": "25",
+    "fee": "yes",
+    "from": "Mines View PUJ Terminal",
+    "name": "Jeepney: Baguio → Mines View",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 05:00-18:00",
+    "public_transport:version": "2",
+    "ref": "Mines View",
+    "route": "bus",
+    "to": "Mines View Park",
+    "type": "route"
+   },
+   "way_members": 56,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 10831364,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "11 PHP",
+    "colour": "#FF0000",
+    "duration": "25",
+    "fee": "yes",
+    "from": "Mines View Park",
+    "name": "Jeepney: Mines View → Baguio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 06:00-19:00",
+    "public_transport:version": "2",
+    "ref": "Mines View",
+    "route": "bus",
+    "to": "Mines View PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 59,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 10841890,
+   "tags": {
+    "bus": "share_taxi",
+    "colour": "#0000FF",
+    "from": "Aurora Hill PUJ Terminal",
+    "name": "Jeepney: Baguio → Aurora Hill",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "ref": "Aurora Hill",
+    "route": "bus",
+    "to": "East Modern Site Barangay Hall",
+    "type": "route"
+   },
+   "way_members": 28,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 10841891,
+   "tags": {
+    "bus": "share_taxi",
+    "colour": "#0000FF",
+    "from": "East Modern Site Barangay Hall",
+    "name": "Jeepney: Aurora Hill → Baguio",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "ref": "Aurora Hill",
+    "route": "bus",
+    "to": "Aurora Hill PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 41,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 10841916,
+   "tags": {
+    "bus": "share_taxi",
+    "from": "Liteng PUJ Terminal",
+    "name": "Jeepney:Baguio → Liteng",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "ref": "Liteng",
+    "route": "bus",
+    "to": "Liteng",
+    "type": "route"
+   },
+   "way_members": 60,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 10841917,
+   "tags": {
+    "bus": "share_taxi",
+    "from": "Liteng",
+    "name": "Jeepney: Liteng → Baguio",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "ref": "Liteng",
+    "route": "bus",
+    "to": "Liteng PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 51,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 11173414,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#FF0000",
+    "fee": "yes",
+    "from": "Navy Base",
+    "name": "Jeepney: Navy Base → Baguio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 08:00-19:00",
+    "public_transport:version": "2",
+    "ref": "Navy Base",
+    "route": "bus",
+    "to": "Liteng / Navy Base PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 48,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 11174155,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#FF0000",
+    "fee": "yes",
+    "from": "Liteng / Navy Base PUJ Terminal",
+    "name": "Jeepney: Baguio → Navy Base",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 08:00-19:00",
+    "public_transport:version": "2",
+    "ref": "Navy Base",
+    "route": "bus",
+    "to": "Navy Base",
+    "type": "route"
+   },
+   "way_members": 47,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 11190023,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "15 PHP",
+    "colour": "#008000",
+    "duration": "35",
+    "fee": "yes",
+    "from": "Green Valley PUJ Terminal",
+    "name": "Jeepney: Baguio → Green Valley",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "ref": "Green Valley",
+    "route": "bus",
+    "to": "Purok 10",
+    "type": "route"
+   },
+   "way_members": 45,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 11190024,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "15 PHP",
+    "colour": "#008000",
+    "duration": "35",
+    "fee": "yes",
+    "from": "Purok 10",
+    "name": "Jeepney: Green Valley → Baguio",
+    "network": "PH:CAR:Benguet",
+    "public_transport:version": "2",
+    "ref": "Green Valley",
+    "route": "bus",
+    "to": "Green Valley PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 47,
+   "roles": [
+    "",
+    "hail_and_ride",
+    "platform"
+   ]
+  },
+  {
+   "id": 11192042,
+   "tags": {
+    "bus": "share_taxi",
+    "colour": "#008000",
+    "fee": "yes",
+    "from": "Taloy PUJ Terminal",
+    "name": "Jeepney: Baguio → Taloy",
+    "network": "PH:CAR:Benguet",
+    "opening_hours": "Mo-Su 06:00-17:00",
+    "public_transport:version": "2",
+    "ref": "Taloy",
+    "route": "bus",
+    "to": "Pugo Poblacion East",
+    "type": "route"
+   },
+   "way_members": 97,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 11192154,
+   "tags": {
+    "bus": "share_taxi",
+    "colour": "#008000",
+    "from": "Pugo Poblacion East",
+    "name": "Jeepney: Taloy → Baguio",
+    "network": "PH:CAR:Benguet",
+    "opening_hours": "Mo-Su 06:00-17:00",
+    "public_transport:version": "2",
+    "ref": "Taloy",
+    "route": "bus",
+    "to": "Taloy PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 96,
+   "roles": [
+    "",
+    "platform"
+   ]
+  },
+  {
+   "id": 11243161,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "13 PHP",
+    "duration": "20",
+    "fee": "yes",
+    "from": "Saint Patrick / NPC",
+    "name": "Jeepney: Saint Patrick / NPC → Baguio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 05:00-20:30",
+    "public_transport:version": "2",
+    "ref": "Saint Patrick / NPC",
+    "route": "bus",
+    "to": "Saint Patrick / NPC PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 57,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 11243347,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "13 PHP",
+    "colour": "#FFFF00",
+    "fee": "yes",
+    "from": "Saint Patrick / NPC PUJ Terminal",
+    "name": "Jeepney: Baguio → Saint Patrick / NPC",
+    "opening_hours": "Mo-Su 05:00-20:30",
+    "public_transport:version": "2",
+    "ref": "Saint Patrick / NPC",
+    "route": "bus",
+    "to": "Saint Patrick / NPC",
+    "type": "route"
+   },
+   "way_members": 51,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 12903441,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "50 PHP",
+    "colour": "#FF0000",
+    "fee": "yes",
+    "from": "Itogon / Sangilo PUJ Terminal",
+    "name": "Jeepney: Baguio → Itogon / Sangilo",
+    "official_name": "Baguio Sangilo",
+    "public_transport:version": "2",
+    "ref": "Itogon / Sangilo",
+    "route": "bus",
+    "to": "1300 Level",
+    "type": "route",
+    "via": "Pacdal;Tuding;Ucab"
+   },
+   "way_members": 58,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 12909369,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "50 PHP",
+    "colour": "#FF0000",
+    "fee": "yes",
+    "from": "1300 Level",
+    "name": "Jeepney: Itogon / Sangilo → Baguio",
+    "public_transport:version": "2",
+    "ref": "Itogon / Sangilo",
+    "route": "bus",
+    "to": "Itogon / Sangilo PUJ Terminal",
+    "type": "route",
+    "via": "Ucab;Tuding;Pacdal"
+   },
+   "way_members": 53,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 12910000,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#FFFF00",
+    "fee": "yes",
+    "from": "San Carlos Heights",
+    "name": "Jeepney: San Carlos Heights → Baguio",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "ref": "San Carlos Heights",
+    "route": "bus",
+    "to": "San Carlos Heights PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 49,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 12910001,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#FFFF00",
+    "duration": "15",
+    "fee": "yes",
+    "from": "San Carlos Heights PUJ Terminal",
+    "name": "Jeepney: Baguio → San Carlos Heights",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "ref": "San Carlos Heights",
+    "route": "bus",
+    "to": "San Carlos Heights",
+    "type": "route"
+   },
+   "way_members": 40,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 12914196,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "40 PHP",
+    "colour": "#FFFF00",
+    "fee": "yes",
+    "from": "Sawili",
+    "name": "Jeepney: Sablan → Baguio",
+    "network": "PH:CAR:Benguet",
+    "opening_hours": "Mo-Sa 06:00-19:00; Su 06:00-16:30",
+    "public_transport:version": "2",
+    "ref": "Sablan",
+    "route": "bus",
+    "to": "Sablan PUJ Terminal",
+    "type": "route",
+    "via": "Sablan Poblacion;Banangan;Irisan"
+   },
+   "way_members": 77,
+   "roles": [
+    "",
+    "hail_and_ride",
+    "platform"
+   ]
+  },
+  {
+   "id": 12914197,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "40 PHP",
+    "colour": "#FFFF00",
+    "fee": "yes",
+    "from": "Sablan PUJ Terminal",
+    "name": "Jeepney: Baguio → Sablan",
+    "network": "PH:CAR:Benguet",
+    "opening_hours": "Mo-Sa 06:00-19:00; Su 06:00-16:30",
+    "public_transport:version": "2",
+    "ref": "Sablan",
+    "route": "bus",
+    "to": "Sawili",
+    "type": "route",
+    "via": "Irisan;Banangan;Poblacion"
+   },
+   "way_members": 72,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 12922868,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "30 PHP",
+    "colour": "#FF0000",
+    "fee": "yes",
+    "from": "Ucab PUJ Terminal",
+    "name": "Jeepney: Baguio → Ucab",
+    "official_name": "Baguio Ucab",
+    "public_transport:version": "2",
+    "ref": "Ucab",
+    "route": "bus",
+    "to": "Keystone",
+    "type": "route",
+    "via": "Pacdal;Tuding;Ucab"
+   },
+   "way_members": 45,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 12926774,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "30 PHP",
+    "colour": "#FF0000",
+    "fee": "yes",
+    "from": "Keystone",
+    "level": "3",
+    "name": "Jeepney: Ucab → Baguio",
+    "network": "PH:CAR:Benguet",
+    "public_transport:version": "2",
+    "ref": "Ucab",
+    "route": "bus",
+    "to": "Ucab / Keystone PUJ Terminal",
+    "type": "route",
+    "via": "Ucab;Tuding;Pacdal"
+   },
+   "way_members": 42,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 12993285,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "12 PHP",
+    "colour": "#0000FF",
+    "duration": "45",
+    "fee": "yes",
+    "from": "La Trinidad - Bokawkan Terminal",
+    "name": "Jeepney: Baguio → Tawang",
+    "network": "PH:CAR:Benguet",
+    "public_transport:version": "2",
+    "ref": "Tawang",
+    "route": "bus",
+    "to": "Sitio Dengsi",
+    "type": "route"
+   },
+   "way_members": 58,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 13384988,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "17.5 PHP",
+    "colour": "#008000",
+    "fee": "yes",
+    "from": "Loakan PEZA PUJ Terminal",
+    "name": "Jeepney: Baguio → Loakan PEZA",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "ref": "Loakan PEZA",
+    "route": "bus",
+    "to": "PEZA",
+    "type": "route"
+   },
+   "way_members": 47,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 13384989,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "17.5 PHP",
+    "colour": "#008000",
+    "fee": "yes",
+    "from": "PEZA",
+    "name": "Jeepney: Loakan PEZA → Baguio",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "ref": "Loakan PEZA",
+    "route": "bus",
+    "to": "Loakan PEZA PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 50,
+   "roles": [
+    "",
+    "platform"
+   ]
+  },
+  {
+   "id": 13438572,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "50 PHP",
+    "colour": "#FFFF00",
+    "duration": "50",
+    "fee": "yes",
+    "from": "Tricycle Station Hydro #4",
+    "name": "Jeepney: Nangalisan → Baguio",
+    "network": "PH:CAR:Benguet",
+    "opening_hours": "Mo-Fr 05:30-18:00; Sa-Su 06:00-15:00",
+    "public_transport:version": "2",
+    "ref": "Nangalisan",
+    "route": "bus",
+    "to": "Nangalisan PUJ Terminal",
+    "type": "route",
+    "via": "Asin"
+   },
+   "way_members": 72,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13438575,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "50 PHP",
+    "colour": "#FFFF00",
+    "duration": "50",
+    "fee": "yes",
+    "from": "Nangalisan PUJ Terminal",
+    "name": "Jeepney: Baguio → Nangalisan",
+    "network": "PH:CAR:Benguet",
+    "opening_hours": "Mo-Su 07:00-19:00",
+    "public_transport:version": "2",
+    "ref": "Nangalisan",
+    "route": "bus",
+    "to": "Nangalisan Hydro #4",
+    "type": "route",
+    "via": "Asin"
+   },
+   "way_members": 78,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13440186,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "30 PHP",
+    "colour": "#FFFF00",
+    "duration": "30",
+    "fee": "yes",
+    "from": "Asin Road PUJ Terminal",
+    "name": "Jeepney: Baguio → Asin Road",
+    "network": "PH:CAR:Benguet",
+    "public_transport:version": "2",
+    "ref": "Asin Road",
+    "route": "bus",
+    "to": "Aguyad Terminal",
+    "type": "route",
+    "via": "Tadiangan"
+   },
+   "way_members": 55,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13440187,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "30 PHP",
+    "colour": "#FFFF00",
+    "duration": "30",
+    "fee": "yes",
+    "from": "Sipitan",
+    "name": "Jeepney: Asin Road → Baguio",
+    "network": "PH:CAR:Benguet",
+    "public_transport:version": "2",
+    "ref": "Asin Road",
+    "route": "bus",
+    "to": "Asin Road PUJ Terminal",
+    "type": "route",
+    "via": "Tadiangan"
+   },
+   "way_members": 57,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13440188,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "40 PHP",
+    "colour": "#FFFF00",
+    "duration": "40",
+    "fee": "yes",
+    "from": "Asin PUJ Terminal",
+    "name": "Jeepney: Baguio → Asin Hot Springs",
+    "network": "PH:CAR:Benguet",
+    "opening_hours": "Mo-Su 07:00-17:00",
+    "public_transport:version": "2",
+    "ref": "Asin Hot Springs",
+    "route": "bus",
+    "to": "Lusob Terminal",
+    "type": "route",
+    "via": "Asin;Tadiangan"
+   },
+   "way_members": 65,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13440189,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "40 PHP",
+    "colour": "#FFFF00",
+    "duration": "40",
+    "fee": "yes",
+    "from": "Lusob Terminal",
+    "name": "Jeepney: Asin Hot Springs → Baguio",
+    "network": "PH:CAR:Benguet",
+    "opening_hours": "Mo-Fr 06:00-16:00; Sa-Su 06:00-15:00",
+    "public_transport:version": "2",
+    "ref": "Asin Hot Springs",
+    "route": "bus",
+    "to": "Asin PUJ Terminal",
+    "type": "route",
+    "via": "Tadiangan;Asin"
+   },
+   "way_members": 65,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13460743,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#FFFF00",
+    "fee": "yes",
+    "from": "San Luis PUJ Terminal",
+    "name": "Jeepney: Baguio → San Luis",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "ref": "San Luis",
+    "route": "bus",
+    "to": "Celestial Village Gate",
+    "type": "route",
+    "via": "San Roque"
+   },
+   "way_members": 37,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13462544,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#FFFF00",
+    "fee": "yes",
+    "from": "San Luis Terminal",
+    "name": "Jeepney: San Luis → Baguio",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "ref": "San Luis",
+    "route": "bus",
+    "to": "Rizal Park",
+    "type": "route",
+    "via": "San Roque"
+   },
+   "way_members": 40,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13462731,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "28 PHP",
+    "colour": "#FFFF00",
+    "description": "\"Tam-Awan Longlong\" written on the side of jeeps",
+    "duration": "30",
+    "fee": "yes",
+    "from": "fix this name",
+    "name": "Jeepney: Longlong → Baguio",
+    "network": "PH:CAR:Benguet",
+    "public_transport:version": "2",
+    "ref": "Longlong",
+    "route": "bus",
+    "to": "Longlong PUJ Terminal",
+    "type": "route",
+    "via": "Tam-Awan"
+   },
+   "way_members": 41,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13462733,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "28 PHP",
+    "colour": "#FFFF00",
+    "description": "\"Tam-Awan Longlong\" written on the side of jeeps",
+    "duration": "30",
+    "fee": "yes",
+    "from": "Longlong PUJ Terminal",
+    "name": "Jeepney: Baguio → Longlong",
+    "network": "PH:CAR:Benguet",
+    "public_transport:version": "2",
+    "ref": "Longlong",
+    "route": "bus",
+    "type": "route",
+    "via": "Tam-Awan"
+   },
+   "way_members": 34,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13495463,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "11 PHP",
+    "fee": "yes",
+    "from": "Camp 7 Health Center",
+    "name": "Jeepney: Camp 7 → Baguio",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "ref": "Camp 7",
+    "route": "bus",
+    "to": "Diego Silang Mini Park",
+    "type": "route"
+   },
+   "way_members": 45,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 13495464,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "11 PHP",
+    "colour": "#008000",
+    "fee": "yes",
+    "from": "Camp 7 PUJ Terminal",
+    "name": "Jeepney: Baguio → Camp 7",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "ref": "Camp 7",
+    "route": "bus",
+    "to": "Camp 7 Elementary School",
+    "type": "route"
+   },
+   "way_members": 53,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 13562598,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#FFFF00",
+    "duration": "15",
+    "fee": "yes",
+    "from": "Guisad Central Turning Point",
+    "name": "Jeepney: Guisad → Baguio",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "ref": "Guisad",
+    "route": "bus",
+    "to": "Guisad PUJ Terminal",
+    "type": "route",
+    "via": "Andres Bonifacio"
+   },
+   "way_members": 44,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13562608,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#FFFF00",
+    "duration": "15",
+    "fee": "yes",
+    "from": "Guisad PUJ Terminal",
+    "name": "Jeepney: Baguio → Guisad",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "red": "Guisad",
+    "route": "bus",
+    "to": "Guisad Central Turning Point",
+    "type": "route",
+    "via": "Campo Filipino"
+   },
+   "way_members": 23,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13571343,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#FFFF00",
+    "duration": "20",
+    "fee": "yes",
+    "from": "Lourdes Dominican PUJ Terminal",
+    "name": "Jeepney: Baguio → Lourdes Dominican",
+    "network": "PH:CAR:Baguio",
+    "operator": "Cordillera Basic Sectors Transport Cooperative",
+    "public_transport:version": "2",
+    "ref": "Lourdes Dominican",
+    "route": "bus",
+    "to": "Lourdes Dominican Turning Point",
+    "type": "route"
+   },
+   "way_members": 34,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13571476,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#FFFF00",
+    "duration": "15",
+    "fee": "yes",
+    "from": "Dominican Mirador Barangay Hall",
+    "name": "Jeepney: Lourdes Dominican → Baguio",
+    "network": "PH:CAR:Baguio",
+    "operator": "Cordillera Basic Sectors Transport Cooperative",
+    "public_transport:version": "2",
+    "ref": "Lourdes Dominican",
+    "route": "bus",
+    "to": "Lourdes Dominican PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 45,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13573517,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#FFFF00",
+    "duration": "25",
+    "fee": "yes",
+    "from": "Kalkalan Turning Point",
+    "name": "Jeepney: Pinsao Pilot Project → Baguio",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "ref": "Pinsao Pilot Project",
+    "route": "bus",
+    "to": "Pinsao Pilot Project PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 41,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13573518,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#FFFF00",
+    "duration": "25",
+    "fee": "yes",
+    "from": "Pinsao Pilot Project PUJ Terminal",
+    "name": "Jeepney: Baguio → Pinsao Pilot Project",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "ref": "Pinsao Pilot Project",
+    "route": "bus",
+    "to": "Kalkalan Turning Point",
+    "type": "route"
+   },
+   "way_members": 38,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13573913,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#FFFF00",
+    "duration": "20",
+    "fee": "yes",
+    "from": "Quezon Hill Turning Point",
+    "name": "Jeepney: Quezon Hill → Baguio",
+    "network": "PH:CAR:Baguio",
+    "operator": "Tam-Awan Transport Cooperative",
+    "public_transport:version": "2",
+    "ref": "Quezon Hill",
+    "route": "bus",
+    "to": "Hilltop PUJ Area Unloading",
+    "type": "route"
+   },
+   "way_members": 47,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13573914,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#FFFF00",
+    "duration": "20",
+    "fee": "yes",
+    "from": "Quezon Hill PUJ Terminal",
+    "name": "Jeepney: Baguio → Quezon Hill",
+    "network": "PH:CAR:Baguio",
+    "operator": "Tam-Awan Transport Cooperative",
+    "public_transport:version": "2",
+    "ref": "Quezon Hill",
+    "route": "bus",
+    "to": "Quezon Hill Turning Point",
+    "type": "route"
+   },
+   "way_members": 30,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13594333,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#008000",
+    "duration": "12",
+    "fee": "yes",
+    "from": "Santo Rosario Barangay Hall",
+    "name": "Jeepney: Campo Sioco → Baguio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 06:00-19:00",
+    "public_transport:version": "2",
+    "ref": "Campo Sioco",
+    "route": "bus",
+    "to": "Campo Sioco PUJ Terminal",
+    "type": "route",
+    "via": "Baguio General Hospital"
+   },
+   "way_members": 36,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13594334,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#008000",
+    "duration": "12",
+    "fee": "yes",
+    "from": "Campo Sioco PUJ Terminal",
+    "name": "Jeepney: Baguio → Campo Sioco",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 06:00-19:00",
+    "public_transport:version": "2",
+    "ref": "Campo Sioco",
+    "route": "bus",
+    "to": "Santo Rosaria Barangay Hall",
+    "type": "route",
+    "via": "Baguio General Hospital"
+   },
+   "way_members": 44,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13594348,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "9 PHP",
+    "colour": "#008000",
+    "duration": "16",
+    "fee": "yes",
+    "from": "Gabriela Silang PUJ Terminal",
+    "name": "Jeepney: Baguio → Gabriela Silang",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 05:30-20:00",
+    "public_transport:version": "2",
+    "ref": "Gabriela Silang",
+    "route": "bus",
+    "to": "Gabriela Silang Covered Court",
+    "type": "route",
+    "via": "Military Cut-Off;Hillside"
+   },
+   "way_members": 48,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13594549,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#008000",
+    "duration": "12",
+    "fee": "yes",
+    "from": "Gabriela Silang Turning Point",
+    "name": "Jeepney: Gabriela Silang → Baguio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 05:30-20:00",
+    "public_transport:version": "2",
+    "ref": "Gabriela Silang",
+    "route": "bus",
+    "to": "Gabriela Silang PUJ Terminal",
+    "type": "route",
+    "via": "Hillside;Military Cut-Off"
+   },
+   "way_members": 47,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13595081,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "20 PHP",
+    "colour": "#008000",
+    "duration": "50",
+    "fee": "yes",
+    "from": "Badiwan Turning Point",
+    "name": "Jeepney: Badiwan → Baguio",
+    "network": "PH:CAR:Benguet",
+    "opening_hours": "Mo-Su 06:00-18:00",
+    "public_transport:version": "2",
+    "ref": "Badiwan",
+    "route": "bus",
+    "to": "Badiwan PUJ Terminal",
+    "type": "route",
+    "via": "Rock Shed"
+   },
+   "way_members": 78,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13595082,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "20 PHP",
+    "colour": "#008000",
+    "duration": "50",
+    "fee": "yes",
+    "from": "Badiwan PUJ Terminal",
+    "name": "Jeepney: Baguio → Badiwan",
+    "network": "PH:CAR:Benguet",
+    "opening_hours": "Mo-Su 06:00-18:00",
+    "public_transport:version": "2",
+    "ref": "Badiwan",
+    "route": "bus",
+    "to": "Badiwan Turning Point",
+    "type": "route"
+   },
+   "way_members": 51,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13595131,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#FFFF00",
+    "description": "\"Tacay Tam-Awan\" written on the side of jeeps",
+    "duration": "20",
+    "fee": "yes",
+    "from": "Tam-Awan Turning Point",
+    "name": "Jeepney: Tam-Awan → Baguio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 04:00-20:00",
+    "operator": "Tam-Awan Transport Cooperative",
+    "public_transport:version": "2",
+    "ref": "Tam-Awan",
+    "route": "bus",
+    "to": "Hilltop PUJ Area Unloading",
+    "type": "route"
+   },
+   "way_members": 45,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13595132,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#FFFF00",
+    "description": "\"Tacay Tam-Awan\" written on the side of jeeps",
+    "duration": "20",
+    "fee": "yes",
+    "from": "Tam-Awan PUJ Terminal",
+    "name": "Jeepney: Baguio → Tam-Awan",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 04:00-20:00",
+    "operator": "Tam-Awan Transport Cooperative",
+    "public_transport:version": "2",
+    "ref": "Tam-Awan",
+    "route": "bus",
+    "to": "Tam-Awan Turning Point",
+    "type": "route"
+   },
+   "way_members": 29,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13598982,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10",
+    "colour": "#FFFF00",
+    "duration": "20",
+    "fee": "yes",
+    "from": "San Carlos Heights Extension Turning Point",
+    "name": "Jeepney: San Carlos Heights Extension → Baguio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 05:00-18:00",
+    "public_transport:version": "2",
+    "ref": "San Carlos Heights Extension",
+    "route": "bus",
+    "to": "Hilltop PUJ Area Unloading",
+    "type": "route"
+   },
+   "way_members": 58,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13598983,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#FFFF00",
+    "duration": "20",
+    "fee": "yes",
+    "from": "San Carlos Heights Extension PUJ Terminal",
+    "name": "Jeepney: Baguio → San Carlos Heights Extension",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 05:00-18:00",
+    "public_transport:version": "2",
+    "ref": "San Carlos Heights Extension",
+    "route": "bus",
+    "to": "San Carlos Heights Extension Turning Point",
+    "type": "route"
+   },
+   "way_members": 42,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13613150,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "17 PHP",
+    "colour": "#FF0000",
+    "duration": "28",
+    "fee": "yes",
+    "from": "Lucnab Purok 4 B",
+    "name": "Jeepney: Lucnab → Baguio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 06:00-19:00",
+    "public_transport:version": "2",
+    "ref": "Lucnab",
+    "route": "bus",
+    "to": "Lucnab PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 58,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13613151,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "17 PHP",
+    "colour": "#FF0000",
+    "duration": "32",
+    "fee": "yes",
+    "from": "Lucnab PUJ Terminal",
+    "name": "Jeepney: Baguio → Lucnab",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 06:00-19:00",
+    "public_transport:version": "2",
+    "ref": "Lucnab",
+    "route": "bus",
+    "to": "Lucnab Purok 4 B",
+    "type": "route"
+   },
+   "way_members": 60,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13618337,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "15 PHP",
+    "colour": "#FF0000",
+    "duration": "16",
+    "fee": "yes",
+    "from": "Country Club Village PUJ Terminal",
+    "name": "Jeepney: Baguio → Country Club",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 06:00-19:30",
+    "public_transport:version": "2",
+    "ref": "Country Club",
+    "route": "bus",
+    "to": "Country Club Village Turning Point",
+    "type": "route"
+   },
+   "way_members": 37,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 13618349,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "15 PHP",
+    "colour": "#FF0000",
+    "duration": "18",
+    "fee": "yes",
+    "from": "Country Club Village Barangay Hall",
+    "name": "Jeepney: Country Club → Baguio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 06:30-19:00",
+    "public_transport:version": "2",
+    "ref": "Country Club",
+    "route": "bus",
+    "to": "Country Club Village PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 30,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 13625711,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "15 PHP",
+    "colour": "#008000",
+    "duration": "30",
+    "fee": "yes",
+    "from": "Crystal Cave PUJ Terminal",
+    "name": "Jeepney: Baguio → Crystal Cave",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 05:00-21:00",
+    "public_transport:version": "2",
+    "ref": "Crystal Cave",
+    "route": "bus",
+    "to": "Crystal Cave Turning Point",
+    "type": "route"
+   },
+   "way_members": 33,
+   "roles": [
+    "",
+    "hail_and_ride",
+    "platform"
+   ]
+  },
+  {
+   "id": 13627575,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "15 PHP",
+    "colour": "#008000",
+    "duration": "38",
+    "fee": "yes",
+    "from": "Crystal Cave Turning Point",
+    "name": "Jeepney: Crystal Cave → Baguio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 05:00-21:00",
+    "public_transport:version": "2",
+    "ref": "Crystal Cave",
+    "route": "bus",
+    "to": "Crystal Cave PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 54,
+   "roles": [
+    "",
+    "hail_and_ride",
+    "platform"
+   ]
+  },
+  {
+   "id": 13627847,
+   "tags": {
+    "alt_name": "long",
+    "bus": "share_taxi",
+    "charge": "20 PHP",
+    "colour": "#FFFF00",
+    "duration": "24",
+    "fee": "yes",
+    "from": "Irisan National High School",
+    "name": "Jeepney: Lamtang → Baguio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 06:00-18:30",
+    "operator": "Ijoda Transport Cooperative",
+    "public_transport:version": "2",
+    "ref": "Lamtang",
+    "route": "bus",
+    "to": "Lamtang PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 71,
+   "roles": [
+    "",
+    "hail_and_ride",
+    "platform"
+   ]
+  },
+  {
+   "id": 13627848,
+   "tags": {
+    "alt_name": "long",
+    "bus": "share_taxi",
+    "charge": "20 PHP",
+    "colour": "#FFFF00",
+    "duration": "34",
+    "fee": "yes",
+    "from": "Lamtang PUJ Terminal",
+    "name": "Jeepney: Baguio → Lamtang",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 05:00-20:00",
+    "operator": "Ijoda Transport Cooperative",
+    "public_transport:version": "2",
+    "ref": "Lamtang",
+    "route": "bus",
+    "to": "Lamtang Turning Point",
+    "type": "route"
+   },
+   "way_members": 71,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13667242,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "9 PHP",
+    "colour": "#FFFF00",
+    "duration": "9",
+    "fee": "yes",
+    "from": "City Camp Quarry Turning Point",
+    "name": "Jeepney: City Camp Quarry → Baguio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 05:45-18:45",
+    "public_transport:version": "2",
+    "ref": "City Camp Quarry",
+    "route": "bus",
+    "to": "City Camp District PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 26,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13667243,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "9 PHP",
+    "colour": "#FFFF00",
+    "duration": "9",
+    "fee": "yes",
+    "from": "City Camp District PUJ Terminal",
+    "name": "Jeepney: Baguio → City Camp Quarry",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 06:00-19:00",
+    "public_transport:version": "2",
+    "ref": "City Camp Quarry",
+    "route": "bus",
+    "to": "City Camp Quarry Turning Point",
+    "type": "route"
+   },
+   "way_members": 21,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 13668303,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "15 PHP",
+    "colour": "#FFFF00",
+    "duration": "14",
+    "fee": "yes",
+    "from": "Cypress Road",
+    "name": "Jeepney: Marville → Baguio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 05:30-20:00",
+    "operator": "Ijoda Transport Cooperative",
+    "public_transport:version": "2",
+    "ref": "Marville",
+    "route": "bus",
+    "to": "Marville PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 57,
+   "roles": [
+    "",
+    "hail_and_ride",
+    "platform"
+   ]
+  },
+  {
+   "id": 13668464,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "15 PHP",
+    "colour": "#FFFF00",
+    "duration": "20",
+    "fee": "yes",
+    "from": "Irisan Marville PUJ Terminal",
+    "name": "Jeepney: Baguio → Marville",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 05:30-20:00",
+    "operator": "Ijoda Transport Cooperative",
+    "public_transport:version": "2",
+    "ref": "Marville",
+    "route": "bus",
+    "to": "Marville Turning Point",
+    "type": "route"
+   },
+   "way_members": 63,
+   "roles": [
+    "",
+    "hail_and_ride",
+    "platform"
+   ]
+  },
+  {
+   "id": 13670893,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "15 PHP",
+    "colour": "#FFFF00",
+    "duration": "20",
+    "fee": "yes",
+    "from": "UP Village PUJ Terminal",
+    "name": "Jeepney: Marville → Baguio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 05:30-20:00",
+    "operator": "Ijoda Transport Cooperative",
+    "public_transport:version": "2",
+    "ref": "Marville",
+    "route": "bus",
+    "to": "Marville PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 61,
+   "roles": [
+    "",
+    "hail_and_ride",
+    "platform"
+   ]
+  },
+  {
+   "id": 13940394,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "120 PHP",
+    "duration": "1:30",
+    "fee": "yes",
+    "from": "Baguio PUJ Terminal",
+    "name": "Jeepney: Agoo → Baguio",
+    "network": "PH",
+    "opening_hours": "Mo-Su 06:00-16:00",
+    "public_transport:version": "2",
+    "ref": "Baguio Agoo",
+    "route": "bus",
+    "to": "Agoo PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 152,
+   "roles": [
+    "",
+    "platform"
+   ]
+  },
+  {
+   "id": 13940810,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "120 PHP",
+    "duration": "1:30",
+    "fee": "yes",
+    "from": "Agoo PUJ Terminal",
+    "name": "Jeepney: Baguio → Agoo",
+    "network": "PH",
+    "opening_hours": "Mo-Su 06:00-16:00",
+    "public_transport:version": "2",
+    "ref": "Baguio Agoo",
+    "route": "bus",
+    "to": "Baguio PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 148,
+   "roles": [
+    "",
+    "platform"
+   ]
+  },
+  {
+   "id": 13970692,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#0000FF",
+    "duration": "24",
+    "fee": "yes",
+    "fixme": "operating hours, verify fee",
+    "from": "Dengsi Turning Point",
+    "name": "Jeepney: Camp Dangwa → Baguio",
+    "network": "PH:CAR",
+    "public_transport:version": "2",
+    "ref": "Camp Dangwa",
+    "route": "bus",
+    "to": "Upper Magsaysay End",
+    "type": "route"
+   },
+   "way_members": 72,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 13970693,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#0000FF",
+    "duration": "24",
+    "fee": "yes",
+    "fixme": "operating hours, verify fee",
+    "from": "Camp Dangwa PUJ Terminal",
+    "name": "Jeepney: Baguio → Camp Dangwa",
+    "network": "PH:CAR",
+    "public_transport:version": "2",
+    "ref": "Camp Dangwa",
+    "route": "bus",
+    "to": "Dengsi Turning Point",
+    "type": "route"
+   },
+   "way_members": 74,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 13973786,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#0000FF",
+    "duration": "20",
+    "fee": "yes",
+    "from": "Boted Turning Point",
+    "name": "Jeepney: Tawang → Pines Park",
+    "network": "PH:CAR:La Trinidad",
+    "opening_hours": "Mo-Su 06:00-19:00",
+    "public_transport:version": "2",
+    "ref": "Pines Park Tawang",
+    "route": "bus",
+    "to": "Pines Park Tawang PUJ Terminal",
+    "type": "route",
+    "via": "Lubas"
+   },
+   "way_members": 10,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 13973787,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10 PHP",
+    "colour": "#0000FF",
+    "duration": "20",
+    "fee": "yes",
+    "from": "Pines Park Tawang PUJ Terminal",
+    "name": "Jeepney: Pines Park → Tawang",
+    "network": "PH:CAR:La Trinidad",
+    "opening_hours": "Mo-Su 06:00-19:00",
+    "public_transport:version": "2",
+    "ref": "Pines Park Tawang",
+    "route": "bus",
+    "to": "Boted Turning Point",
+    "type": "route",
+    "via": "Lubas"
+   },
+   "way_members": 10,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 13981483,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "120",
+    "colour": "#008000",
+    "duration": "1:30",
+    "fee": "yes",
+    "from": "Rosario PUJ Terminal",
+    "name": "Jeepney: Baguio → Rosario",
+    "network": "PH:CAR",
+    "opening_hours": "Mo-Su 06:00-16:00",
+    "public_transport:version": "2",
+    "ref": "Rosario",
+    "route": "bus",
+    "to": "Camp 1 PUJ Terminal",
+    "type": "route",
+    "via": "Kennon Road"
+   },
+   "way_members": 117,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 13981559,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "120",
+    "colour": "#008000",
+    "duration": "1:30",
+    "fee": "yes",
+    "from": "Camp 1 PUJ Terminal",
+    "name": "Jeepney: Rosario → Baguio",
+    "network": "PH:CAR",
+    "opening_hours": "Mo-Su 06:00-16:00",
+    "public_transport:version": "2",
+    "ref": "Rosario",
+    "route": "bus",
+    "to": "Rosario PUJ Terminal",
+    "type": "route",
+    "via": "Kennon Road"
+   },
+   "way_members": 128,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 14134274,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "25 PHP",
+    "colour": "#008000",
+    "duration": "35",
+    "fee": "yes",
+    "from": "Camp 6 PUJ Terminal",
+    "name": "Jeepney: Baguio → Camp 6",
+    "network": "PH:CAR:Benguet",
+    "opening_hours": "Mo-Su 06:00-19:00",
+    "public_transport:version": "2",
+    "ref": "Camp 6",
+    "route": "bus",
+    "to": "Camp 6 Millsite",
+    "type": "route"
+   },
+   "way_members": 71,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 14134306,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "25 PHP",
+    "colour": "#008000",
+    "duration": "35",
+    "fee": "yes",
+    "from": "Camp 6 Millsite",
+    "name": "Jeepney: Camp 6 → Baguio",
+    "network": "PH:CAR:Benguet",
+    "opening_hours": "Mo-Su 06:00-17:00",
+    "public_transport:version": "2",
+    "ref": "Camp 6",
+    "route": "bus",
+    "to": "Camp 6 PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 66,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 14134819,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "17 PHP",
+    "colour": "#008000",
+    "duration": "25",
+    "fee": "yes",
+    "from": "Happy Hollow PUJ Terminal",
+    "name": "Jeepney: Baguio → Happy Hollow",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 06:00-19:00",
+    "public_transport:version": "2",
+    "ref": "Happy Hollow",
+    "route": "bus",
+    "to": "Happy Hollow Purok 1",
+    "type": "route",
+    "via": "Kadaclan"
+   },
+   "way_members": 80,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 14135112,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "17 PHP",
+    "colour": "#008000",
+    "duration": "25",
+    "fee": "yes",
+    "from": "Happy Hollow Purok 1",
+    "name": "Jeepney: Happy Hollow → Baguio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 06:00-18:00",
+    "public_transport:version": "2",
+    "ref": "Happy Hollow",
+    "route": "bus",
+    "to": "Happy Hollow PUJ Terminal",
+    "type": "route",
+    "via": "Kadaclan"
+   },
+   "way_members": 73,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 14222657,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "10",
+    "colour": "#FFFF00",
+    "duration": "20",
+    "fee": "yes",
+    "from": "San Carlos Heights Extension PUJ Terminal",
+    "name": "Jeepney: San Carlos Heights Extension → Baguio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 05:00-18:00",
+    "public_transport:version": "2",
+    "ref": "San Carlos Heights Extension",
+    "route": "bus",
+    "to": "Hilltop PUJ Area Unloading",
+    "type": "route"
+   },
+   "way_members": 55,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 14747449,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "13 PHP",
+    "colour": "#FFFF00",
+    "fee": "yes",
+    "from": "Dumpsite",
+    "name": "Jeepney: Dumpsite → Baguio",
+    "opening_hours": "Mo-Su 06:00-19:00",
+    "public_transport:version": "2",
+    "ref": "Dumpsite",
+    "route": "bus",
+    "to": "Dumpsite PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 47,
+   "roles": [
+    "",
+    "hail_and_ride",
+    "platform"
+   ]
+  },
+  {
+   "id": 14747600,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "13 PHP",
+    "colour": "#FFFF00",
+    "fee": "yes",
+    "from": "Dumpsite PUJ Terminal",
+    "name": "Jeepney: Baguio → Dumpsite",
+    "opening_hours": "Mo-Su 06:00-19:00",
+    "public_transport:version": "2",
+    "ref": "Dumpsite",
+    "route": "bus",
+    "to": "Dumpsite",
+    "type": "route"
+   },
+   "way_members": 47,
+   "roles": [
+    "",
+    "hail_and_ride",
+    "platform"
+   ]
+  },
+  {
+   "id": 15047074,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "14",
+    "colour": "#0000FF",
+    "fee": "yes",
+    "from": "SM Main Entrance",
+    "name": "Jeepney: Baguio → Trancoville",
+    "network": "PH:CAR:Baguio",
+    "operator": "Kaaruba Transport Service Cooperative",
+    "operator:type": "cooperative",
+    "public_transport:version": "2",
+    "ref": "Trancoville",
+    "roundtrip": "yes",
+    "route": "bus",
+    "to": "Trancoville Camdas",
+    "type": "route"
+   },
+   "way_members": 96,
+   "roles": [
+    "",
+    "platform"
+   ]
+  },
+  {
+   "id": 15475655,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "14",
+    "colour": "#0000FF",
+    "fee": "yes",
+    "from": "Trancoville PUJ Terminal",
+    "name": "Jeepney: Baguio → Trancoville",
+    "network": "PH:CAR:Baguio",
+    "operator": "Kaaruba Transport Service Cooperative",
+    "public_transport:version": "2",
+    "ref": "Trancoville",
+    "roundtrip": "yes",
+    "route": "bus",
+    "to": "Trancoville PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 98,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 15542725,
+   "tags": {
+    "bus": "share_taxi",
+    "name": "Jeepney: KM5 → Motorpool",
+    "public_transport:version": "2",
+    "route": "bus",
+    "type": "route"
+   },
+   "way_members": 19,
+   "roles": [
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 15590275,
+   "tags": {
+    "bus": "share_taxi",
+    "fee": "yes",
+    "fixme": "colour, operating hours, charge,duration",
+    "from": "end of the line",
+    "name": "Jeepney: Balacbac → Baguio",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "ref": "Balacbac",
+    "route": "bus",
+    "to": "Balacbac PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 52,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 15590276,
+   "tags": {
+    "bus": "share_taxi",
+    "fee": "yes",
+    "fixme": "colour, operating hours, charge,duration",
+    "from": "Balacbac PUJ Terminal",
+    "name": "Jeepney: Baguio → Balacbac",
+    "network": "PH:CAR:Baguio",
+    "public_transport:version": "2",
+    "ref": "Balacbac",
+    "route": "bus",
+    "to": "end of line",
+    "type": "route"
+   },
+   "way_members": 43,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 16237133,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "21 PHP",
+    "check_date": "2023-07-07",
+    "colour": "#0000FF",
+    "description": "operating hours",
+    "fee": "yes",
+    "from": "Housing PUJ Terminal",
+    "name": "Jeepney: Wangal → Baguio",
+    "network": "PH:BEN",
+    "public_transport:version": "2",
+    "ref": "WANGAL",
+    "route": "bus",
+    "source": "survey;bing",
+    "to": "Wangal PUJ Terminal",
+    "type": "route",
+    "via": "Buyagan"
+   },
+   "way_members": 68,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 16237135,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "21 PHP",
+    "check_date": "2023-07-07",
+    "colour": "#0000FF",
+    "description": "operating hours",
+    "fee": "yes",
+    "from": "Wangal PUJ Terminal",
+    "name": "Jeepney: Baguio → Wangal",
+    "network": "PH:BEN",
+    "public_transport:version": "2",
+    "ref": "WANGAL",
+    "route": "bus",
+    "source": "survey;bing",
+    "to": "Housing PUJ Terminal",
+    "type": "route",
+    "via": "Buyagan"
+   },
+   "way_members": 71,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 16243860,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "15 PHP",
+    "check_date": "2023-06-27",
+    "colour": "#008000",
+    "fee": "yes",
+    "from": "Bengao Turning Point",
+    "name": "Jeepney: Bengao → Baguio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 06:30-19:30",
+    "public_transport:version": "2",
+    "ref": "BENGAO",
+    "route": "bus",
+    "source": "survey;bing",
+    "to": "Bengao PUJ Terminal",
+    "type": "route",
+    "via": "Santo Niño"
+   },
+   "way_members": 32,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 16243861,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "15 PHP",
+    "check_date": "2023-06-27",
+    "colour": "#008000",
+    "fee": "yes",
+    "from": "Bengao PUJ Terminal",
+    "name": "Jeepney: Baguio → Bengao",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 06:30-19:30",
+    "public_transport:version": "2",
+    "ref": "BENGAO",
+    "route": "bus",
+    "source": "survey;bing",
+    "to": "Bengao Turning Point",
+    "type": "route",
+    "via": "Santo Niño"
+   },
+   "way_members": 35,
+   "roles": [
+    ""
+   ]
+  },
+  {
+   "id": 18504305,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "13 PHP",
+    "colour": "#FFFF00",
+    "fee": "yes",
+    "from": "Irisan 3 Pumping Station",
+    "name": "Jeepney: San Carlos Heights → Baguio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Fr 06:00-07:30",
+    "public_transport:version": "2",
+    "ref": "San Carlos Heights",
+    "route": "bus",
+    "to": "San Carlos Heights PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 46,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 18504356,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "13 PHP",
+    "duration": "20",
+    "fee": "yes",
+    "from": "Idogan Village",
+    "name": "Jeepney: Saint Patrick / NPC → Baguio",
+    "network": "PH:CAR:Baguio",
+    "opening_hours": "Mo-Su 06:00-07:30",
+    "public_transport:version": "2",
+    "ref": "Saint Patrick / NPC",
+    "route": "bus",
+    "to": "Saint Patrick / NPC PUJ Terminal",
+    "type": "route"
+   },
+   "way_members": 52,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 18654966,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "13 PHP",
+    "colour": "#0000FF",
+    "fee": "yes",
+    "from": "Pinget Jeepney Terminal",
+    "name": "Jeepney: Baguio → Pinget-Dreamland",
+    "network": "PH:CAR:Baguio",
+    "operator": "PDJODA",
+    "public_transport:version": "2",
+    "ref": "Pinget",
+    "route": "bus",
+    "to": "Dreamland (Turning Point)",
+    "type": "route",
+    "via": "Pinget"
+   },
+   "way_members": 36,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  },
+  {
+   "id": 18655895,
+   "tags": {
+    "bus": "share_taxi",
+    "charge": "13 PHP",
+    "colour": "#0000FF",
+    "fee": "yes",
+    "from": "Upper Pinget Jeepney Terminal",
+    "name": "Jeepney: Pinget-Dreamland → Baguio",
+    "network": "PH:CAR:Baguio",
+    "operator": "PDJODA",
+    "public_transport:version": "2",
+    "ref": "Pinget",
+    "route": "bus",
+    "to": "Pinget Jeepney Terminal",
+    "type": "route"
+   },
+   "way_members": 28,
+   "roles": [
+    "",
+    "hail_and_ride"
+   ]
+  }
+ ]
+}

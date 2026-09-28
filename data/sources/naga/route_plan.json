@@ -1,0 +1,127 @@
+{
+ "city": "naga",
+ "source": "City of Naga Ordinance No. 2025-070 (LTFRB-DOTr Board Resolution No. 204, s. 2025), with Sangguniang Panlungsod Resolution No. 2025-172",
+ "source_urls": [
+  "https://www2.naga.gov.ph/wp-content/uploads/2025/10/Ordno-2025-070-Institutionalizing-the-Approved-LPTRP.pdf",
+  "https://www2.naga.gov.ph/wp-content/uploads/2025/05/Resno-2025-172-Amending-Route-C-and-D-under-the-LPTRP.pdf"
+ ],
+ "retrieved": "2026-09-28",
+ "note": "Transcribed from the ordinance's route table (see the extracted text beside this file). Entrance runs from the barangay to Centro, exit returns; loops are split at their far point. Loops A and B turn at Bicol Central Station on Roxas Avenue; C and D at J. Miranda Avenue.",
+ "routes": [
+  {
+   "code": "1",
+   "name": "San Isidro – Centro via Cararayan",
+   "units": 20,
+   "start": "San Isidro",
+   "far": "Centro",
+   "inbound": "Cararayan-San Isidro Rd. – Balatas Rd. – Magsaysay Avenue – Peñafrancia Avenue – Diaz St. – Elias Angeles St. – Caceres St.",
+   "outbound": "Elias Angeles St. – Panganiban Drive – Dayangdang St. – Balatas Rd. – Cararayan-San Isidro Rd.",
+   "source_url": "https://www2.naga.gov.ph/wp-content/uploads/2025/10/Ordno-2025-070-Institutionalizing-the-Approved-LPTRP.pdf"
+  },
+  {
+   "code": "2",
+   "name": "Del Rosario – Centro via Magsaysay Avenue",
+   "units": 22,
+   "start": "Del Rosario",
+   "far": "Centro",
+   "inbound": "Maharlika Highway – Magsaysay Avenue – Peñafrancia Ave. – Diaz St. – Elias Angeles St. – Padian St.",
+   "outbound": "Gen. Luna St. – P. Burgos St. – Peñafrancia Ave. – Magsaysay Ave. – Maharlika Highway",
+   "source_url": "https://www2.naga.gov.ph/wp-content/uploads/2025/10/Ordno-2025-070-Institutionalizing-the-Approved-LPTRP.pdf"
+  },
+  {
+   "code": "3",
+   "name": "Del Rosario – Centro via Roxas Avenue",
+   "units": 28,
+   "start": "Del Rosario",
+   "far": "Centro",
+   "inbound": "AH26 – Roxas Avenue – Fraternidad St. – Biak na Bato St. – Gen. Luna St. – P. Burgos St. – J. Hernandez Ave.",
+   "outbound": "Gen. Luna St. – Biak na Bato St. – Fraternidad St. – Roxas Avenue – AH26",
+   "source_url": "https://www2.naga.gov.ph/wp-content/uploads/2025/10/Ordno-2025-070-Institutionalizing-the-Approved-LPTRP.pdf",
+   "note": "The ordinance also lists a Del Rosario – Almeda Highway – Roxas Avenue – Mabolo-Camaligan Gainza Rd. – Felix Plazo St. – Southbound Terminal variant, not drawn here."
+  },
+  {
+   "code": "4",
+   "name": "Del Rosario – Centro via Panganiban Drive",
+   "units": 55,
+   "start": "Del Rosario",
+   "far": "Centro",
+   "inbound": "AH26 – Panganiban Drive – J. Hernandez Ave. – Peñafrancia Avenue – Arana St. – Caceres St.",
+   "outbound": "Dinaga St. – Panganiban Drive – AH26",
+   "source_url": "https://www2.naga.gov.ph/wp-content/uploads/2025/10/Ordno-2025-070-Institutionalizing-the-Approved-LPTRP.pdf",
+   "note": "Order of J. Hernandez Ave. reconstructed from the table layout."
+  },
+  {
+   "code": "5",
+   "name": "San Felipe – Centro",
+   "units": 33,
+   "start": "San Felipe",
+   "far": "Centro",
+   "inbound": "Pacol Rd. – Peñafrancia Ave. – Diaz St. – Elias Angeles St. – Padian St. – Gen. Luna St.",
+   "outbound": "Gen. Luna St. – P. Burgos St. – Peñafrancia Ave. – Pacol Rd.",
+   "source_url": "https://www2.naga.gov.ph/wp-content/uploads/2025/10/Ordno-2025-070-Institutionalizing-the-Approved-LPTRP.pdf"
+  },
+  {
+   "code": "6",
+   "name": "Pacol – Centro",
+   "units": 29,
+   "start": "Pacol",
+   "far": "Centro",
+   "inbound": "Pacol Rd. – Peñafrancia Ave. – Diaz St. – Elias Angeles St.",
+   "outbound": "Padian St. – Dinaga St. – Peñafrancia Ave. – Pacol Rd.",
+   "source_url": "https://www2.naga.gov.ph/wp-content/uploads/2025/10/Ordno-2025-070-Institutionalizing-the-Approved-LPTRP.pdf"
+  },
+  {
+   "code": "7",
+   "name": "Carolina – Panicuason – Centro",
+   "units": 24,
+   "start": "Panicuason",
+   "far": "Centro",
+   "inbound": "Panicuason Rd. – Carolina Rd. – Pacol Rd. – Peñafrancia Ave. – Diaz St. – Elias Angeles St.",
+   "outbound": "Padian St. – Dinaga St. – Peñafrancia Ave. – Pacol Rd. – Carolina Rd. – Panicuason Rd.",
+   "source_url": "https://www2.naga.gov.ph/wp-content/uploads/2025/10/Ordno-2025-070-Institutionalizing-the-Approved-LPTRP.pdf"
+  },
+  {
+   "code": "8A",
+   "name": "Centro – Magsaysay Loop A (clockwise)",
+   "units": null,
+   "start": "Centro",
+   "far": "Bicol Central Station",
+   "inbound": "Gen. Luna St. – P. Burgos St. – Peñafrancia Avenue – Magsaysay Ave. – Taal Ave. – J. Miranda Ave. – Leon SA Aureus St. – Mayflower St. – Magsaysay Avenue – Roxas Ave.",
+   "outbound": "Roxas Avenue – Fraternidad St. – Biak na Bato St. – Gen. Luna St.",
+   "source_url": "https://www2.naga.gov.ph/wp-content/uploads/2025/10/Ordno-2025-070-Institutionalizing-the-Approved-LPTRP.pdf",
+   "note": "Loop A is listed as the reverse of Loop B; its cell is jumbled in the ordinance text. The four loops share 71 units."
+  },
+  {
+   "code": "8B",
+   "name": "Centro – Magsaysay Loop B (counterclockwise)",
+   "units": null,
+   "start": "Centro",
+   "far": "Bicol Central Station",
+   "inbound": "Gen. Luna St. – Biak na Bato St. – Fraternidad St. – Roxas Avenue",
+   "outbound": "Roxas Ave. – Magsaysay Ave. – Leon SA Aureus St. – Mayflower St. – J. Miranda Ave. – Taal Ave. – Magsaysay Ave. – Peñafrancia Avenue – P. Burgos St. – Gen. Luna St.",
+   "source_url": "https://www2.naga.gov.ph/wp-content/uploads/2025/10/Ordno-2025-070-Institutionalizing-the-Approved-LPTRP.pdf"
+  },
+  {
+   "code": "8C",
+   "name": "Centro – Magsaysay Loop C (clockwise)",
+   "units": null,
+   "start": "Centro",
+   "far": "Naga City Hall",
+   "inbound": "Gen. Luna St. – P. Burgos St. – Peñafrancia Ave. – Diaz St. – Elias Angeles St. – Bagumbayan St. – M.T. Villanueva Ave. – Magsaysay Ave. – J. Miranda Ave.",
+   "outbound": "J. Miranda Ave. – Roxas Ave. – Fraternidad St. – Biak-na-Bato St. – Gen. Luna St.",
+   "source_url": "https://www2.naga.gov.ph/wp-content/uploads/2025/05/Resno-2025-172-Amending-Route-C-and-D-under-the-LPTRP.pdf",
+   "note": "As amended by Resolution 2025-172 to include J. Miranda Avenue."
+  },
+  {
+   "code": "8D",
+   "name": "Centro – Magsaysay Loop D (counterclockwise)",
+   "units": null,
+   "start": "Centro",
+   "far": "Naga City Hall",
+   "inbound": "Gen. Luna St. – Biak-na-Bato St. – Fraternidad St. – Roxas Ave. – J. Miranda Ave.",
+   "outbound": "J. Miranda Ave. – Magsaysay Ave. – M.T. Villanueva Ave. – Bagumbayan St. – Elias Angeles St. – Caceres St. – Gen. Luna St.",
+   "source_url": "https://www2.naga.gov.ph/wp-content/uploads/2025/05/Resno-2025-172-Amending-Route-C-and-D-under-the-LPTRP.pdf",
+   "note": "As amended by Resolution 2025-172 to include J. Miranda Avenue."
+  }
+ ]
+}

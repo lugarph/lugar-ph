@@ -1,6 +1,6 @@
 # Lugar.ph
 
-Jeepney directions for Bacolod, Iloilo, Cebu, and Tacloban. Pick a start and a destination; Lugar.ph walks you to a nearby line and plans up to three jeepney rides, naming the signboards to look for, where to get off, and the estimated fare.
+Jeepney directions for Baguio, Naga, Bacolod, Iloilo, Cebu, Tacloban, Cagayan de Oro, and Davao. Each city has its own page, such as `/bacolod` or `/cdo`, and `/` introduces the app and lets riders pick a city. Pick a start and a destination; Lugar.ph walks you to a nearby line and plans up to three jeepney rides, naming the signboards to look for, where to get off, and the estimated fare.
 
 Built with FastAPI, Alpine.js, Tailwind CSS, and Leaflet.
 
@@ -32,14 +32,15 @@ Lugar.ph is free to copy for any city with jeepneys or other fixed-route transit
      relation["type"="route"]["route"~"bus|share_taxi|jeepney|minibus"]({{bbox}});
      out geom;
      ```
-     Export the result as GeoJSON, keep one circuit per line (out and back, in riding order), and add the line properties. Or list the relation ids in `OSM_ROUTES` in [`scripts/build_additional_city_networks.py`](scripts/build_additional_city_networks.py) to import them the way the existing cities do.
+     Export the result as GeoJSON, keep one circuit per line (out and back, in riding order), and add the line properties. Or list the relation ids in `OSM_LINES` in [`scripts/build_city_networks.py`](scripts/build_city_networks.py) to import them the way Baguio is.
+   - **If your city publishes its route plan street by street** (most LPTRPs list each route's streets in order), save the descriptions in `data/sources/<city>/route_plan.json` and the terminals in `data/sources/<city>/places.json`, then add the city to `CITIES` in [`scripts/build_city_networks.py`](scripts/build_city_networks.py). It draws each line through the corners where its streets meet, as it does for Cagayan de Oro and Naga. Check `data/sources/<city>/build_report.json` for streets it couldn't place and lines whose drawn length is far from the published one.
    - **Otherwise draw them** in [geojson.io](https://geojson.io), tracing each route the way the jeep drives it.
 3. **Add the city** in three places:
-   - `CITY_METADATA` and `NETWORK_FILES` in [`transit_network.py`](transit_network.py): name, map centre, zoom, route source, and the data file.
+   - `CITY_METADATA` and `NETWORK_FILES` in [`transit_network.py`](transit_network.py): region, name, map centre, zoom, route source, and the data file. The key is the city's address: `cdo` serves `/cdo`.
    - `CITY_VIEWBOXES` in [`osm_services.py`](osm_services.py): the bounding box that place search stays inside.
-   - `cities` and `cityProfiles` in [`templates/index.html`](templates/index.html): the default start point and a few popular places. Set `city: '<id>'` there to open on your city.
+   - `cityProfiles` in [`templates/index.html`](templates/index.html): the default start point and a few popular places.
 
-   Remove cities you don't need from the same places.
+   Remove cities you don't need from the same places. Other spellings of a city's address go in `CITY_ALIASES` in [`main.py`](main.py). With only one city, you can have `home()` in `main.py` redirect `/` to it.
 4. **Name your app to OpenStreetMap.** Set `LUGAR_USER_AGENT` to your app's name and a contact URL or email, such as `MyCityJeeps/1.0 (https://github.com/you/your-fork)`. The free search, walking, and map-tile services ask apps to identify themselves and only allow light use.
 5. **Check the local rules.** The fare estimate (`FARE_*`) and riding speeds are near the top of the planner section in [`transit_network.py`](transit_network.py). The fares follow the LTFRB regular jeepney fare.
 6. **Run `pytest`,** and update the expected city and line counts in `tests/test_route_catalog.py`.
@@ -59,6 +60,10 @@ Each city's jeepney network is one GeoJSON file in `data/`:
 | Iloilo | `iloilo_jeepney_network.geojson` | 25 | 10 |
 | Cebu | `cebu_jeepney_network.geojson` | 64 | 28 |
 | Tacloban | `tacloban_jeepney_network.geojson` | 19 | 6 |
+| Baguio | `baguio_jeepney_network.geojson` | 45 | 45 |
+| Naga | `naga_jeepney_network.geojson` | 11 | 0 |
+| Cagayan de Oro | `cdo_jeepney_network.geojson` | 63 | 0 |
+| Davao | `davao_jeepney_network.geojson` | 8 | 2 |
 
 The file is a `FeatureCollection` with one `LineString` feature per jeepney line:
 
@@ -165,9 +170,9 @@ cost = ride km + 2.2 × walk to and from the pins + 3 × walk between lines + 2 
 
 ## Contributing route data
 
-1. **Best: map it in OpenStreetMap.** Add or fix the line's public-transport route relations in OSM (one per direction, following the [PTv2 scheme](https://wiki.openstreetmap.org/wiki/Public_transport)). Then list the relation ids in `OSM_ROUTES`: in [`scripts/build_route_network.py`](scripts/build_route_network.py) for Bacolod (rerun it with the line's id), or in [`scripts/build_additional_city_networks.py`](scripts/build_additional_city_networks.py) for the other cities (rerun it with `--osm-only`). The shared import code is in [`scripts/osm_routes.py`](scripts/osm_routes.py). The fix then helps every OSM-based app too.
+1. **Best: map it in OpenStreetMap.** Add or fix the line's public-transport route relations in OSM (one per direction, following the [PTv2 scheme](https://wiki.openstreetmap.org/wiki/Public_transport)). Then list the relation ids in `OSM_ROUTES`: in [`scripts/build_route_network.py`](scripts/build_route_network.py) for Bacolod (rerun it with the line's id), in [`scripts/build_additional_city_networks.py`](scripts/build_additional_city_networks.py) for Iloilo, Cebu, and Tacloban (rerun it with `--osm-only`), or in `OSM_ROUTES` or `OSM_LINES` in [`scripts/build_city_networks.py`](scripts/build_city_networks.py) for Baguio, Naga, Cagayan de Oro, and Davao. The shared import code is in [`scripts/osm_routes.py`](scripts/osm_routes.py). The fix then helps every OSM-based app too.
 2. **Or fix the GeoJSON directly.** Edit the city's file in [geojson.io](https://geojson.io), QGIS, or JOSM. Trace the roads the jeep actually takes, in riding order, and add anchors for the landmarks riders use.
-3. **Or change the anchors and regenerate.** Lines without a mapped path are generated from anchors by [`scripts/build_route_network.py`](scripts/build_route_network.py) and [`scripts/build_additional_city_networks.py`](scripts/build_additional_city_networks.py).
+3. **Or change the anchors or street lists and regenerate.** Lines without a mapped path are generated from anchors by [`scripts/build_route_network.py`](scripts/build_route_network.py) and [`scripts/build_additional_city_networks.py`](scripts/build_additional_city_networks.py), and from the street lists in `data/sources/` by [`scripts/build_city_networks.py`](scripts/build_city_networks.py).
    - Each line is routed out through its anchors, then back.
    - By default the way back passes the same landmarks in reverse, following one-way streets. If the jeep returns through different landmarks, list them in `RETURN_VIA`.
    - Rerunning a script overwrites hand edits to those cities' files.

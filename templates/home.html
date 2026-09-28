@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f8fafc">
+  <title>Lugar.ph — Jeepney directions for Philippine cities</title>
+  <meta name="description" content="Which jeepney to take, where to board, where to get off, and the fare, in {{ cities | map(attribute='name') | map('replace', ' City', '') | join(', ') }}.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { font-family: Inter, sans-serif; color: #17212f; }
+    body { margin: 0; background: #f8fafc; }
+    .route-art { background:
+      radial-gradient(circle at 12% 30%, rgba(255,193,69,.35), transparent 28%),
+      radial-gradient(circle at 88% 12%, rgba(37,99,235,.18), transparent 30%),
+      linear-gradient(180deg, #ffffff, #f1f5f9); }
+    .city-card:focus-visible, .button:focus-visible { outline: 3px solid #1d4ed8; outline-offset: 2px; }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <header class="route-art border-b border-slate-200">
+    <div class="mx-auto max-w-5xl px-4 pb-12 pt-5 sm:px-6 sm:pb-16">
+      <nav class="flex items-center justify-between">
+        <a href="/" class="flex items-center gap-2" aria-label="Lugar.ph home">
+          <span class="grid h-9 w-9 place-items-center rounded-xl bg-slate-900 text-lg font-extrabold tracking-tight text-white"><span>L<span class="text-[#ffc145]">.</span></span></span>
+          <span class="text-[15px] font-extrabold tracking-tight">lugar<span class="text-slate-400">.ph</span></span>
+        </a>
+        <a href="https://github.com/andrewnyu/lugar-ph" class="rounded-full px-3 py-2 text-sm font-bold text-slate-600 hover:bg-white">Open source</a>
+      </nav>
+
+      {% if unknown_city %}
+      <p class="mt-8 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900" role="status">
+        Lugar.ph doesn't cover “{{ unknown_city }}” yet. Pick one of the cities below.
+      </p>
+      {% endif %}
+
+      <div class="mt-10 max-w-2xl sm:mt-14">
+        <p class="text-[11px] font-bold uppercase tracking-[.18em] text-slate-500">Move like a local</p>
+        <h1 class="mt-3 text-4xl font-extrabold leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">Which jeepney do I take?</h1>
+        <p class="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg">
+          Pick where you are and where you're going. Lugar.ph tells you where to walk, which signboard to wait for,
+          where to get off, where to transfer, and about how much it costs, in up to three rides.
+        </p>
+        <div class="mt-6 flex flex-wrap gap-3">
+          <a id="continue" href="#cities" hidden class="button rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-slate-900/15"></a>
+          <button id="locate" type="button" class="button rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-800 hover:border-slate-400">Find my city</button>
+          <a href="#cities" class="button rounded-2xl px-5 py-3 text-sm font-bold text-slate-600 hover:bg-white">Choose a city ↓</a>
+        </div>
+        <p id="locate-status" class="mt-3 min-h-[1.25rem] text-sm text-slate-500" role="status" aria-live="polite"></p>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="cities" class="mx-auto max-w-5xl scroll-mt-4 px-4 py-12 sm:px-6" aria-labelledby="cities-heading">
+      <h2 id="cities-heading" class="text-2xl font-extrabold tracking-tight">Choose your city</h2>
+      <p class="mt-2 text-sm text-slate-600">Each city has its own page to bookmark or share, like <span class="font-semibold text-slate-800">{{ request.url.netloc }}/{{ cities[0].id }}</span>.</p>
+      {% for region in ["Luzon", "Visayas", "Mindanao"] %}
+      {% set in_region = cities | selectattr("region", "equalto", region) | list %}
+      {% if in_region %}
+      <h3 class="mt-8 text-[11px] font-bold uppercase tracking-[.18em] text-slate-500">{{ region }}</h3>
+      <ul class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {% for city in in_region %}
+        <li>
+          <a href="/{{ city.id }}" class="city-card group flex h-full items-start justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
+            <span>
+              <span class="block text-lg font-extrabold tracking-tight text-slate-900">{{ city.name }}</span>
+              <span class="mt-1 block text-sm text-slate-600">{{ city.lines }} jeepney lines</span>
+              <span class="mt-2 block text-xs font-semibold text-slate-400">{{ city.source_label }}{% if city.coverage_note %} · {{ city.coverage_note }}{% endif %}</span>
+            </span>
+            <span class="mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-700 transition group-hover:bg-slate-900 group-hover:text-white" aria-hidden="true">→</span>
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% endfor %}
+    </section>
+
+    <section class="border-y border-slate-200 bg-white" aria-labelledby="why-heading">
+      <div class="mx-auto grid max-w-5xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1fr_1.2fr]">
+        <div>
+          <h2 id="why-heading" class="text-2xl font-extrabold tracking-tight">Why Lugar.ph</h2>
+          <p class="mt-3 leading-relaxed text-slate-600">
+            Jeepneys carry most commuters in Philippine cities, but their routes are hard to learn if you're new. They're written
+            in city route plans and ordinances, or passed along by word of mouth. Lugar.ph gathers what's published and what
+            volunteers have mapped in OpenStreetMap into one free trip planner, so anyone can get around like a local.
+          </p>
+        </div>
+        <ol class="grid gap-4 sm:grid-cols-3 md:grid-cols-1 lg:grid-cols-3">
+          <li class="rounded-2xl bg-slate-50 p-4">
+            <span class="grid h-8 w-8 place-items-center rounded-full bg-slate-900 text-sm font-extrabold text-white">1</span>
+            <p class="mt-3 font-bold">Set your trip</p>
+            <p class="mt-1 text-sm text-slate-600">Search a place, drop a pin, or use your location.</p>
+          </li>
+          <li class="rounded-2xl bg-slate-50 p-4">
+            <span class="grid h-8 w-8 place-items-center rounded-full bg-[#ffc145] text-sm font-extrabold text-slate-900">2</span>
+            <p class="mt-3 font-bold">Find the jeep</p>
+            <p class="mt-1 text-sm text-slate-600">See where to board and which signboard to wait for.</p>
+          </li>
+          <li class="rounded-2xl bg-slate-50 p-4">
+            <span class="grid h-8 w-8 place-items-center rounded-full bg-blue-700 text-sm font-extrabold text-white">3</span>
+            <p class="mt-3 font-bold">Ride and get off</p>
+            <p class="mt-1 text-sm text-slate-600">Know where to get off, where to transfer, and the fare.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="mx-auto max-w-5xl px-4 py-10 sm:px-6" aria-labelledby="honest-heading">
+      <h2 id="honest-heading" class="text-lg font-extrabold tracking-tight">Best estimates, not official timetables</h2>
+      <p class="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">
+        Some lines are mapped street by street; others are drawn from published route plans and marked as estimates.
+        Routes change, so check the signboard and ask the driver before you ride. If something is wrong, leave a note on
+        the line in the app so the next rider knows.
+      </p>
+    </section>
+  </main>
+
+  <footer class="border-t border-slate-200">
+    <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-xs text-slate-500 sm:px-6">
+      <p>Map data © <a class="underline" href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>. Routes from city and LTFRB route plans.</p>
+      <p><a class="underline" href="https://github.com/andrewnyu/lugar-ph">Run it for your city</a> · MIT licence</p>
+    </div>
+  </footer>
+
+  <script>
+    const CITIES = {{ cities | tojson }};
+    const CITY_DETECT_RADIUS_KM = 30;
+
+    function kmBetween([lat1, lng1], [lat2, lng2]) {
+      const rad = Math.PI / 180, dLat = (lat2 - lat1) * rad, dLng = (lng2 - lng1) * rad;
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLng / 2) ** 2;
+      return 12742 * Math.asin(Math.sqrt(a));
+    }
+
+    // Offer the last city this browser used.
+    try {
+      const last = CITIES.find(city => city.id === localStorage.getItem('lugar.city'));
+      if (last) {
+        const link = document.getElementById('continue');
+        link.href = `/${last.id}`;
+        link.textContent = `Continue in ${last.name.replace(' City', '')}`;
+        link.hidden = false;
+      }
+    } catch (error) { /* Storage unavailable: no shortcut. */ }
+
+    document.getElementById('locate').addEventListener('click', () => {
+      const status = document.getElementById('locate-status');
+      if (!navigator.geolocation) { status.textContent = 'Location is unavailable on this device. Choose a city below.'; return; }
+      status.textContent = 'Finding your city…';
+      navigator.geolocation.getCurrentPosition(({ coords }) => {
+        const here = [coords.latitude, coords.longitude];
+        const nearest = CITIES.map(city => ({ city, km: kmBetween(here, city.center) })).sort((a, b) => a.km - b.km)[0];
+        if (nearest && nearest.km <= CITY_DETECT_RADIUS_KM) {
+          location.href = `/${nearest.city.id}`;
+        } else {
+          status.textContent = `Lugar.ph doesn't cover where you are yet. The nearest city is ${nearest.city.name}, ${Math.round(nearest.km)} km away.`;
+        }
+      }, () => { status.textContent = 'Location access was denied. Choose a city below.'; }, { timeout: 10000 });
+    });
+  </script>
+</body>
+</html>

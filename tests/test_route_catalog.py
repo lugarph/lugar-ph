@@ -58,7 +58,22 @@ class RouteCatalogTests(unittest.TestCase):
         self.assertEqual(len(public_catalog("iloilo")["routes"]), 25)
         self.assertEqual(len(public_catalog("tacloban")["routes"]), 19)
         self.assertEqual(len(public_catalog("cebu")["routes"]), 64)
-        self.assertEqual(set(NETWORKS), {"bacolod", "iloilo", "cebu", "tacloban"})
+        self.assertEqual(len(public_catalog("baguio")["routes"]), 45)
+        self.assertEqual(len(public_catalog("naga")["routes"]), 11)
+        self.assertEqual(len(public_catalog("cdo")["routes"]), 63)
+        self.assertEqual(len(public_catalog("davao")["routes"]), 8)
+        self.assertEqual(set(NETWORKS), {"bacolod", "iloilo", "cebu", "tacloban", "baguio", "naga", "cdo", "davao"})
+
+    def test_new_city_lines_are_contiguous_circuits_with_terminals(self):
+        for city in ("baguio", "naga", "cdo", "davao"):
+            for line in LINES_BY_CITY[city]:
+                with self.subTest(line=line.id):
+                    self.assertTrue(line.id.startswith(f"{city}-"))
+                    self.assertTrue(line.circuit)
+                    steps = [distance_km(a[1], a[0], b[1], b[0]) for a, b in zip(line.coordinates, line.coordinates[1:])]
+                    self.assertLess(max(steps), 0.5)
+                    if line.number != "12":  # Davao's Route 12 relation names no terminals
+                        self.assertGreaterEqual(len(line.anchors), 2)
 
     def test_ayala_to_sm_uses_published_bata_line(self):
         match = match_jeepney(*AYALA, *SM)
@@ -225,7 +240,7 @@ class RouteCatalogTests(unittest.TestCase):
         self.assertFalse(listed & set(numbers))
 
     def test_lines_mapped_in_openstreetmap_keep_their_credit(self):
-        expected = {"bacolod": 11, "iloilo": 10, "cebu": 28, "tacloban": 6}
+        expected = {"bacolod": 11, "iloilo": 10, "cebu": 28, "tacloban": 6, "baguio": 45, "naga": 0, "cdo": 0, "davao": 2}
         for city, network in NETWORKS.items():
             mapped = [feature for feature in network["features"] if feature["properties"]["status"] == "osm_route_relation"]
             self.assertEqual(len(mapped), expected[city], city)

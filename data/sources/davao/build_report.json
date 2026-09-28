@@ -1,0 +1,81 @@
+[
+ {
+  "code": "1",
+  "name": "Marfori Heights – Chinatown",
+  "drawn_km": 11.2,
+  "planned_km": null,
+  "ratio": null,
+  "unplaced": [
+   "Sobrecary"
+  ],
+  "start": "Marfori Heights",
+  "far": "Chinatown"
+ },
+ {
+  "code": "2",
+  "name": "Ecoland Terminal – Chinatown",
+  "drawn_km": 8.8,
+  "planned_km": null,
+  "ratio": null,
+  "unplaced": [
+   "Generoso Bridge",
+   "Generoso Bridge"
+  ],
+  "start": "Ecoland Terminal",
+  "far": "Chinatown"
+ },
+ {
+  "code": "3",
+  "name": "Marfori Heights – Santa Ana",
+  "drawn_km": 12.7,
+  "planned_km": null,
+  "ratio": null,
+  "unplaced": [
+   "Sobrecary"
+  ],
+  "start": "Marfori Heights",
+  "far": "Santa Ana"
+ },
+ {
+  "code": "4",
+  "name": "Claveria – SPMC Loop",
+  "drawn_km": 9.9,
+  "planned_km": null,
+  "ratio": null,
+  "unplaced": [],
+  "start": "Claveria",
+  "far": "SPMC"
+ },
+ {
+  "code": "5",
+  "name": "Bankerohan – Agdao Loop",
+  "drawn_km": 11.0,
+  "planned_km": null,
+  "ratio": null,
+  "unplaced": [
+   "Sobrecary"
+  ],
+  "start": "Bankerohan",
+  "far": "Agdao"
+ },
+ {
+  "code": "Barrio Obrero",
+  "name": "Claveria – San Roque (Barrio Obrero)",
+  "drawn_km": 9.0,
+  "planned_km": null,
+  "ratio": null,
+  "unplaced": [],
+  "start": "Claveria",
+  "far": "San Roque"
+ },
+ {
+  "code": "Sasa",
+  "name": "Claveria – Sasa via R. Castillo",
+  "drawn_km": 18.3,
+  "planned_km": null,
+  "ratio": null,
+  "unplaced": [],
+  "start": "Claveria",
+  "far": "Sasa"
+ }
+]

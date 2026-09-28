@@ -1,0 +1,120 @@
+[
+ {
+  "code": "1",
+  "name": "San Isidro – Centro via Cararayan",
+  "drawn_km": 21.7,
+  "planned_km": null,
+  "ratio": null,
+  "unplaced": [],
+  "start": "San Isidro",
+  "far": "Centro"
+ },
+ {
+  "code": "2",
+  "name": "Del Rosario – Centro via Magsaysay Avenue",
+  "drawn_km": 15.7,
+  "planned_km": null,
+  "ratio": null,
+  "unplaced": [],
+  "start": "Del Rosario",
+  "far": "Centro"
+ },
+ {
+  "code": "3",
+  "name": "Del Rosario – Centro via Roxas Avenue",
+  "drawn_km": 15.8,
+  "planned_km": null,
+  "ratio": null,
+  "unplaced": [],
+  "start": "Del Rosario",
+  "far": "Centro"
+ },
+ {
+  "code": "4",
+  "name": "Del Rosario – Centro via Panganiban Drive",
+  "drawn_km": 15.4,
+  "planned_km": null,
+  "ratio": null,
+  "unplaced": [],
+  "start": "Del Rosario",
+  "far": "Centro"
+ },
+ {
+  "code": "5",
+  "name": "San Felipe – Centro",
+  "drawn_km": 6.6,
+  "planned_km": null,
+  "ratio": null,
+  "unplaced": [
+   "Pacol Rd (only found off the route)",
+   "Pacol Rd (only found off the route)"
+  ],
+  "start": "San Felipe",
+  "far": "Centro"
+ },
+ {
+  "code": "6",
+  "name": "Pacol – Centro",
+  "drawn_km": 19.1,
+  "planned_km": null,
+  "ratio": null,
+  "unplaced": [],
+  "start": "Pacol",
+  "far": "Centro"
+ },
+ {
+  "code": "7",
+  "name": "Carolina – Panicuason – Centro",
+  "drawn_km": 36.1,
+  "planned_km": null,
+  "ratio": null,
+  "unplaced": [],
+  "start": "Panicuason",
+  "far": "Centro"
+ },
+ {
+  "code": "8A",
+  "name": "Centro – Magsaysay Loop A (clockwise)",
+  "drawn_km": 7.3,
+  "planned_km": null,
+  "ratio": null,
+  "unplaced": [
+   "Magsaysay Ave (only found off the route)"
+  ],
+  "start": "Centro",
+  "far": "Bicol Central Station"
+ },
+ {
+  "code": "8B",
+  "name": "Centro – Magsaysay Loop B (counterclockwise)",
+  "drawn_km": 8.3,
+  "planned_km": null,
+  "ratio": null,
+  "unplaced": [
+   "Magsaysay Ave (only found off the route)",
+   "Leon SA Aureus St (only found off the route)"
+  ],
+  "start": "Centro",
+  "far": "Bicol Central Station"
+ },
+ {
+  "code": "8C",
+  "name": "Centro – Magsaysay Loop C (clockwise)",
+  "drawn_km": 8.0,
+  "planned_km": null,
+  "ratio": null,
+  "unplaced": [],
+  "start": "Centro",
+  "far": "Naga City Hall"
+ },
+ {
+  "code": "8D",
+  "name": "Centro – Magsaysay Loop D (counterclockwise)",
+  "drawn_km": 7.9,
+  "planned_km": null,
+  "ratio": null,
+  "unplaced": [],
+  "start": "Centro",
+  "far": "Naga City Hall"
+ }
+]

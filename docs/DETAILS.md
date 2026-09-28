@@ -1,10 +1,19 @@
 # Technical details
 
+## Pages
+
+| Address | Page |
+| --- | --- |
+| `/` | Splash page: what Lugar.ph does, and a city picker grouped by island. "Find my city" jumps to the nearest supported city; the last city used is offered first. |
+| `/{city}` | The trip planner opened on one city, such as `/bacolod` or `/cdo`. Switching cities in the app updates the address, and back and forward move between cities. Other spellings in `CITY_ALIASES` in `main.py` (`/cagayan-de-oro`, `/CDO`) redirect to the canonical address; an unknown city shows the picker with a 404. |
+
+The city route is declared last in `main.py`, so it never shadows `/api/…`, `/health`, or `/docs`.
+
 ## API
 
 | Endpoint | Purpose |
 | --- | --- |
-| `GET /api/cities` | Supported cities with map centre and zoom. |
+| `GET /api/cities` | Supported cities with region, map centre, zoom, source, and line count. |
 | `GET /api/routes?city&origin_lat&origin_lng&destination_lat&destination_lng` | Trip options (see below). |
 | `GET /api/places?city&q` | City-bounded place search through Nominatim. Runs only on an explicit search. |
 | `GET /api/landmarks?city` | Named anchors along a city's lines, used for instant search suggestions. |

@@ -12,22 +12,36 @@ contributors, under the ODbL.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
+import os
 import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
 
 
-OSRM_URL = "https://router.project-osrm.org/route/v1/driving/"
+# Driving routers tried in order: set LUGAR_OSRM_URL to put your own OSRM
+# server (for example one built with a jeepney profile) ahead of the public ones.
+ROUTERS = tuple(url for url in (
+    os.environ.get("LUGAR_OSRM_URL"),
+    "https://routing.openstreetmap.de/routed-car/route/v1/driving/",
+    "https://router.project-osrm.org/route/v1/driving/",
+) if url)
+CACHE_DIR = Path(__file__).resolve().parent / ".cache"
 OVERPASS_URLS = ("https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter")
+OSM_API = "https://api.openstreetmap.org/api/0.6"
 USER_AGENT = "LugarPH/0.4 route network builder"
 ATTRIBUTION = "© OpenStreetMap contributors, ODbL"
 GAP_KM = 0.03  # ways closer than this are already joined
 MAX_SEGMENT_KM = 0.4  # longer straight segments are split so stops can be placed along them
 ANCHOR_REACH_KM = 0.4  # a planned landmark counts only if the mapped route passes this close
 TERMINAL_CLEARANCE_KM = 0.5  # landmarks this close to a terminal repeat it
+
+# Member roles for the road a route drives. Baguio mappers mark stretches where
+# riders flag jeeps down anywhere as hail_and_ride.
+WAY_ROLES = ("", "forward", "backward", "hail_and_ride")
 
 Point = list[float]  # [lng, lat]
 Landmark = tuple[str, str, Point]  # (id, name, point)
@@ -38,29 +52,59 @@ def km(a: Point, b: Point) -> float:
     return math.hypot((a[0] - b[0]) * 111.32 * math.cos(math.radians(a[1])), (a[1] - b[1]) * 110.57)
 
 
-def route_geometry_between(points: list[Point]) -> tuple[dict, float]:
-    """A driving route through the points, from the public OSRM demo server."""
+def route_path(points: list[Point]) -> list[Point]:
+    """A driving path through the points, cached in scripts/.cache so reruns only ask for what changed."""
+    key = hashlib.sha1(json.dumps([[round(lng, 6), round(lat, 6)] for lng, lat in points]).encode()).hexdigest()
+    cache = CACHE_DIR / "osrm" / f"{key}.json"
+    if cache.exists():
+        return json.loads(cache.read_text())
     coordinates = ";".join(f"{lng},{lat}" for lng, lat in points)
     query = urllib.parse.urlencode({"overview": "full", "geometries": "geojson", "steps": "false"})
-    request = urllib.request.Request(f"{OSRM_URL}{coordinates}?{query}", headers={"User-Agent": USER_AGENT})
-    for attempt in range(4):
-        try:
-            with urllib.request.urlopen(request, timeout=60) as response:
-                route = json.load(response)["routes"][0]
-            time.sleep(0.5)
-            return route["geometry"], route["distance"] / 1000
-        except OSError:  # the public demo server is often slow; back off and retry
-            if attempt == 3:
-                raise
-            time.sleep(5 * (attempt + 1))
-    raise RuntimeError("unreachable")
+    last_error: Exception | None = None
+    for attempt in range(3):
+        for router in ROUTERS:
+            try:
+                request = urllib.request.Request(f"{router}{coordinates}?{query}", headers={"User-Agent": USER_AGENT})
+                with urllib.request.urlopen(request, timeout=60) as response:
+                    path = json.load(response)["routes"][0]["geometry"]["coordinates"]
+                time.sleep(1.1)  # the public servers ask for at most one request a second
+                cache.parent.mkdir(parents=True, exist_ok=True)
+                cache.write_text(json.dumps(path))
+                return path
+            except OSError as exc:  # the public servers are often slow or down; try the next one
+                last_error = exc
+        time.sleep(15 * (attempt + 1))
+    raise RuntimeError(f"No router answered: {last_error}")
+
+
+def route_geometry_between(points: list[Point]) -> tuple[dict, float]:
+    """A driving route through the points, and its length in km."""
+    path = route_path(points)
+    return {"type": "LineString", "coordinates": path}, sum(km(a, b) for a, b in zip(path, path[1:]))
 
 
 def fetch_relations(relation_ids: list[int]) -> dict[int, dict]:
-    """Route relations with their member geometry, trying each public Overpass server."""
+    """Route relations with their member geometry, cached in scripts/.cache/relations.
+
+    Delete a relation's cache file to pick up edits made in OpenStreetMap since.
+    """
+    cache = CACHE_DIR / "relations"
+    found = {relation_id: json.loads((cache / f"{relation_id}.json").read_text()) for relation_id in relation_ids if (cache / f"{relation_id}.json").exists()}
+    missing = [relation_id for relation_id in relation_ids if relation_id not in found]
+    if missing:
+        fetched = _fetch_relations(missing)
+        cache.mkdir(parents=True, exist_ok=True)
+        for relation_id, relation in fetched.items():
+            (cache / f"{relation_id}.json").write_text(json.dumps(relation))
+        found.update(fetched)
+    return found
+
+
+def _fetch_relations(relation_ids: list[int]) -> dict[int, dict]:
+    """Route relations with their member geometry, trying each public Overpass server, then the OSM API."""
     query = f"[out:json][timeout:90];relation(id:{','.join(map(str, relation_ids))});out body geom;"
     data = urllib.parse.urlencode({"data": query}).encode()
-    for attempt, url in enumerate([*OVERPASS_URLS, *OVERPASS_URLS]):
+    for attempt, url in enumerate(OVERPASS_URLS):
         try:
             request = urllib.request.Request(url, data=data, headers={"User-Agent": USER_AGENT})
             with urllib.request.urlopen(request, timeout=120) as response:
@@ -72,7 +116,26 @@ def fetch_relations(relation_ids: list[int]) -> dict[int, dict]:
         except OSError as exc:  # busy public servers answer 504/429; try the next mirror
             print(f"    Overpass {url} failed ({exc}); retrying", flush=True)
             time.sleep(10 * (attempt + 1))
-    raise RuntimeError("All Overpass servers failed")
+    print("    Overpass unavailable; reading the relations from the OpenStreetMap API instead", flush=True)
+    return {relation_id: _relation_from_api(relation_id) for relation_id in relation_ids}
+
+
+def _relation_from_api(relation_id: int) -> dict:
+    """One relation in Overpass's `out body geom` shape, from the main OSM API's /full call."""
+    request = urllib.request.Request(f"{OSM_API}/relation/{relation_id}/full.json", headers={"User-Agent": USER_AGENT})
+    with urllib.request.urlopen(request, timeout=120) as response:
+        elements = json.load(response)["elements"]
+    time.sleep(1)
+    nodes = {element["id"]: element for element in elements if element["type"] == "node"}
+    ways = {element["id"]: element for element in elements if element["type"] == "way"}
+    relation = next(element for element in elements if element["type"] == "relation" and element["id"] == relation_id)
+    members = []
+    for member in relation["members"]:
+        item = {"type": member["type"], "ref": member["ref"], "role": member.get("role", "")}
+        if member["type"] == "way" and member["ref"] in ways:
+            item["geometry"] = [{"lat": nodes[node]["lat"], "lon": nodes[node]["lon"]} for node in ways[member["ref"]]["nodes"] if node in nodes]
+        members.append(item)
+    return {"type": "relation", "id": relation_id, "tags": relation.get("tags", {}), "members": members}
 
 
 def join(points: list[Point], piece: list[Point]) -> list[Point]:
@@ -92,7 +155,7 @@ def relation_path(relation: dict) -> list[Point]:
     ways = [
         [[point["lon"], point["lat"]] for point in member["geometry"]]
         for member in relation["members"]
-        if member["type"] == "way" and member.get("role", "") in ("", "forward", "backward") and member.get("geometry")
+        if member["type"] == "way" and member.get("role", "") in WAY_ROLES and member.get("geometry")
     ]
     first = ways[0]
     if len(ways) > 1 and min(km(first[0], ways[1][0]), km(first[0], ways[1][-1])) < min(km(first[-1], ways[1][0]), km(first[-1], ways[1][-1])):

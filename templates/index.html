@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
   <meta name="theme-color" content="#f8fafc">
-  <title>Lugar.ph — Local jeepney routes</title>
-  <meta name="description" content="Map jeepney routes in Bacolod, Iloilo, Cebu, and Tacloban.">
+  <title>{{ (cities | selectattr('id', 'equalto', city) | first).name }} jeepney routes — Lugar.ph</title>
+  <meta name="description" content="Which jeepney to take in {{ (cities | selectattr('id', 'equalto', city) | first).name }}: where to board, where to get off, and the fare.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -91,17 +91,17 @@
   <div x-data="lugarApp()" class="relative z-[500]">
     <div x-show="loading || placeSearchLoading || (activeTab === 'routes' && (catalogLoading || networkSettling))" x-cloak class="loading-bar" role="progressbar" aria-label="Loading"></div>
     <header x-show="activeTab === 'plan'" class="top-bar">
-      <div class="flex items-center gap-2 rounded-2xl border border-white/80 bg-white/95 px-3 py-2 shadow-lg shadow-slate-900/10 backdrop-blur">
-        <span class="grid h-9 w-9 place-items-center rounded-xl bg-slate-900 text-white font-extrabold text-lg tracking-tight">L<span class="text-[#ffc145]">.</span></span>
+      <a href="/" class="flex items-center gap-2 rounded-2xl border border-white/80 bg-white/95 px-3 py-2 shadow-lg shadow-slate-900/10 backdrop-blur" aria-label="Lugar.ph home: about the app and all cities">
+        <span class="grid h-9 w-9 place-items-center rounded-xl bg-slate-900 text-white font-extrabold text-lg tracking-tight"><span>L<span class="text-[#ffc145]">.</span></span></span>
         <div class="leading-tight">
           <p class="text-[15px] font-extrabold tracking-tight">lugar<span class="text-slate-400">.ph</span></p>
           <p class="text-[10px] font-semibold uppercase tracking-[.17em] text-slate-500">Move like a local</p>
         </div>
-      </div>
+      </a>
       <label class="flex items-center gap-1.5 rounded-full border border-white/80 bg-white/95 px-3 py-2 text-xs font-bold text-slate-700 shadow-lg shadow-slate-900/10 backdrop-blur">
         <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
         <span class="sr-only">Choose city</span>
-        <select x-model="city" @change="changeCity()" class="bg-transparent font-bold outline-none"><template x-for="item in cities" :key="item.id"><option :value="item.id" x-text="item.name"></option></template></select>
+        <select x-model="city" @change="changeCity()" class="bg-transparent font-bold outline-none"><template x-for="item in cities" :key="item.id"><option :value="item.id" :selected="item.id === city" x-text="item.name"></option></template></select>
       </label>
     </header>
 
@@ -299,7 +299,9 @@
                     <div class="flex w-7 shrink-0 flex-col items-center">
                       <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full" :class="step.kind === 'arrive' ? 'bg-slate-900 text-white' : step.kind === 'walk' ? 'bg-slate-100 text-slate-600' : ''" :style="step.kind === 'ride' ? chipStyle(step.leg.color) : {}">
                         <template x-if="step.kind === 'walk'"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="2"/><path d="m9 20 3-6 3 3v4M7 12l3-4 4 1 3 3M10 8l-1 6"/></svg></template>
-                        <template x-if="step.kind === 'ride'"><span class="text-[10px] font-extrabold" x-text="step.leg.route_number"></span></template>
+                        <template x-if="step.kind === 'ride' && String(step.leg.route_number).length <= 3"><span class="text-[10px] font-extrabold" x-text="step.leg.route_number"></span></template>
+                        <!-- Longer codes (Baguio's destinations, "Bulua R1") don't fit the dot; the chip beside it names the jeep. -->
+                        <template x-if="step.kind === 'ride' && String(step.leg.route_number).length > 3"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17V7a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v10M3 11h18M5 17h14"/><circle cx="8" cy="18" r="1.6"/><circle cx="16" cy="18" r="1.6"/></svg></template>
                         <template x-if="step.kind === 'arrive'"><span class="h-2.5 w-2.5 rounded-[3px] bg-white"></span></template>
                       </span>
                       <span x-show="step.kind !== 'arrive'" class="my-1 w-0 flex-1" :class="step.kind === 'ride' ? 'border-l-[3px]' : 'border-l-2 border-dotted border-slate-300'" :style="step.kind === 'ride' ? { borderColor: strokeColor(step.leg.color) } : {}"></span>
@@ -366,7 +368,7 @@
     <section x-show="activeTab === 'routes'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="network-screen" aria-label="Jeepney routes">
       <header class="network-heading flex items-center justify-between border-b border-slate-200 bg-white px-5 pb-3 pt-[calc(14px+env(safe-area-inset-top))] md:px-8">
         <div><p class="text-[10px] font-bold uppercase tracking-[.18em] text-blue-700" x-text="`${currentCity.source_label} · mapped network`"></p><h1 class="text-xl font-extrabold tracking-tight">Jeepney routes</h1></div>
-        <label class="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-800"><span class="sr-only">Choose city</span><select x-model="city" @change="changeCity()" class="max-w-[145px] bg-transparent font-bold outline-none"><template x-for="item in cities" :key="item.id"><option :value="item.id" x-text="item.name"></option></template></select></label>
+        <label class="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-800"><span class="sr-only">Choose city</span><select x-model="city" @change="changeCity()" class="max-w-[145px] bg-transparent font-bold outline-none"><template x-for="item in cities" :key="item.id"><option :value="item.id" :selected="item.id === city" x-text="item.name"></option></template></select></label>
       </header>
       <div id="network-map" class="network-map" role="application" aria-label="Interactive city map with colored jeepney corridors"></div>
       <div class="network-details bg-[#f8fafc] pb-8">
@@ -476,13 +478,8 @@
         commentWebsite: '',
         commentSaving: false,
         commentError: '',
-        city: 'bacolod',
-        cities: [
-          { id: 'bacolod', name: 'Bacolod City', center: [10.6825, 122.9545], zoom: 13, source_label: 'Bacolod LPTRP' },
-          { id: 'iloilo', name: 'Iloilo City', center: [10.7130, 122.5570], zoom: 13, source_label: 'Iloilo LPTRP 2023' },
-          { id: 'cebu', name: 'Cebu City', center: [10.3157, 123.8854], zoom: 13, source_label: 'Cebu DOTC GTFS' },
-          { id: 'tacloban', name: 'Tacloban City', center: [11.2440, 125.0000], zoom: 13, source_label: 'Tacloban LPTRP 2024' },
-        ],
+        city: {{ city | tojson }},
+        cities: {{ cities | tojson }},
         cityProfiles: {
           bacolod: {
             origin: { name: 'Bacolod City center', lat: 10.6765, lng: 122.9509 },
@@ -515,10 +512,42 @@
               { name: 'Tacloban New Bus Terminal', area: 'Abucay', lat: 11.2391, lng: 124.9879 },
               { name: 'DZR Airport', area: 'San Jose', lat: 11.2275, lng: 125.0275 },
             ]
+          },
+          baguio: {
+            origin: { name: 'Session Road', lat: 16.4119, lng: 120.5975 },
+            places: [
+              { name: 'SM City Baguio', area: 'Luneta Hill', lat: 16.4089, lng: 120.5992 },
+              { name: 'Burnham Park', area: 'Central Business District', lat: 16.4080, lng: 120.5960 },
+              { name: 'Mines View Park', area: 'Mines View', lat: 16.4197, lng: 120.6275 },
+            ]
+          },
+          naga: {
+            origin: { name: 'Plaza Rizal', lat: 13.6234, lng: 123.1849 },
+            places: [
+              { name: 'SM City Naga', area: 'Triangulo', lat: 13.6212, lng: 123.1904 },
+              { name: 'Naga City Hall', area: 'J. Miranda Avenue', lat: 13.6261, lng: 123.1987 },
+              { name: 'Ateneo de Naga University', area: 'Bagumbayan Sur', lat: 13.6308, lng: 123.1846 },
+            ]
+          },
+          cdo: {
+            origin: { name: 'Divisoria', lat: 8.4775, lng: 124.6446 },
+            places: [
+              { name: 'Limketkai Center', area: 'Lapasan', lat: 8.4814, lng: 124.6564 },
+              { name: 'Gaisano City', area: 'C.M. Recto Avenue', lat: 8.4865, lng: 124.6508 },
+              { name: 'Westbound Terminal', area: 'Bulua', lat: 8.5121, lng: 124.6235 },
+            ]
+          },
+          davao: {
+            origin: { name: 'San Pedro Cathedral', lat: 7.0647, lng: 125.6095 },
+            places: [
+              { name: 'Gaisano Mall of Davao', area: 'J.P. Laurel Avenue', lat: 7.0776, lng: 125.6141 },
+              { name: 'Victoria Plaza', area: 'J.P. Laurel Avenue', lat: 7.0866, lng: 125.6118 },
+              { name: 'Ateneo de Davao University', area: 'E. Jacinto Street', lat: 7.0718, lng: 125.6134 },
+            ]
           }
         },
-        origin: { lat: 10.6765, lng: 122.9509 },
-        originLabel: 'Bacolod City center',
+        origin: { lat: 0, lng: 0 },
+        originLabel: '',
         dragStartY: null,
         requestId: 0,
 
@@ -666,6 +695,18 @@
           return steps;
         },
         init() {
+          const profile = this.cityProfiles[this.city];
+          this.origin = { lat: profile.origin.lat, lng: profile.origin.lng };
+          this.originLabel = profile.origin.name;
+          try { localStorage.setItem('lugar.city', this.city); } catch (error) { /* Private mode: nothing to remember. */ }
+          // Back and forward move between cities opened in this tab.
+          window.addEventListener('popstate', () => {
+            const id = location.pathname.replace(/^\/+|\/+$/g, '');
+            if (id !== this.city && this.cities.some(item => item.id === id)) {
+              this.city = id;
+              this.changeCity({ history: false });
+            }
+          });
           maps.map = L.map('map', { zoomControl: false, attributionControl: true }).setView(this.currentCity.center, this.currentCity.zoom);
           maps.map.on('click', event => this.placePin(event.latlng));
           L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -678,7 +719,13 @@
             .then(status => { if (status.state === 'granted') this.locateMe(true); })
             .catch(() => {});
         },
-        changeCity() {
+        changeCity({ history = 'push' } = {}) {
+          // Each city has its own address (/bacolod, /cdo), so it can be shared and bookmarked.
+          if (history && location.pathname !== `/${this.city}`) {
+            window.history[history === 'replace' ? 'replaceState' : 'pushState']({ city: this.city }, '', `/${this.city}`);
+          }
+          document.title = `${this.currentCity.name} jeepney routes — Lugar.ph`;
+          try { localStorage.setItem('lugar.city', this.city); } catch (error) { /* Private mode: nothing to remember. */ }
           const profile = this.cityProfiles[this.city];
           this.origin = { lat: profile.origin.lat, lng: profile.origin.lng };
           this.originLabel = profile.origin.name;
@@ -953,7 +1000,7 @@
             const detected = this.nearestCity(lat, lng);
             if (detected && detected !== this.city) {
               this.city = detected;
-              this.changeCity();
+              this.changeCity({ history: 'replace' });
             }
             this.origin = { lat, lng };
             this.originLabel = 'Your current location';
@@ -1223,7 +1270,7 @@
             const detected = this.nearestCity(lat, lng);
             if (detected && detected !== this.city && !this.destination) {
               this.city = detected;
-              this.changeCity();
+              this.changeCity({ history: 'replace' });
               this.beginSearch(target);
             }
             this.setEnd(target, { name: 'Your location', lat, lng });

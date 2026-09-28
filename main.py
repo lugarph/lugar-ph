@@ -1,4 +1,4 @@
-"""Lugar.ph MVP: Bacolod transit route previews."""
+"""Lugar.ph: jeepney directions for Philippine cities, one page per city."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from time import monotonic
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -16,7 +16,7 @@ from sqlalchemy import select
 from models import RouteComment, SessionLocal
 from osm_services import search_places, walking_matrix, walking_route
 from route_catalog import ROUTE_BY_ID, distance_km, public_catalog
-from transit_network import CITY_METADATA, landmarks, plan_trips, public_network, trip_help
+from transit_network import CITY_METADATA, LINES_BY_CITY, landmarks, plan_trips, public_network, trip_help
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -54,14 +54,23 @@ def _comment_json(comment: RouteComment) -> dict:
         "created_at": comment.created_at.isoformat(),
     }
 
+# Other spellings of a city's page address, sent on to its canonical one.
+CITY_ALIASES = {"cagayan-de-oro": "cdo", "cagayandeoro": "cdo", "cagayan": "cdo", "naga-city": "naga", "davao-city": "davao"}
+
+
+def _city_list() -> list[dict]:
+    return [{"id": city, **metadata, "lines": len(LINES_BY_CITY[city])} for city, metadata in CITY_METADATA.items()]
+
+
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request):
-    return templates.TemplateResponse(request=request, name="index.html")
+def home(request: Request):
+    """Splash page: what Lugar.ph is for, and a city to start in."""
+    return templates.TemplateResponse(request=request, name="home.html", context={"cities": _city_list()})
 
 
 @app.get("/api/cities")
 def cities():
-    return {"cities": [{"id": city, **metadata} for city, metadata in CITY_METADATA.items()]}
+    return {"cities": _city_list()}
 
 
 @app.get("/api/places")
@@ -212,3 +221,16 @@ def _jeepney_option(itinerary: dict, index: int) -> dict:
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+# Declared last so it never shadows /api, /health, or the docs pages.
+@app.get("/{city}", response_class=HTMLResponse)
+def city_page(request: Request, city: str):
+    """The trip planner, opened on one city: /bacolod, /cdo, /baguio."""
+    wanted = city.lower().strip()
+    canonical = CITY_ALIASES.get(wanted, wanted)
+    if canonical not in CITY_METADATA:
+        return templates.TemplateResponse(request=request, name="home.html", context={"cities": _city_list(), "unknown_city": city}, status_code=404)
+    if canonical != city:
+        return RedirectResponse(f"/{canonical}", status_code=308)
+    return templates.TemplateResponse(request=request, name="index.html", context={"city": canonical, "cities": _city_list()})

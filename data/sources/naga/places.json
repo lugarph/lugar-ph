@@ -1,0 +1,108 @@
+{
+ "city": "naga",
+ "retrieved": "2026-09-28",
+ "note": "Terminals and landmarks named in the route plan, located with Nominatim (OpenStreetMap).",
+ "places": {
+  "Centro": {
+   "lng": 123.184884,
+   "lat": 13.623362,
+   "source": "nominatim",
+   "query": "Plaza Rizal Naga",
+   "match": "Plaza Rizal, Dinaga, San Felipe, Marupit, Naga City, Bicol Region, 4400, Philippines",
+   "note": "Plaza Rizal; the routes load and unload on the downtown streets around it"
+  },
+  "San Isidro": {
+   "lng": 123.269535,
+   "lat": 13.63239,
+   "source": "nominatim",
+   "query": "San Isidro, Naga",
+   "match": "San Isidro, Naga City, Bicol Region, 4400, Philippines"
+  },
+  "San Felipe": {
+   "lng": 123.203115,
+   "lat": 13.639796,
+   "source": "nominatim",
+   "query": "San Felipe, Naga",
+   "match": "San Felipe, Naga City, Bicol Region, 4400, Philippines"
+  },
+  "Pacol": {
+   "lng": 123.25119,
+   "lat": 13.659543,
+   "source": "nominatim",
+   "query": "Pacol, Naga",
+   "match": "Pacol, Naga City, Bicol Region, 4400, Philippines"
+  },
+  "Carolina": {
+   "lng": 123.290861,
+   "lat": 13.664335,
+   "source": "nominatim",
+   "query": "Carolina, Naga",
+   "match": "Carolina, Naga City, Bicol Region, 4400, Philippines"
+  },
+  "Panicuason": {
+   "lng": 123.31792,
+   "lat": 13.663292,
+   "source": "nominatim",
+   "query": "Panicuason, Naga",
+   "match": "Panicuason, Naga City, Bicol Region, 4400, Philippines"
+  },
+  "Bicol Central Station": {
+   "lng": 123.189701,
+   "lat": 13.619235,
+   "source": "nominatim",
+   "query": "Bicol Central Station",
+   "match": "Bicol Central Station, Ninoy and Cory Avenue, Lerma, Naga City, Bicol Region, 4400, Philip"
+  },
+  "Naga City Hall": {
+   "lng": 123.19868,
+   "lat": 13.626072,
+   "source": "nominatim",
+   "query": "Naga City Hall",
+   "match": "Naga City Hall, J. Miranda Avenue, Peñafrancia, San Felipe, Naga City, Bicol Region, 4400,"
+  },
+  "SM City Naga": {
+   "lng": 123.190373,
+   "lat": 13.621216,
+   "source": "nominatim",
+   "query": "SM City Naga",
+   "match": "SM City Naga, Triangulo, Naga City, Bicol Region, 4400, Philippines"
+  },
+  "Naga Cathedral": {
+   "lng": 123.187279,
+   "lat": 13.62825,
+   "source": "nominatim",
+   "query": "Naga Metropolitan Cathedral",
+   "match": "Metropolitan Cathedral of St. John the Evangelist, Elias Angeles Street, Zone 2, Santa Cru"
+  },
+  "Ateneo de Naga": {
+   "lng": 123.184557,
+   "lat": 13.630814,
+   "source": "nominatim",
+   "query": "Ateneo de Naga University",
+   "match": "Ateneo de Naga University, Ateneo Avenue, Bagumbayan Sur, San Felipe, Naga City, Bicol Reg"
+  },
+  "Robinsons Naga": {
+   "lng": 123.192729,
+   "lat": 13.614411,
+   "source": "nominatim",
+   "query": "Robinsons Place Naga",
+   "match": "Robinsons Place Naga, Triangulo, Naga City, Bicol Region, 4400, Philippines"
+  },
+  "Naga City Public Market": {
+   "lng": 123.183688,
+   "lat": 13.620974,
+   "source": "nominatim",
+   "query": "Naga City People's Mall",
+   "match": "Naga City People's Mall, General Luna Street, Zone 4, Dinaga, Naga City, Bicol Region, 440"
+  },
+  "Del Rosario": {
+   "lng": 123.237549,
+   "lat": 13.61739,
+   "source": "nominatim",
+   "query": "Del Rosario, Naga",
+   "match": "Del Rosario, Cararayan, Naga City, Bicol Region, 4400, Philippines",
+   "approximate": true,
+   "note": "On Maharlika Highway in Del Rosario; the plan's terminal is at the Naga–Pili boundary, further along the highway"
+  }
+ }
+}

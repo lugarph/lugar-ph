@@ -9,3 +9,6 @@ tests/
 Dockerfile
 docker-compose.yml
 .dockerignore
+# Build inputs; the app serves only data/*.geojson
+scripts/
+data/sources/
