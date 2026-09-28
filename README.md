@@ -21,6 +21,34 @@ uvicorn main:app --reload
 
 Open <http://localhost:8000>. Run the tests with `pytest`.
 
+## Run it for your city
+
+Lugar.ph is free to copy for any city with jeepneys or other fixed-route transit. To make your own:
+
+1. **Fork this repo** on GitHub.
+2. **Get your city's routes** into one GeoJSON file, `data/<city>_jeepney_network.geojson`, in the [format below](#route-data).
+   - **Check OpenStreetMap first.** Many Philippine cities already have jeepney routes mapped. Run this in [overpass turbo](https://overpass-turbo.eu/) over your city:
+     ```text
+     relation["type"="route"]["route"~"bus|share_taxi|jeepney|minibus"]({{bbox}});
+     out geom;
+     ```
+     Export the result as GeoJSON, keep one circuit per line (out and back, in riding order), and add the line properties. Or list the relation ids in `OSM_ROUTES` in [`scripts/build_additional_city_networks.py`](scripts/build_additional_city_networks.py) to import them the way the existing cities do.
+   - **Otherwise draw them** in [geojson.io](https://geojson.io), tracing each route the way the jeep drives it.
+3. **Add the city** in three places:
+   - `CITY_METADATA` and `NETWORK_FILES` in [`transit_network.py`](transit_network.py): name, map centre, zoom, route source, and the data file.
+   - `CITY_VIEWBOXES` in [`osm_services.py`](osm_services.py): the bounding box that place search stays inside.
+   - `cities` and `cityProfiles` in [`templates/index.html`](templates/index.html): the default start point and a few popular places. Set `city: '<id>'` there to open on your city.
+
+   Remove cities you don't need from the same places.
+4. **Name your app to OpenStreetMap.** Set `LUGAR_USER_AGENT` to your app's name and a contact URL or email, such as `MyCityJeeps/1.0 (https://github.com/you/your-fork)`. The free search, walking, and map-tile services ask apps to identify themselves and only allow light use.
+5. **Check the local rules.** The fare estimate (`FARE_*`) and riding speeds are near the top of the planner section in [`transit_network.py`](transit_network.py). The fares follow the LTFRB regular jeepney fare.
+6. **Run `pytest`,** and update the expected city and line counts in `tests/test_route_catalog.py`.
+7. **Deploy.**
+   - **Vercel:** [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fandrewnyu%2Flugar-ph), or run `vercel deploy` in your fork. It finds the FastAPI app on its own.
+   - **Anywhere with Docker:** `docker compose up --build`.
+
+   Community notes need a Postgres database set in `DATABASE_URL` to be kept; without one, a Vercel deployment keeps them only temporarily. Run `alembic upgrade head` against it once.
+
 ## Route data
 
 Each city's jeepney network is one GeoJSON file in `data/`:

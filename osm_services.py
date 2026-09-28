@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import threading
 import time
 from collections import OrderedDict
@@ -16,7 +17,9 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 
-USER_AGENT = "LugarPH/0.4 (local transit routing MVP)"
+# Public OpenStreetMap services ask apps to identify themselves. Forks should
+# set LUGAR_USER_AGENT to their own app name and a contact URL or email.
+USER_AGENT = os.getenv("LUGAR_USER_AGENT", "LugarPH/0.4 (local transit routing MVP)")
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 FOOT_ROUTER_URL = "https://routing.openstreetmap.de/routed-foot/route/v1/driving"
 FOOT_TABLE_URL = "https://routing.openstreetmap.de/routed-foot/table/v1/driving"

@@ -38,10 +38,7 @@ Notes are stored in the `route_comments` table. Posting has length checks, a hon
 
 ## Adding a city
 
-1. Add the GeoJSON file.
-2. Add the city to `CITY_METADATA` and `NETWORK_FILES` in `transit_network.py`.
-3. Add its search bounding box to `CITY_VIEWBOXES` in `osm_services.py`.
-4. Add its default start and popular places to `cityProfiles` and `cities` in `templates/index.html`.
+See [Run it for your city](../README.md#run-it-for-your-city) in the README.
 
 ## Next steps
 
