@@ -9,7 +9,20 @@ from sqlalchemy import DateTime, Float, Integer, String, Text, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./lugar.db")
+def _database_url() -> str:
+    url = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL")
+    if not url:
+        # Vercel's filesystem is read-only except /tmp, where notes last only as
+        # long as the function instance. Set DATABASE_URL to keep them.
+        return "sqlite:////tmp/lugar.db" if os.getenv("VERCEL") else "sqlite:///./lugar.db"
+    # Hosted Postgres (Vercel, Neon, Heroku) hands out postgres:// URLs; use the psycopg 3 driver.
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix):]
+    return url
+
+
+DATABASE_URL = _database_url()
 
 
 class Base(DeclarativeBase):
@@ -49,3 +62,7 @@ class RouteComment(Base):
 
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+
+if DATABASE_URL.startswith("sqlite:////tmp/"):
+    # A fresh serverless instance has no migrated database; create the tables in place.
+    Base.metadata.create_all(engine)

@@ -1,0 +1,11 @@
+# Not needed by the deployed app
+.venv/
+__pycache__/
+*.py[cod]
+*.db
+.pytest_cache/
+.claude/
+tests/
+Dockerfile
+docker-compose.yml
+.dockerignore
