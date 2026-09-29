@@ -56,7 +56,9 @@ Open a city's **Jeepney routes** screen and select **Suggest a route**. Riders c
 
 Suggestions are stored in the database with `pending` status and are **not** used by the route planner. Set `DATABASE_URL` to persistent Postgres for production and run `alembic upgrade head` to create the proposal and vote tables. Without persistent storage, serverless submissions and votes can disappear when an instance is recycled.
 
-Reviewers can inspect suggestions with `GET /api/route-proposals?city=bacolod` and set a decision with `PATCH /api/route-proposals/{id}/review`. Set a private `ROUTE_REVIEW_TOKEN` environment variable, then pass it in the `X-Review-Token` header with JSON such as `{"status":"accepted","note":"Checked against the city route plan."}`. An accepted decision records the review outcome; incorporating the route into the GeoJSON network still requires a data change and deployment. When importing a new line, add the required anchors and source attribution described below. The editor's straight line segments are proposals for review, not automatically road snapped geometry.
+Reviewers sign in at `/admin/routes`. Set `ROUTE_ADMIN_USERNAME` and a private `ROUTE_ADMIN_PASSWORD_HASH` environment variable. Run `python scripts/hash_admin_password.py` locally to create a salted hash; enter the password only at the sign-in page, never in source control. The admin page shows pending suggestions, support counts, evidence links, and the proposed map path. A review note is required to accept or reject. Sessions are stored in the database and expire after eight hours; signing out revokes the session. The older `ROUTE_REVIEW_TOKEN` API option remains available for scripted reviews if configured.
+
+An accepted decision records the review outcome; incorporating the route into the GeoJSON network still requires a data change and deployment. When importing a new line, add the required anchors and source attribution described below. The editor's straight line segments are proposals for review, not automatically road snapped geometry.
 
 ## Route data
 

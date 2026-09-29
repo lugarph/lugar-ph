@@ -6,9 +6,10 @@ import json
 import math
 import os
 import secrets
+from hashlib import pbkdf2_hmac, sha256
 from pathlib import Path
 from threading import Lock
-from time import monotonic
+from time import monotonic, time
 from urllib.parse import urlparse
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request, Response
@@ -16,9 +17,9 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 
-from models import ProposalVote, RouteComment, RouteProposal, SessionLocal
+from models import ProposalVote, RouteAdminSession, RouteComment, RouteProposal, SessionLocal
 from osm_services import search_places, walking_matrix, walking_route
 from route_catalog import ROUTE_BY_ID, distance_km, public_catalog
 from transit_network import CITY_METADATA, LINES_BY_CITY, landmarks, plan_trips, public_network, trip_help
@@ -32,6 +33,10 @@ _comment_times: dict[str, float] = {}
 _comment_lock = Lock()
 _proposal_times: dict[str, float] = {}
 _proposal_lock = Lock()
+_login_attempts: dict[str, list[float]] = {}
+_login_lock = Lock()
+ADMIN_COOKIE = "lugar_admin_session"
+ADMIN_SESSION_SECONDS = 8 * 60 * 60
 
 
 class CommentInput(BaseModel):
@@ -57,6 +62,55 @@ class ProposalInput(BaseModel):
 class ReviewInput(BaseModel):
     status: str
     note: str = Field(min_length=10, max_length=1000)
+
+
+class AdminLoginInput(BaseModel):
+    username: str = Field(min_length=1, max_length=80)
+    password: str = Field(min_length=1, max_length=200)
+
+
+def _admin_configured() -> bool:
+    return bool(os.getenv("ROUTE_ADMIN_USERNAME") and os.getenv("ROUTE_ADMIN_PASSWORD_HASH"))
+
+
+def _verify_admin_password(password: str) -> bool:
+    try:
+        scheme, rounds, salt, expected = os.environ["ROUTE_ADMIN_PASSWORD_HASH"].split("$")
+        if scheme != "pbkdf2_sha256" or not 100_000 <= int(rounds) <= 2_000_000:
+            return False
+        actual = pbkdf2_hmac("sha256", password.encode(), bytes.fromhex(salt), int(rounds))
+        return secrets.compare_digest(actual, bytes.fromhex(expected))
+    except (KeyError, ValueError):
+        return False
+
+
+def _admin_username(request: Request) -> str | None:
+    token = request.cookies.get(ADMIN_COOKIE, "")
+    if len(token) != 43 or not all(char.isalnum() or char in "-_" for char in token):
+        return None
+    token_hash = sha256(token.encode()).hexdigest()
+    with SessionLocal() as session:
+        record = session.get(RouteAdminSession, token_hash)
+        if not record:
+            return None
+        if record.expires_at <= int(time()) or record.username != os.getenv("ROUTE_ADMIN_USERNAME"):
+            session.delete(record)
+            session.commit()
+            return None
+        return record.username
+
+
+def _require_admin(request: Request) -> str:
+    username = _admin_username(request)
+    if not username:
+        raise HTTPException(status_code=401, detail="Admin sign-in required")
+    return username
+
+
+def _require_same_origin(request: Request) -> None:
+    origin = urlparse(request.headers.get("origin", ""))
+    if origin.scheme not in {"http", "https"} or origin.netloc != request.headers.get("host"):
+        raise HTTPException(status_code=403, detail="Invalid request origin")
 
 
 def _known_line(route_slug: str) -> None:
@@ -306,11 +360,90 @@ def vote_route_proposal(proposal_id: int, request: Request, response: Response):
         return {"votes": counts.get(proposal_id, 0), "voted": proposal_id in voted}
 
 
+@app.get("/admin/routes", response_class=HTMLResponse)
+def route_admin_page(request: Request):
+    return templates.TemplateResponse(request=request, name="admin_routes.html")
+
+
+@app.get("/api/admin/session")
+def admin_session(request: Request, response: Response):
+    response.headers["Cache-Control"] = "no-store"
+    return {"configured": _admin_configured(), "username": _admin_username(request)}
+
+
+@app.post("/api/admin/login")
+def admin_login(payload: AdminLoginInput, request: Request, response: Response):
+    _require_same_origin(request)
+    if not _admin_configured():
+        raise HTTPException(status_code=503, detail="Admin login has not been configured")
+    client = request.client.host if request.client else "unknown"
+    now = monotonic()
+    with _login_lock:
+        attempts = [stamp for stamp in _login_attempts.get(client, []) if now - stamp < 300]
+        if len(attempts) >= 5:
+            raise HTTPException(status_code=429, detail="Too many sign-in attempts. Try again later")
+        _login_attempts[client] = attempts
+    username = os.environ["ROUTE_ADMIN_USERNAME"]
+    valid_user = secrets.compare_digest(payload.username, username)
+    valid_password = _verify_admin_password(payload.password)
+    if not (valid_user and valid_password):
+        with _login_lock:
+            _login_attempts[client].append(now)
+        raise HTTPException(status_code=401, detail="Incorrect username or password")
+    with _login_lock:
+        _login_attempts.pop(client, None)
+    token = secrets.token_urlsafe(32)
+    with SessionLocal() as session:
+        session.add(RouteAdminSession(
+            token_hash=sha256(token.encode()).hexdigest(), username=username,
+            expires_at=int(time()) + ADMIN_SESSION_SECONDS,
+        ))
+        session.commit()
+    response.set_cookie(
+        ADMIN_COOKIE, token, max_age=ADMIN_SESSION_SECONDS, httponly=True, samesite="strict",
+        secure=bool(os.getenv("VERCEL")) or request.url.scheme == "https", path="/",
+    )
+    response.headers["Cache-Control"] = "no-store"
+    return {"username": username}
+
+
+@app.post("/api/admin/logout")
+def admin_logout(request: Request, response: Response):
+    _require_same_origin(request)
+    token = request.cookies.get(ADMIN_COOKIE, "")
+    if token:
+        with SessionLocal() as session:
+            record = session.get(RouteAdminSession, sha256(token.encode()).hexdigest())
+            if record:
+                session.delete(record)
+                session.commit()
+    response.delete_cookie(ADMIN_COOKIE, path="/")
+    response.headers["Cache-Control"] = "no-store"
+    return {"signed_out": True}
+
+
+@app.get("/api/admin/route-proposals")
+def admin_route_proposals(request: Request, response: Response):
+    _require_admin(request)
+    response.headers["Cache-Control"] = "no-store"
+    with SessionLocal() as session:
+        proposals = session.scalars(
+            select(RouteProposal).order_by(
+                case((RouteProposal.status == "pending", 0), else_=1),
+                RouteProposal.created_at.desc(), RouteProposal.id.desc(),
+            ).limit(500)
+        ).all()
+        counts, _ = _proposal_counts(session, [item.id for item in proposals], "")
+        return {"proposals": [_proposal_json(item, counts.get(item.id, 0)) for item in proposals]}
+
+
 @app.patch("/api/route-proposals/{proposal_id}/review")
-def review_route_proposal(proposal_id: int, payload: ReviewInput, x_review_token: str | None = Header(default=None)):
+def review_route_proposal(proposal_id: int, payload: ReviewInput, request: Request, x_review_token: str | None = Header(default=None)):
     configured = os.getenv("ROUTE_REVIEW_TOKEN")
-    if not configured or not x_review_token or not secrets.compare_digest(x_review_token, configured):
-        raise HTTPException(status_code=403, detail="Review token required")
+    token_valid = bool(configured and x_review_token and secrets.compare_digest(x_review_token, configured))
+    if not token_valid:
+        _require_admin(request)
+        _require_same_origin(request)
     if payload.status not in {"accepted", "rejected"}:
         raise HTTPException(status_code=422, detail="Review status must be accepted or rejected")
     note = " ".join(payload.note.split())

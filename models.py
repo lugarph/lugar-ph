@@ -90,6 +90,14 @@ class ProposalVote(Base):
     voter_id: Mapped[str] = mapped_column(String(64), nullable=False)
 
 
+class RouteAdminSession(Base):
+    __tablename__ = "route_admin_sessions"
+
+    token_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    username: Mapped[str] = mapped_column(String(80), nullable=False)
+    expires_at: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+
+
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 

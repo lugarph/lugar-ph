@@ -1,6 +1,7 @@
 """Community route suggestions stay pending and collect one vote per browser."""
 
 from contextlib import contextmanager
+from hashlib import pbkdf2_hmac
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
@@ -20,6 +21,7 @@ def proposal_app():
         engine = create_engine(f"sqlite:///{Path(directory) / 'routes.db'}")
         Base.metadata.create_all(engine)
         main._proposal_times.clear()
+        main._login_attempts.clear()
         with patch.object(main, "SessionLocal", sessionmaker(bind=engine)), TestClient(main.app) as client:
             yield client
         engine.dispose()
@@ -71,7 +73,7 @@ def test_votes_toggle_per_browser_and_review_closes_voting(monkeypatch):
         with TestClient(main.app) as other:
             assert other.post(f"/api/route-proposals/{proposal_id}/vote").json()["votes"] == 2
         assert client.post(f"/api/route-proposals/{proposal_id}/vote").json() == {"votes": 1, "voted": False}
-        assert client.patch(f"/api/route-proposals/{proposal_id}/review", json={"status": "accepted", "note": "Checked against the city route plan."}).status_code == 403
+        assert client.patch(f"/api/route-proposals/{proposal_id}/review", json={"status": "accepted", "note": "Checked against the city route plan."}).status_code == 401
         monkeypatch.setenv("ROUTE_REVIEW_TOKEN", "review-secret")
         reviewed = client.patch(f"/api/route-proposals/{proposal_id}/review", headers={"X-Review-Token": "review-secret"}, json={"status": "accepted", "note": "Checked against the city route plan."})
         assert reviewed.status_code == 200
@@ -83,3 +85,28 @@ def test_rejects_distant_or_malformed_route_points():
     with proposal_app() as client:
         assert client.post("/api/route-proposals", json={**new_route(), "coordinates": [[0, 0], [1, 1]]}).status_code == 422
         assert client.post("/api/route-proposals", json={**new_route(), "coordinates": [[122.95, 10.67], [122.95, 10.67]]}).status_code == 422
+
+
+def test_admin_login_review_and_logout(monkeypatch):
+    salt = bytes.fromhex("11" * 16)
+    digest = pbkdf2_hmac("sha256", b"test-password", salt, 100_000).hex()
+    monkeypatch.setenv("ROUTE_ADMIN_USERNAME", "reviewer")
+    monkeypatch.setenv("ROUTE_ADMIN_PASSWORD_HASH", f"pbkdf2_sha256$100000${salt.hex()}${digest}")
+    origin = {"Origin": "http://testserver"}
+    with proposal_app() as client:
+        proposal_id = client.post("/api/route-proposals", json=new_route()).json()["id"]
+        assert client.get("/admin/routes").status_code == 200
+        assert client.get("/api/admin/session").json() == {"configured": True, "username": None}
+        assert client.get("/api/admin/route-proposals").status_code == 401
+        assert client.post("/api/admin/login", headers=origin, json={"username": "reviewer", "password": "wrong"}).status_code == 401
+        login = client.post("/api/admin/login", headers=origin, json={"username": "reviewer", "password": "test-password"})
+        assert login.status_code == 200
+        assert "httponly" in login.headers["set-cookie"].lower()
+        assert client.get("/api/admin/session").json()["username"] == "reviewer"
+        assert client.get("/api/admin/route-proposals").json()["proposals"][0]["id"] == proposal_id
+        decision = {"status": "accepted", "note": "Confirmed with the official route plan."}
+        assert client.patch(f"/api/route-proposals/{proposal_id}/review", json=decision).status_code == 403
+        assert client.patch(f"/api/route-proposals/{proposal_id}/review", headers=origin, json=decision).json()["status"] == "accepted"
+        assert client.post("/api/admin/logout", headers=origin).status_code == 200
+        assert client.get("/api/admin/session").json()["username"] is None
+        assert client.get("/api/admin/route-proposals").status_code == 401
