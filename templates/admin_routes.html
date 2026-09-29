@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Review route suggestions — Lugar.ph</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
+  <style>
+    [x-cloak] { display: none !important; }
+    body { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    #review-map { min-height: 290px; height: 38vh; background: #e2e8f0; }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900">
+  <div x-data="routeAdmin()" x-init="init()" class="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+    <header class="mb-6 flex items-center justify-between gap-4">
+      <div><a href="/" class="text-sm font-extrabold tracking-tight">lugar<span class="text-slate-400">.ph</span></a><h1 class="mt-1 text-2xl font-extrabold tracking-tight">Review route suggestions</h1></div>
+      <button x-show="username" x-cloak type="button" @click="logout()" class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold">Sign out</button>
+    </header>
+
+    <div x-show="loading" class="text-sm text-slate-500">Loading reviewer account…</div>
+    <div x-show="!loading && !configured" x-cloak class="max-w-xl rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">Admin sign-in is not configured for this deployment. Set the reviewer credentials and a persistent database before using this page.</div>
+
+    <form x-show="!loading && configured && !username" x-cloak @submit.prevent="login()" class="max-w-md space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <p class="text-sm text-slate-600">Sign in to inspect community suggestions and record a review decision.</p>
+      <label class="block text-sm font-bold">Username<input x-model="loginForm.username" required autocomplete="username" class="mt-1 h-11 w-full rounded-xl border border-slate-300 px-3 font-medium outline-none focus:border-blue-600"></label>
+      <label class="block text-sm font-bold">Password<input x-model="loginForm.password" type="password" required autocomplete="current-password" class="mt-1 h-11 w-full rounded-xl border border-slate-300 px-3 font-medium outline-none focus:border-blue-600"></label>
+      <p x-show="error" x-text="error" role="alert" class="text-sm text-rose-700"></p>
+      <button type="submit" :disabled="busy" class="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white disabled:opacity-50" x-text="busy ? 'Signing in…' : 'Sign in'"></button>
+    </form>
+
+    <div x-show="username" x-cloak class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(330px,42%)]">
+      <section class="space-y-4">
+        <div class="rounded-2xl border border-slate-200 bg-white p-4">
+          <div class="flex flex-wrap items-center justify-between gap-3"><div><h2 class="text-base font-extrabold">Suggestions</h2><p class="mt-1 text-xs text-slate-500" x-text="`${pendingCount} awaiting review · ${proposals.length} total`"></p></div><button type="button" @click="loadProposals()" class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold">Refresh</button></div>
+          <div class="mt-3 flex gap-2" role="group" aria-label="Filter suggestions"><button type="button" @click="filter = 'pending'" :aria-pressed="filter === 'pending'" class="rounded-full px-3 py-1.5 text-xs font-bold" :class="filter === 'pending' ? 'bg-blue-700 text-white' : 'bg-slate-100 text-slate-600'">Pending</button><button type="button" @click="filter = 'all'" :aria-pressed="filter === 'all'" class="rounded-full px-3 py-1.5 text-xs font-bold" :class="filter === 'all' ? 'bg-blue-700 text-white' : 'bg-slate-100 text-slate-600'">All</button></div>
+        </div>
+        <p x-show="error" x-text="error" role="alert" class="rounded-xl bg-rose-50 p-3 text-sm text-rose-700"></p>
+        <p x-show="!busy && filteredProposals.length === 0" class="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-500">No suggestions in this view.</p>
+        <template x-for="proposal in filteredProposals" :key="proposal.id"><article class="rounded-2xl border bg-white p-5 shadow-sm" :class="selected?.id === proposal.id ? 'border-blue-400' : 'border-slate-200'">
+          <div class="flex items-start justify-between gap-3"><div><p class="text-[11px] font-bold uppercase tracking-widest text-blue-700" x-text="`${proposal.city} · ${proposal.kind === 'new' ? 'new route' : 'correction'}`"></p><h3 class="mt-1 text-base font-extrabold" x-text="`${proposal.number} · ${proposal.name}`"></h3></div><span class="rounded-full px-2 py-1 text-[11px] font-bold" :class="proposal.status === 'pending' ? 'bg-amber-50 text-amber-800' : proposal.status === 'accepted' ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-100 text-slate-700'" x-text="proposal.status"></span></div>
+          <p class="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-700" x-text="proposal.reason"></p>
+          <p class="mt-2 text-xs text-slate-500" x-text="`By ${proposal.author} · ${date(proposal.created_at)} · ${proposal.votes} support votes`"></p>
+          <a x-show="proposal.source_url" :href="proposal.source_url" target="_blank" rel="noopener noreferrer" class="mt-2 inline-block text-xs font-bold text-blue-700 underline">Open evidence ↗</a>
+          <p x-show="proposal.review_note" class="mt-3 rounded-xl bg-slate-50 p-3 text-xs text-slate-700" x-text="`Review: ${proposal.review_note}`"></p>
+          <button type="button" @click="preview(proposal)" class="mt-3 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold">View proposed path</button>
+          <div x-show="proposal.status === 'pending'" class="mt-4 border-t border-slate-100 pt-4">
+            <label class="block text-xs font-bold text-slate-700">Review note<textarea x-model="reviewNotes[proposal.id]" minlength="10" maxlength="1000" rows="2" placeholder="Explain what was checked or why this needs changes" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-normal outline-none focus:border-blue-600"></textarea></label>
+            <div class="mt-2 flex flex-wrap gap-2"><button type="button" @click="review(proposal, 'accepted')" :disabled="busy" class="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Accept for integration</button><button type="button" @click="review(proposal, 'rejected')" :disabled="busy" class="rounded-lg border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700 disabled:opacity-50">Reject</button></div>
+          </div>
+        </article></template>
+      </section>
+      <aside class="lg:sticky lg:top-5 lg:self-start"><div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div class="p-4"><h2 class="text-sm font-extrabold" x-text="selected ? `${selected.number} · ${selected.name}` : 'Route preview'"></h2><p class="mt-1 text-xs text-slate-500">The proposed path is shown in purple. Compare it with the published lines and source evidence before deciding.</p></div><div id="review-map" role="application" aria-label="Map of proposed route"></div><p class="p-4 text-xs leading-relaxed text-slate-500">Acceptance records a review decision. Publishing a route to trip planning still requires updating the route data and deploying it.</p></div></aside>
+    </div>
+  </div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+    function routeAdmin() {
+      let map = null, previewLine = null;
+      return {
+        loading: true, configured: false, username: null, busy: false, error: '',
+        loginForm: { username: '', password: '' }, proposals: [], filter: 'pending', selected: null, reviewNotes: {},
+        get pendingCount() { return this.proposals.filter(item => item.status === 'pending').length; },
+        get filteredProposals() { return this.filter === 'pending' ? this.proposals.filter(item => item.status === 'pending') : this.proposals; },
+        async init() {
+          try {
+            const response = await fetch('/api/admin/session', { cache: 'no-store' });
+            const data = await response.json();
+            this.configured = data.configured;
+            this.username = data.username;
+            if (this.username) await this.loadProposals();
+          } catch (error) { this.error = 'Could not check reviewer sign-in.'; }
+          finally { this.loading = false; }
+        },
+        async login() {
+          this.busy = true; this.error = '';
+          try {
+            const response = await fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.loginForm) });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.detail || 'Sign-in failed.');
+            this.username = data.username;
+            this.loginForm.password = '';
+            await this.loadProposals();
+          } catch (error) { this.error = error.message || 'Sign-in failed.'; }
+          finally { this.busy = false; }
+        },
+        async logout() {
+          await fetch('/api/admin/logout', { method: 'POST' });
+          this.username = null; this.proposals = []; this.selected = null;
+          if (map) { map.remove(); map = null; previewLine = null; }
+        },
+        async loadProposals() {
+          this.error = '';
+          try {
+            const response = await fetch('/api/admin/route-proposals', { cache: 'no-store' });
+            if (response.status === 401) { this.username = null; throw new Error('Your session expired. Sign in again.'); }
+            if (!response.ok) throw new Error('Could not load route suggestions.');
+            this.proposals = (await response.json()).proposals;
+            this.$nextTick(() => this.initMap());
+          } catch (error) { this.error = error.message; }
+        },
+        initMap() {
+          if (map || !this.username) return;
+          map = L.map('review-map').setView([12.5, 122.5], 6);
+          L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(map);
+        },
+        preview(proposal) {
+          this.selected = proposal;
+          this.$nextTick(() => {
+            this.initMap(); map.invalidateSize();
+            if (previewLine) map.removeLayer(previewLine);
+            previewLine = L.polyline(proposal.coordinates.map(([lng, lat]) => [lat, lng]), { color: '#7c3aed', weight: 5 }).addTo(map);
+            map.fitBounds(previewLine.getBounds(), { padding: [28, 28], maxZoom: 15 });
+          });
+        },
+        async review(proposal, status) {
+          const note = (this.reviewNotes[proposal.id] || '').trim();
+          if (note.length < 10) { this.error = 'Add a review note of at least 10 characters.'; return; }
+          this.busy = true; this.error = '';
+          try {
+            const response = await fetch(`/api/route-proposals/${proposal.id}/review`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status, note }) });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.detail || 'Could not save review.');
+            const index = this.proposals.findIndex(item => item.id === proposal.id);
+            if (index >= 0) this.proposals[index] = data;
+            if (this.selected?.id === proposal.id) this.selected = data;
+          } catch (error) { this.error = error.message || 'Could not save review.'; }
+          finally { this.busy = false; }
+        },
+        date(value) { return new Date(value).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }); }
+      };
+    }
+  </script>
+</body>
+</html>
