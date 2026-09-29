@@ -86,6 +86,16 @@ def _place_name(name: str) -> str:
 
 def _line(city: str, feature: dict) -> Line:
     coordinates = tuple(tuple(point) for point in feature["geometry"]["coordinates"])
+    if feature["properties"].get("status") == "community_verified":
+        # A sketch can contain long straight segments. Sample boarding points
+        # along them so the planner can use the full drawn path.
+        sampled = [coordinates[0]]
+        for first, second in zip(coordinates, coordinates[1:]):
+            steps = max(1, ceil(distance_km(first[1], first[0], second[1], second[0]) / 0.1))
+            sampled.extend((first[0] + (second[0] - first[0]) * step / steps,
+                            first[1] + (second[1] - first[1]) * step / steps)
+                           for step in range(1, steps + 1))
+        coordinates = tuple(sampled)
     cumulative = [0.0]
     for first, second in zip(coordinates, coordinates[1:]):
         cumulative.append(cumulative[-1] + distance_km(first[1], first[0], second[1], second[0]))
@@ -99,7 +109,8 @@ def _line(city: str, feature: dict) -> Line:
         turnaround_km = cumulative[index]
     return Line(
         city=city, id=properties["id"], number=str(properties["number"]), name=properties["name"],
-        color=properties["color"], source_url=properties.get("source_url") or CITY_METADATA[city]["source_url"], status=properties["status"],
+        color=properties["color"], source_url=(properties.get("source_url") if properties["status"] == "community_verified"
+                                                    else properties.get("source_url") or CITY_METADATA[city]["source_url"]), status=properties["status"],
         coordinates=coordinates, cumulative_km=tuple(cumulative),
         anchors=anchors, return_anchors=_anchors(properties.get("return_anchors", [])),
         circuit=distance_km(start[1], start[0], end[1], end[0]) < CIRCUIT_GAP_KM,
@@ -315,7 +326,10 @@ def _stop_indexes(line: Line) -> tuple[int, ...]:
 
 @lru_cache(maxsize=None)
 def _graph(city: str) -> StopGraph:
-    lines = LINES_BY_CITY[city]
+    return build_graph(LINES_BY_CITY[city])
+
+
+def build_graph(lines: tuple[Line, ...]) -> StopGraph:
     stops = tuple(_stop_indexes(line) for line in lines)
     grid: dict[tuple[int, int], list[Stop]] = defaultdict(list)
     for line_pos, (line, indexes) in enumerate(zip(lines, stops)):
@@ -527,19 +541,19 @@ def _line_ids(graph: StopGraph, journey: Journey) -> tuple[str, ...]:
 STREET_NAME = re.compile(r"\b(St|Rd|Ave|Street|Road|Avenue|Drive|Blvd)\b\.?", re.IGNORECASE)
 
 
-def _landmark(city: str, lat: float, lng: float) -> str | None:
+def _landmark(city: str, lat: float, lng: float, anchors: tuple[Anchor, ...] | None = None) -> str | None:
     """The nearest named place within reach, preferring places over street-named terminals."""
     nearby = [
         (bool(STREET_NAME.search(anchor.name)), walk, anchor.name)
-        for anchor in LANDMARKS_BY_CITY[city]
+        for anchor in (anchors if anchors is not None else LANDMARKS_BY_CITY[city])
         if (walk := distance_km(lat, lng, anchor.lat, anchor.lng)) <= LANDMARK_RADIUS_KM
     ]
     return min(nearby)[2] if nearby else None
 
 
-def _stop_json(city: str, point: tuple[float, float], streets: dict[tuple[float, float], str]) -> dict:
+def _stop_json(city: str, point: tuple[float, float], streets: dict[tuple[float, float], str], anchors: tuple[Anchor, ...] | None = None) -> dict:
     lat, lng = point
-    landmark, street = _landmark(city, lat, lng), streets.get(point)
+    landmark, street = _landmark(city, lat, lng, anchors), streets.get(point)
     if landmark and street:
         label = f"near {landmark}, {street}"
     elif landmark or street:
@@ -564,14 +578,14 @@ def _heading(line: Line, alight_km: float) -> str | None:
     return line.anchors[0].name
 
 
-def _itinerary(graph: StopGraph, journey: Journey, city: str, streets: dict[tuple[float, float], str]) -> dict:
+def _itinerary(graph: StopGraph, journey: Journey, city: str, streets: dict[tuple[float, float], str], anchors: tuple[Anchor, ...] | None = None) -> dict:
     lines = [graph.lines[line] for line, _, _ in journey.rides]
     walks = journey.walks
     legs, waypoints, transfers = [], [], []
     for position, ((line_pos, board, alight), ride_km) in enumerate(zip(journey.rides, journey.ride_kms)):
         line = lines[position]
-        board_stop = _stop_json(city, graph.latlng((line_pos, board)), streets)
-        alight_stop = _stop_json(city, graph.latlng((line_pos, alight)), streets)
+        board_stop = _stop_json(city, graph.latlng((line_pos, board)), streets, anchors)
+        alight_stop = _stop_json(city, graph.latlng((line_pos, alight)), streets, anchors)
         start, end = graph.stops[line_pos][board], graph.stops[line_pos][alight]
         legs.append({
             "route_id": line.id, "route_number": line.number, "route_name": line.name, "color": line.color,
@@ -614,6 +628,7 @@ def _itinerary(graph: StopGraph, journey: Journey, city: str, streets: dict[tupl
 def plan_trips(
     origin_lat: float, origin_lng: float, destination_lat: float, destination_lng: float,
     city: str = "bacolod", walk_matrix: WalkMatrix | None = None,
+    graph: StopGraph | None = None, anchors: tuple[Anchor, ...] | None = None,
 ) -> list[dict]:
     """The recommended itinerary first, then up to two distinct alternatives.
 
@@ -622,7 +637,7 @@ def plan_trips(
     """
     if city not in LINES_BY_CITY or distance_km(origin_lat, origin_lng, destination_lat, destination_lng) < 0.25:
         return []
-    graph = _graph(city)
+    graph = graph if graph is not None else _graph(city)
     origin, destination = (origin_lat, origin_lng), (destination_lat, destination_lng)
     found = [*_search(graph, origin, destination, DEFAULT_WEIGHTS).values(), *_search(graph, origin, destination, LOW_WALK_WEIGHTS).values()]
     candidates = list({journey.rides: journey for journey in found}.values())
@@ -651,7 +666,7 @@ def plan_trips(
     shown[1:] = sorted(shown[1:], key=lambda journey: (journey.minutes, journey.walk_km))
     trips = []
     for journey in shown:
-        trip = _itinerary(graph, journey, city, streets)
+        trip = _itinerary(graph, journey, city, streets, anchors)
         trip["tags"] = _tags(journey, primary)
         # A lone route has nothing to be "fastest" against.
         trip["highlight"] = _highlight(primary, shown) if journey is primary and len(shown) > 1 else None
@@ -671,6 +686,8 @@ def match_trip(origin_lat: float, origin_lng: float, destination_lat: float, des
 
 
 def _nearest_line_point(graph: StopGraph, lat: float, lng: float) -> dict | None:
+    if not graph.stops:
+        return None
     walk, line, stop = min(
         (distance_km(lat, lng, *graph.latlng((line, stop))), line, stop)
         for line, indexes in enumerate(graph.stops) for stop in range(len(indexes))
@@ -681,11 +698,11 @@ def _nearest_line_point(graph: StopGraph, lat: float, lng: float) -> dict | None
     return {"lat": point_lat, "lng": point_lng, "walk_km": round(walk, 2), "line_number": graph.lines[line].number}
 
 
-def trip_help(origin_lat: float, origin_lng: float, destination_lat: float, destination_lng: float, city: str = "bacolod") -> dict:
+def trip_help(origin_lat: float, origin_lng: float, destination_lat: float, destination_lng: float, city: str = "bacolod", graph: StopGraph | None = None) -> dict:
     """Why no trip was planned, with the nearest mapped line to each pin."""
     if distance_km(origin_lat, origin_lng, destination_lat, destination_lng) < 0.25:
         return {"reason": "too_close", "origin": None, "destination": None}
-    graph = _graph(city)
+    graph = graph if graph is not None else _graph(city)
     origin = _nearest_line_point(graph, origin_lat, origin_lng)
     destination = _nearest_line_point(graph, destination_lat, destination_lng)
     far = [

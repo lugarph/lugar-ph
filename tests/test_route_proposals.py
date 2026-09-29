@@ -98,15 +98,74 @@ def test_admin_login_review_and_logout(monkeypatch):
         assert client.get("/admin/routes").status_code == 200
         assert client.get("/api/admin/session").json() == {"configured": True, "username": None}
         assert client.get("/api/admin/route-proposals").status_code == 401
+        assert client.get("/api/admin/export-network").status_code == 401
         assert client.post("/api/admin/login", headers=origin, json={"username": "reviewer", "password": "wrong"}).status_code == 401
         login = client.post("/api/admin/login", headers=origin, json={"username": "reviewer", "password": "test-password"})
         assert login.status_code == 200
         assert "httponly" in login.headers["set-cookie"].lower()
         assert client.get("/api/admin/session").json()["username"] == "reviewer"
         assert client.get("/api/admin/route-proposals").json()["proposals"][0]["id"] == proposal_id
+        assert client.get("/api/admin/export-network").json()["type"] == "FeatureCollection"
         decision = {"status": "accepted", "note": "Confirmed with the official route plan."}
         assert client.patch(f"/api/route-proposals/{proposal_id}/review", json=decision).status_code == 403
         assert client.patch(f"/api/route-proposals/{proposal_id}/review", headers=origin, json=decision).json()["status"] == "accepted"
         assert client.post("/api/admin/logout", headers=origin).status_code == 200
         assert client.get("/api/admin/session").json()["username"] is None
         assert client.get("/api/admin/route-proposals").status_code == 401
+
+
+def test_approval_publishes_new_route_and_rollback_removes_it(monkeypatch):
+    salt = bytes.fromhex("22" * 16)
+    digest = pbkdf2_hmac("sha256", b"test-password", salt, 100_000).hex()
+    monkeypatch.setenv("ROUTE_ADMIN_USERNAME", "reviewer")
+    monkeypatch.setenv("ROUTE_ADMIN_PASSWORD_HASH", f"pbkdf2_sha256$100000${salt.hex()}${digest}")
+    origin = {"Origin": "http://testserver"}
+    with proposal_app() as client:
+        assert client.get("/admin").status_code == 200
+        before = len(client.get("/api/jeepney-network").json()["features"])
+        proposal_id = client.post("/api/route-proposals", json=new_route()).json()["id"]
+        client.post("/api/admin/login", headers=origin, json={"username": "reviewer", "password": "test-password"})
+        accepted = client.patch(f"/api/route-proposals/{proposal_id}/review", headers=origin,
+                                json={"status": "accepted", "note": "Verified route with local riders."})
+        assert accepted.status_code == 200
+        slug = accepted.json()["route_slug"]
+        assert len(client.get("/api/jeepney-network").json()["features"]) == before + 1
+        assert len(client.get("/api/admin/export-network").json()["features"]) == before + 1
+        assert any(line.id == slug and len(line.coordinates) > 2 for line in main._live("bacolod").graph.lines)
+        assert any(route["id"] == slug for route in client.get("/api/jeepney-routes").json()["routes"])
+        assert client.get(f"/api/jeepney-routes/{slug}/comments").status_code == 200
+        history = client.get("/api/admin/route-revisions").json()
+        baseline = next(item for item in history["revisions"] if item["action"] == "baseline")
+        assert client.post(f"/api/admin/routes/{slug}/rollback", json={"revision_id": baseline["id"], "note": "Incorrectly approved route."}).status_code == 403
+        restored = client.post(f"/api/admin/routes/{slug}/rollback", headers=origin,
+                               json={"revision_id": baseline["id"], "note": "Incorrectly approved route."})
+        assert restored.status_code == 200
+        assert len(client.get("/api/jeepney-network").json()["features"]) == before
+        assert not any(route["id"] == slug for route in client.get("/api/jeepney-routes").json()["routes"])
+        assert client.patch(f"/api/route-proposals/{proposal_id}/review", headers=origin,
+                            json={"status": "accepted", "note": "Duplicate decision."}).status_code == 409
+
+
+def test_correction_rollback_restores_original_geometry(monkeypatch):
+    monkeypatch.setenv("ROUTE_REVIEW_TOKEN", "review-secret")
+    original = NETWORKS["bacolod"]["features"][0]
+    slug = original["properties"]["id"]
+    with proposal_app() as client:
+        proposal = {**new_route(), "kind": "correction", "route_slug": slug,
+                    "number": str(original["properties"]["number"]), "name": "Corrected name"}
+        proposal_id = client.post("/api/route-proposals", json=proposal).json()["id"]
+        accepted = client.patch(f"/api/route-proposals/{proposal_id}/review",
+                                headers={"X-Review-Token": "review-secret"},
+                                json={"status": "accepted", "note": "Verified route correction."})
+        assert accepted.status_code == 200
+        changed = next(item for item in client.get("/api/jeepney-network").json()["features"] if item["properties"]["id"] == slug)
+        assert changed["properties"]["name"] == "Corrected name"
+        assert changed["geometry"]["coordinates"] == proposal["coordinates"]
+        with patch.object(main, "_admin_username", return_value="reviewer"):
+            history = client.get("/api/admin/route-revisions").json()
+            baseline = next(item for item in history["revisions"] if item["action"] == "baseline")
+            rollback = client.post(f"/api/admin/routes/{slug}/rollback", headers={"Origin": "http://testserver"},
+                                   json={"revision_id": baseline["id"], "note": "Return to mapped original."})
+        assert rollback.status_code == 200
+        restored = next(item for item in client.get("/api/jeepney-network").json()["features"] if item["properties"]["id"] == slug)
+        assert restored == original

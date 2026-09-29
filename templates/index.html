@@ -1027,20 +1027,22 @@
           this.activeTab = 'routes';
           this.$nextTick(() => this.initNetworkMap());
           this.loadProposals();
-          if (this.catalogData && maps.catalogNetwork) return;
           const requestedCity = this.city;
           this.catalogLoading = true;
           this.catalogError = '';
           try {
-            if (!maps.networkCache[requestedCity]) {
-              const [catalogResponse, networkResponse] = await Promise.all([
-                fetch(`/api/jeepney-routes?city=${encodeURIComponent(requestedCity)}`),
-                fetch(`/api/jeepney-network?city=${encodeURIComponent(requestedCity)}`)
-              ]);
-              if (!catalogResponse.ok || !networkResponse.ok) throw new Error('Catalog request failed');
-              maps.networkCache[requestedCity] = { catalog: await catalogResponse.json(), network: await networkResponse.json() };
-            }
+            const [catalogResponse, networkResponse] = await Promise.all([
+              fetch(`/api/jeepney-routes?city=${encodeURIComponent(requestedCity)}`, { cache: 'no-store' }),
+              fetch(`/api/jeepney-network?city=${encodeURIComponent(requestedCity)}`, { cache: 'no-store' })
+            ]);
+            if (!catalogResponse.ok || !networkResponse.ok) throw new Error('Catalog request failed');
+            maps.networkCache[requestedCity] = { catalog: await catalogResponse.json(), network: await networkResponse.json() };
             if (this.city !== requestedCity) return;
+            Object.values(maps.networkLayers).forEach(({ line, casing }) => {
+              maps.networkMap?.removeLayer(line);
+              maps.networkMap?.removeLayer(casing);
+            });
+            maps.networkLayers = {};
             this.catalogData = maps.networkCache[requestedCity].catalog;
             maps.catalogNetwork = maps.networkCache[requestedCity].network;
             this.$nextTick(() => this.drawNetwork());

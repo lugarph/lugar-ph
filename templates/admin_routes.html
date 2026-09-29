@@ -49,11 +49,18 @@
           <button type="button" @click="preview(proposal)" class="mt-3 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold">View proposed path</button>
           <div x-show="proposal.status === 'pending'" class="mt-4 border-t border-slate-100 pt-4">
             <label class="block text-xs font-bold text-slate-700">Review note<textarea x-model="reviewNotes[proposal.id]" minlength="10" maxlength="1000" rows="2" placeholder="Explain what was checked or why this needs changes" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-normal outline-none focus:border-blue-600"></textarea></label>
-            <div class="mt-2 flex flex-wrap gap-2"><button type="button" @click="review(proposal, 'accepted')" :disabled="busy" class="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Accept for integration</button><button type="button" @click="review(proposal, 'rejected')" :disabled="busy" class="rounded-lg border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700 disabled:opacity-50">Reject</button></div>
+            <div class="mt-2 flex flex-wrap gap-2"><button type="button" @click="review(proposal, 'accepted')" :disabled="busy" class="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Approve and publish</button><button type="button" @click="review(proposal, 'rejected')" :disabled="busy" class="rounded-lg border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700 disabled:opacity-50">Reject</button></div>
           </div>
         </article></template>
+        <section class="rounded-2xl border border-slate-200 bg-white p-5">
+          <h2 class="text-base font-extrabold">Published history and rollback</h2>
+          <p class="mt-1 text-xs leading-relaxed text-slate-600">Each approval and rollback is saved as a revision. Restore a previous version below, then sync the database state into Git when ready.</p>
+          <div class="mt-3 flex flex-wrap gap-2"><template x-for="city in cities" :key="city"><button type="button" @click="historyCity = city; loadHistory()" class="rounded-lg px-3 py-1.5 text-xs font-bold" :class="historyCity === city ? 'bg-blue-700 text-white' : 'bg-slate-100 text-slate-700'" x-text="city"></button></template></div>
+          <label class="mt-4 block text-xs font-bold">Rollback reason<textarea x-model="rollbackNote" minlength="10" maxlength="1000" rows="2" placeholder="Why are you restoring an older version?" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-normal"></textarea></label>
+          <div class="mt-3 max-h-80 space-y-2 overflow-y-auto"><template x-for="revision in revisions" :key="revision.id"><div class="flex items-center justify-between gap-3 rounded-lg border border-slate-100 p-3 text-xs"><div><p class="font-bold" x-text="`${revision.route_slug} · ${revision.name}`"></p><p class="mt-1 text-slate-500" x-text="`#${revision.id} · ${revision.action} · ${date(revision.created_at)}`"></p><p class="mt-1 text-slate-600" x-text="revision.note"></p></div><button type="button" x-show="currentRevision(revision.route_slug) !== revision.id" @click="rollback(revision)" :disabled="busy" class="shrink-0 rounded-lg border border-slate-300 px-2 py-1 font-bold disabled:opacity-50">Restore</button></div></template></div>
+        </section>
       </section>
-      <aside class="lg:sticky lg:top-5 lg:self-start"><div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div class="p-4"><h2 class="text-sm font-extrabold" x-text="selected ? `${selected.number} · ${selected.name}` : 'Route preview'"></h2><p class="mt-1 text-xs text-slate-500">The proposed path is shown in purple. Compare it with the published lines and source evidence before deciding.</p></div><div id="review-map" role="application" aria-label="Map of proposed route"></div><p class="p-4 text-xs leading-relaxed text-slate-500">Acceptance records a review decision. Publishing a route to trip planning still requires updating the route data and deploying it.</p></div></aside>
+      <aside class="lg:sticky lg:top-5 lg:self-start"><div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div class="p-4"><h2 class="text-sm font-extrabold" x-text="selected ? `${selected.number} · ${selected.name}` : 'Route preview'"></h2><p class="mt-1 text-xs text-slate-500">The proposed path is shown in purple. Compare it with the published lines and source evidence before deciding.</p></div><div id="review-map" role="application" aria-label="Map of proposed route"></div><p class="p-4 text-xs leading-relaxed text-slate-500">Approval publishes to the map and trip planner immediately. The database keeps every prior version for rollback.</p></div></aside>
     </div>
   </div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
@@ -63,6 +70,7 @@
       return {
         loading: true, configured: false, username: null, busy: false, error: '',
         loginForm: { username: '', password: '' }, proposals: [], filter: 'pending', selected: null, reviewNotes: {},
+        cities: ['bacolod', 'iloilo', 'cebu', 'tacloban', 'baguio', 'naga', 'cdo', 'davao'], historyCity: 'bacolod', revisions: [], publications: [], rollbackNote: '',
         get pendingCount() { return this.proposals.filter(item => item.status === 'pending').length; },
         get filteredProposals() { return this.filter === 'pending' ? this.proposals.filter(item => item.status === 'pending') : this.proposals; },
         async init() {
@@ -89,7 +97,7 @@
         },
         async logout() {
           await fetch('/api/admin/logout', { method: 'POST' });
-          this.username = null; this.proposals = []; this.selected = null;
+          this.username = null; this.proposals = []; this.selected = null; this.revisions = []; this.publications = [];
           if (map) { map.remove(); map = null; previewLine = null; }
         },
         async loadProposals() {
@@ -99,8 +107,33 @@
             if (response.status === 401) { this.username = null; throw new Error('Your session expired. Sign in again.'); }
             if (!response.ok) throw new Error('Could not load route suggestions.');
             this.proposals = (await response.json()).proposals;
+            await this.loadHistory();
             this.$nextTick(() => this.initMap());
           } catch (error) { this.error = error.message; }
+        },
+        async loadHistory() {
+          if (!this.username) return;
+          const response = await fetch(`/api/admin/route-revisions?city=${encodeURIComponent(this.historyCity)}`, { cache: 'no-store' });
+          if (!response.ok) { this.error = 'Could not load route history.'; return; }
+          const data = await response.json();
+          this.revisions = data.revisions; this.publications = data.publications;
+        },
+        currentRevision(slug) { return this.publications.find(item => item.route_slug === slug)?.revision_id; },
+        async rollback(revision) {
+          const note = this.rollbackNote.trim();
+          if (note.length < 10) { this.error = 'Add a rollback reason of at least 10 characters.'; return; }
+          this.busy = true; this.error = '';
+          try {
+            const response = await fetch(`/api/admin/routes/${encodeURIComponent(revision.route_slug)}/rollback`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ revision_id: revision.id, note })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.detail || 'Could not restore route.');
+            this.rollbackNote = '';
+            await this.loadHistory();
+          } catch (error) { this.error = error.message || 'Could not restore route.'; }
+          finally { this.busy = false; }
         },
         initMap() {
           if (map || !this.username) return;
@@ -127,6 +160,7 @@
             const index = this.proposals.findIndex(item => item.id === proposal.id);
             if (index >= 0) this.proposals[index] = data;
             if (this.selected?.id === proposal.id) this.selected = data;
+            if (status === 'accepted') { this.historyCity = proposal.city; await this.loadHistory(); }
           } catch (error) { this.error = error.message || 'Could not save review.'; }
           finally { this.busy = false; }
         },

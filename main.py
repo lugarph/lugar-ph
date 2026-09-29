@@ -19,10 +19,11 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 from sqlalchemy import case, func, select
 
-from models import ProposalVote, RouteAdminSession, RouteComment, RouteProposal, SessionLocal
+from models import ProposalVote, RouteAdminSession, RouteComment, RouteProposal, RoutePublication, RouteRevision, SessionLocal
+from live_network import load_live_network
 from osm_services import search_places, walking_matrix, walking_route
 from route_catalog import ROUTE_BY_ID, distance_km, public_catalog
-from transit_network import CITY_METADATA, LINES_BY_CITY, landmarks, plan_trips, public_network, trip_help
+from transit_network import CITY_METADATA, LINES_BY_CITY, plan_trips, trip_help
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -114,8 +115,19 @@ def _require_same_origin(request: Request) -> None:
 
 
 def _known_line(route_slug: str) -> None:
-    if route_slug not in ROUTE_BY_ID:
+    if route_slug in ROUTE_BY_ID:
+        return
+    with SessionLocal() as session:
+        found = session.scalar(select(RoutePublication.route_slug).where(
+            RoutePublication.route_slug == route_slug, RoutePublication.feature_json.is_not(None)
+        ))
+    if not found:
         raise HTTPException(status_code=404, detail="Unknown jeepney line")
+
+
+def _live(city: str):
+    with SessionLocal() as session:
+        return load_live_network(city, session)
 
 
 def _known_city(city: str) -> str:
@@ -174,7 +186,16 @@ CITY_ALIASES = {"cagayan-de-oro": "cdo", "cagayandeoro": "cdo", "cagayan": "cdo"
 
 
 def _city_list() -> list[dict]:
-    return [{"id": city, **metadata, "lines": len(LINES_BY_CITY[city])} for city, metadata in CITY_METADATA.items()]
+    counts = {city: len(LINES_BY_CITY[city]) for city in CITY_METADATA}
+    static_ids = {city: {line.id for line in lines} for city, lines in LINES_BY_CITY.items()}
+    with SessionLocal() as session:
+        publications = session.scalars(select(RoutePublication)).all()
+    for item in publications:
+        if item.route_slug in static_ids[item.city] and item.feature_json is None:
+            counts[item.city] -= 1
+        elif item.route_slug not in static_ids[item.city] and item.feature_json is not None:
+            counts[item.city] += 1
+    return [{"id": city, **metadata, "lines": counts[city]} for city, metadata in CITY_METADATA.items()]
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -201,7 +222,8 @@ def places(q: str = Query(min_length=2, max_length=120), city: str = "bacolod"):
 @app.get("/api/landmarks")
 def city_landmarks(city: str = "bacolod"):
     """Landmarks along mapped jeepney lines; the client filters these as the rider types."""
-    return {"landmarks": landmarks(_known_city(city))}
+    live = _live(_known_city(city))
+    return {"landmarks": [{"name": item.name, "lat": item.lat, "lng": item.lng} for item in sorted(live.anchors, key=lambda item: item.name)]}
 
 
 @app.get("/api/walking-route")
@@ -218,7 +240,8 @@ def walking_directions(
 @app.get("/api/jeepney-routes")
 def jeepney_routes(city: str = "bacolod"):
     """Published or documented jeepney routes for one supported city."""
-    return public_catalog(_known_city(city))
+    city = _known_city(city)
+    return public_catalog(city, _live(city).network)
 
 
 @app.get("/api/jeepney-network", response_class=JSONResponse)
@@ -226,8 +249,8 @@ def jeepney_network(city: str = "bacolod"):
     """Road-aligned GeoJSON for a supported city's jeepney corridors."""
     city = _known_city(city)
     return JSONResponse(
-        content=public_network(city),
-        headers={"Cache-Control": "public, max-age=86400"},
+        content=_live(city).network,
+        headers={"Cache-Control": "no-cache"},
     )
 
 
@@ -291,7 +314,7 @@ def add_route_proposal(payload: ProposalInput, request: Request):
         raise HTTPException(status_code=422, detail="Invalid route proposal")
     route_slug = payload.route_slug if payload.kind == "correction" else None
     if payload.kind == "correction":
-        if not route_slug or not any(line.id == route_slug for line in LINES_BY_CITY[city]):
+        if not route_slug or not any(feature["properties"]["id"] == route_slug for feature in _live(city).network["features"]):
             raise HTTPException(status_code=422, detail="Select a route in this city to correct")
     elif payload.route_slug:
         raise HTTPException(status_code=422, detail="New routes cannot have an existing route ID")
@@ -313,8 +336,12 @@ def add_route_proposal(payload: ProposalInput, request: Request):
             raise HTTPException(status_code=422, detail="Route points must be near the selected city")
     if all(point == payload.coordinates[0] for point in payload.coordinates):
         raise HTTPException(status_code=422, detail="Draw at least two different route points")
+    drawn_km = sum(distance_km(first[1], first[0], second[1], second[0])
+                   for first, second in zip(payload.coordinates, payload.coordinates[1:]))
+    if drawn_km > 120:
+        raise HTTPException(status_code=422, detail="Route path is too long for one city line")
     if payload.kind == "correction":
-        original = next(feature for feature in public_network(city)["features"] if feature["properties"]["id"] == route_slug)
+        original = next(feature for feature in _live(city).network["features"] if feature["properties"]["id"] == route_slug)
         props = original["properties"]
         if (number == str(props["number"]) and name == props["name"] and payload.mode == props.get("mode", "jeepney")
                 and payload.coordinates == original["geometry"]["coordinates"]):
@@ -360,6 +387,7 @@ def vote_route_proposal(proposal_id: int, request: Request, response: Response):
         return {"votes": counts.get(proposal_id, 0), "voted": proposal_id in voted}
 
 
+@app.get("/admin", response_class=HTMLResponse)
 @app.get("/admin/routes", response_class=HTMLResponse)
 def route_admin_page(request: Request):
     return templates.TemplateResponse(request=request, name="admin_routes.html")
@@ -441,8 +469,8 @@ def admin_route_proposals(request: Request, response: Response):
 def review_route_proposal(proposal_id: int, payload: ReviewInput, request: Request, x_review_token: str | None = Header(default=None)):
     configured = os.getenv("ROUTE_REVIEW_TOKEN")
     token_valid = bool(configured and x_review_token and secrets.compare_digest(x_review_token, configured))
+    actor = "review-token" if token_valid else _require_admin(request)
     if not token_valid:
-        _require_admin(request)
         _require_same_origin(request)
     if payload.status not in {"accepted", "rejected"}:
         raise HTTPException(status_code=422, detail="Review status must be accepted or rejected")
@@ -450,15 +478,116 @@ def review_route_proposal(proposal_id: int, payload: ReviewInput, request: Reque
     if len(note) < 10:
         raise HTTPException(status_code=422, detail="Please explain the review decision")
     with SessionLocal() as session:
-        proposal = session.get(RouteProposal, proposal_id)
+        proposal = session.get(RouteProposal, proposal_id, with_for_update=True)
         if not proposal:
             raise HTTPException(status_code=404, detail="Unknown route proposal")
+        if proposal.status != "pending":
+            raise HTTPException(status_code=409, detail="This proposal has already been reviewed")
+        if payload.status == "accepted":
+            slug = proposal.route_slug if proposal.kind == "correction" else f"{proposal.city}-community-{proposal.id}"
+            publication = session.get(RoutePublication, (proposal.city, slug), with_for_update=True)
+            current = next((feature for feature in load_live_network(proposal.city, session).network["features"]
+                            if feature["properties"]["id"] == slug), None)
+            if proposal.kind == "correction" and current is None:
+                raise HTTPException(status_code=409, detail="The route to correct is no longer published")
+            if publication is None:
+                baseline = RouteRevision(
+                    city=proposal.city, route_slug=slug, feature_json=json.dumps(current, separators=(",", ":")) if current else None,
+                    action="baseline", proposal_id=None, actor=actor, note="Published state before first review",
+                )
+                session.add(baseline)
+                session.flush()
+            if current:
+                properties = dict(current["properties"])
+            else:
+                properties = {"id": slug, "color": "#7c3aed", "status": "community_verified", "anchors": []}
+            properties.update({"id": slug, "number": proposal.number, "name": proposal.name,
+                               "mode": proposal.mode, "status": "community_verified"})
+            coordinates = json.loads(proposal.coordinates_json)
+            if current is None or coordinates != current["geometry"]["coordinates"]:
+                properties["anchors"] = []
+                properties.pop("return_anchors", None)
+            properties.pop("osm_relations", None)
+            properties.pop("attribution", None)
+            properties["source_url"] = proposal.source_url
+            properties["distance_km"] = round(sum(
+                distance_km(first[1], first[0], second[1], second[0])
+                for first, second in zip(coordinates, coordinates[1:])
+            ), 2)
+            feature = {"type": "Feature", "properties": properties,
+                       "geometry": {"type": "LineString", "coordinates": coordinates}}
+            serialized = json.dumps(feature, separators=(",", ":"), ensure_ascii=False)
+            revision = RouteRevision(city=proposal.city, route_slug=slug, feature_json=serialized,
+                                     action="approved", proposal_id=proposal.id, actor=actor, note=note)
+            session.add(revision)
+            session.flush()
+            if publication is None:
+                session.add(RoutePublication(city=proposal.city, route_slug=slug,
+                                             feature_json=serialized, revision_id=revision.id))
+            else:
+                publication.feature_json = serialized
+                publication.revision_id = revision.id
+            proposal.route_slug = slug
         proposal.status = payload.status
         proposal.review_note = note
         session.commit()
         session.refresh(proposal)
         votes = session.scalar(select(func.count(ProposalVote.id)).where(ProposalVote.proposal_id == proposal_id)) or 0
         return _proposal_json(proposal, votes)
+
+
+@app.get("/api/admin/route-revisions")
+def admin_route_revisions(request: Request, response: Response, city: str = "bacolod"):
+    _require_admin(request)
+    response.headers["Cache-Control"] = "no-store"
+    city = _known_city(city)
+    with SessionLocal() as session:
+        publications = session.scalars(select(RoutePublication).where(RoutePublication.city == city)).all()
+        revisions = session.scalars(select(RouteRevision).where(RouteRevision.city == city)
+                                    .order_by(RouteRevision.id.desc()).limit(500)).all()
+        return {"publications": [{"route_slug": item.route_slug, "revision_id": item.revision_id,
+                                  "name": json.loads(item.feature_json)["properties"]["name"] if item.feature_json else "Removed"}
+                                 for item in publications],
+                "revisions": [{"id": item.id, "route_slug": item.route_slug, "action": item.action,
+                               "name": json.loads(item.feature_json)["properties"]["name"] if item.feature_json else "Removed",
+                               "actor": item.actor, "note": item.note, "created_at": item.created_at.isoformat()}
+                              for item in revisions]}
+
+
+@app.get("/api/admin/export-network")
+def admin_export_network(request: Request, city: str = "bacolod"):
+    _require_admin(request)
+    city = _known_city(city)
+    return JSONResponse(content=_live(city).network, headers={"Cache-Control": "no-store"})
+
+
+class RollbackInput(BaseModel):
+    revision_id: int
+    note: str = Field(min_length=10, max_length=1000)
+
+
+@app.post("/api/admin/routes/{route_slug}/rollback")
+def rollback_route(route_slug: str, payload: RollbackInput, request: Request):
+    actor = _require_admin(request)
+    _require_same_origin(request)
+    with SessionLocal() as session:
+        target = session.get(RouteRevision, payload.revision_id)
+        if not target or target.route_slug != route_slug:
+            raise HTTPException(status_code=404, detail="Unknown revision for this route")
+        publication = session.get(RoutePublication, (target.city, route_slug), with_for_update=True)
+        if not publication:
+            raise HTTPException(status_code=404, detail="Route has no publication history")
+        if publication.feature_json == target.feature_json:
+            raise HTTPException(status_code=409, detail="That version is already published")
+        revision = RouteRevision(city=target.city, route_slug=route_slug, feature_json=target.feature_json,
+                                 action="rollback", proposal_id=None, actor=actor,
+                                 note=f"Restored revision {target.id}: {' '.join(payload.note.split())}")
+        session.add(revision)
+        session.flush()
+        publication.feature_json = target.feature_json
+        publication.revision_id = revision.id
+        session.commit()
+        return {"city": target.city, "route_slug": route_slug, "revision_id": revision.id}
 
 
 @app.get("/api/routes")
@@ -472,7 +601,8 @@ def routes(
     """Suggest mapped jeepney connections (up to three rides) plus distinct alternatives."""
     city = _known_city(city)
     straight_km = distance_km(origin_lat, origin_lng, destination_lat, destination_lng)
-    itineraries = plan_trips(origin_lat, origin_lng, destination_lat, destination_lng, city, walk_matrix=walking_matrix)
+    live = _live(city)
+    itineraries = plan_trips(origin_lat, origin_lng, destination_lat, destination_lng, city, walk_matrix=walking_matrix, graph=live.graph, anchors=live.anchors)
     road_km = itineraries[0]["road_distance_km"] if itineraries else max(0.6, straight_km * 1.35)
 
     # Future PostGIS integration: store surveyed route geometries, query near
@@ -483,7 +613,7 @@ def routes(
         "destination": {"lat": destination_lat, "lng": destination_lng},
         "distance_km": round(road_km, 1),
         "jeepney_notice": None if itineraries else "No mapped jeepney connection was found within walking distance of both pins. Try moving a pin closer to a colored corridor or check the jeepney route map.",
-        "no_route": None if itineraries else trip_help(origin_lat, origin_lng, destination_lat, destination_lng, city),
+        "no_route": None if itineraries else trip_help(origin_lat, origin_lng, destination_lat, destination_lng, city, graph=live.graph),
         "estimate_note": (
             "Walking links connect your pins to the nearest mapped corridors. Signboards, direction, current service, time, and fare need local confirmation."
             if itineraries else

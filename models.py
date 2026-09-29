@@ -98,6 +98,31 @@ class RouteAdminSession(Base):
     expires_at: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
 
 
+class RouteRevision(Base):
+    __tablename__ = "route_revisions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    city: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    route_slug: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    feature_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    action: Mapped[str] = mapped_column(String(24), nullable=False)
+    proposal_id: Mapped[int | None] = mapped_column(ForeignKey("route_proposals.id"), nullable=True)
+    actor: Mapped[str] = mapped_column(String(80), nullable=False)
+    note: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+
+
+class RoutePublication(Base):
+    __tablename__ = "route_publications"
+
+    city: Mapped[str] = mapped_column(String(40), primary_key=True)
+    route_slug: Mapped[str] = mapped_column(String(100), primary_key=True)
+    feature_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    revision_id: Mapped[int] = mapped_column(ForeignKey("route_revisions.id"), nullable=False)
+
+
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 

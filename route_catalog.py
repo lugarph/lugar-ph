@@ -73,17 +73,23 @@ for city, network in NETWORKS.items():
 MAPPED_PORTION = {
     "osm_route_relation": "mapped street by street in OpenStreetMap",
     "archived_dotc_gtfs_shape": "archived DOTC GTFS shape",
+    "community_verified": "approved community submission; confirm locally before travel",
 }
 
 
-def public_catalog(city: str = "bacolod") -> dict:
-    network = public_network(city)
+def public_catalog(city: str = "bacolod", network: dict | None = None) -> dict:
+    network = network if network is not None else public_network(city)
     routes = []
     for feature in network["features"]:
         properties = feature["properties"]
-        base = ROUTE_BY_ID[properties["id"]]
+        base = ROUTE_BY_ID.get(properties["id"], {
+            "number": str(properties["number"]), "id": properties["id"], "name": properties["name"],
+            "length_km": properties.get("planned_length_km") or properties.get("distance_km"), "city": city,
+        })
         routes.append({
             **base,
+            "number": properties["number"], "name": properties["name"],
+            "length_km": properties.get("distance_km") if properties.get("status") == "community_verified" else base.get("length_km"),
             "color": properties["color"],
             "mapped_portion": MAPPED_PORTION.get(properties["status"], "estimated from the published route plan"),
             "geometry_status": properties["status"],
