@@ -3,33 +3,32 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f8fafc">
+  <meta name="theme-color" content="#f6f7f9">
   <title>Lugar.ph — Jeepney directions for Philippine cities</title>
   <meta name="description" content="Which jeepney to take, where to board, where to get off, and the fare, in {{ cities | map(attribute='name') | map('replace', ' City', '') | join(', ') }}.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  {% include "_tokens.html" %}
   <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
   <script defer src="/_vercel/insights/script.js"></script>
   <style>
-    :root { font-family: Inter, sans-serif; color: #17212f; }
-    body { margin: 0; background: #f8fafc; }
-    .route-art { background:
-      radial-gradient(circle at 12% 30%, rgba(255,193,69,.35), transparent 28%),
-      radial-gradient(circle at 88% 12%, rgba(37,99,235,.18), transparent 30%),
-      linear-gradient(180deg, #ffffff, #f1f5f9); }
-    .city-card:focus-visible, .button:focus-visible { outline: 3px solid #1d4ed8; outline-offset: 2px; }
+    body { margin: 0; background: var(--ground); }
+    [hidden] { display: none !important; }
+    .line-chip { display: inline-grid; place-items: center; min-width: 26px; height: 24px; padding: 0 6px; border-radius: 6px; font: 700 15px/1 var(--font-sign); }
+    .signboard { display: inline-block; padding: 1px 7px 0; border: 2px solid; border-radius: 5px; background: #fff; color: var(--ink); font: 700 17px/1.25 var(--font-sign); letter-spacing: .015em; text-transform: uppercase; }
     @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
   </style>
 </head>
 <body>
-  <header class="route-art border-b border-slate-200">
+  {% set chip = example_lines %}
+  <header class="border-b border-line bg-white">
     <div class="mx-auto max-w-5xl px-4 pb-12 pt-5 sm:px-6 sm:pb-16">
       <nav class="flex items-center justify-between">
-        <a href="/" class="flex items-center gap-2" aria-label="Lugar.ph home">
-          <span class="grid h-9 w-9 place-items-center rounded-xl bg-slate-900 text-lg font-extrabold tracking-tight text-white"><span>L<span class="text-[#ffc145]">.</span></span></span>
-          <span class="text-[15px] font-extrabold tracking-tight">lugar<span class="text-slate-400">.ph</span></span>
+        <a href="/" class="flex min-h-11 items-center gap-2" aria-label="Lugar.ph home">
+          <span class="grid h-9 w-9 place-items-center rounded-xl bg-ink font-sign text-xl font-bold text-white"><span>L<span class="text-sign">.</span></span></span>
+          <span class="text-[16px] font-extrabold tracking-tight">lugar<span class="text-ink-muted">.ph</span></span>
         </a>
       </nav>
 
@@ -39,19 +38,44 @@
       </p>
       {% endif %}
 
-      <div class="mt-10 max-w-2xl sm:mt-14">
-        <p class="text-[11px] font-bold uppercase tracking-[.18em] text-slate-500">Move like a local</p>
-        <h1 class="mt-3 text-4xl font-extrabold leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">Which jeepney do I take?</h1>
-        <p class="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg">
-          Pick where you are and where you're going. Lugar.ph tells you where to walk, which signboard to wait for,
-          where to get off, where to transfer, and about how much it costs, in up to three rides.
-        </p>
-        <div class="mt-6 flex flex-wrap gap-3">
-          <a id="continue" href="#cities" hidden class="button rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-slate-900/15"></a>
-          <button id="locate" type="button" class="button rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-800 hover:border-slate-400">Find my city</button>
-          <a href="#cities" class="button rounded-2xl px-5 py-3 text-sm font-bold text-slate-600 hover:bg-white">Choose a city ↓</a>
+      <div class="mt-10 grid items-center gap-10 sm:mt-14 md:grid-cols-[1.1fr_1fr]">
+        <div>
+          <h1 class="font-sign text-[3.4rem] font-extrabold leading-[.95] tracking-[-.01em] text-ink [text-wrap:balance] sm:text-7xl">Which jeepney do I take?</h1>
+          <p class="mt-5 max-w-[34rem] text-base leading-relaxed text-ink-soft sm:text-lg">
+            Pick where you are and where you're going. Lugar.ph tells you where to walk, which signboard to wait for,
+            where to get off, where to transfer, and about how much it costs, in up to three rides.
+          </p>
+          <div class="mt-6 flex flex-wrap gap-3">
+            <a id="continue" href="#cities" hidden class="inline-flex min-h-12 items-center rounded-2xl bg-ink px-5 text-sm font-bold text-white"></a>
+            <button id="locate" type="button" class="min-h-12 rounded-2xl border border-line-strong bg-white px-5 text-sm font-bold text-ink hover:border-ink-muted">Find my city</button>
+            <a href="#cities" class="inline-flex min-h-12 items-center rounded-2xl px-5 text-sm font-bold text-ink-soft hover:bg-ground">Choose a city</a>
+          </div>
+          <p id="locate-status" class="mt-3 min-h-[1.25rem] text-sm text-ink-muted" role="status" aria-live="polite"></p>
         </div>
-        <p id="locate-status" class="mt-3 min-h-[1.25rem] text-sm text-slate-500" role="status" aria-live="polite"></p>
+
+        {# A real trip from the Bacolod planner, as the rider sees it. #}
+        <figure class="rounded-3xl border border-line bg-ground p-5 sm:p-6">
+          <figcaption class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <span class="text-sm font-bold text-ink">Bacolod City center to SM City Bacolod</span>
+            <span class="text-sm text-ink-muted">A sample trip</span>
+          </figcaption>
+          <p class="mt-3 text-2xl font-extrabold tracking-tight text-ink">18 min · ~₱14</p>
+          <ol class="mt-4 space-y-3 text-sm">
+            <li class="text-ink-soft">Walk 1 min to Gatuslao Street.</li>
+            <li>
+              <p class="font-semibold text-ink">Wait near Ayala for any of these signboards:</p>
+              <ul class="mt-2 space-y-1.5">
+                {% for number in ["2", "3", "10"] if number in chip %}
+                <li class="flex items-center gap-2">
+                  <span class="line-chip shrink-0" style="background: {{ chip[number].bg }}; color: {{ chip[number].fg }}">{{ number }}</span>
+                  <span class="signboard" style="border-color: {{ chip[number].bg }}">{{ chip[number].signboard }}</span>
+                </li>
+                {% endfor %}
+              </ul>
+            </li>
+            <li class="font-semibold text-ink">Get off near SM, Bishop Antonio Y. Fortich Street.</li>
+          </ol>
+        </figure>
       </div>
     </div>
   </header>
@@ -59,21 +83,24 @@
   <main>
     <section id="cities" class="mx-auto max-w-5xl scroll-mt-4 px-4 py-12 sm:px-6" aria-labelledby="cities-heading">
       <h2 id="cities-heading" class="text-2xl font-extrabold tracking-tight">Choose your city</h2>
-      <p class="mt-2 text-sm text-slate-600">Each city has its own page to bookmark or share, like <span class="font-semibold text-slate-800">{{ request.url.netloc }}/{{ cities[0].id }}</span>.</p>
+      <p class="mt-2 text-sm text-ink-muted">Each city has its own page to bookmark or share, like <span class="font-semibold text-ink">{{ request.url.netloc }}/{{ cities[0].id }}</span>.</p>
       {% for region in ["Luzon", "Visayas", "Mindanao"] %}
       {% set in_region = cities | selectattr("region", "equalto", region) | list %}
       {% if in_region %}
-      <h3 class="mt-8 text-[11px] font-bold uppercase tracking-[.18em] text-slate-500">{{ region }}</h3>
+      <h3 class="mt-8 text-base font-bold text-ink-soft">{{ region }}</h3>
       <ul class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {% for city in in_region %}
         <li>
-          <a href="/{{ city.id }}" class="city-card group flex h-full items-start justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
-            <span>
-              <span class="block text-lg font-extrabold tracking-tight text-slate-900">{{ city.name }}</span>
-              <span class="mt-1 block text-sm text-slate-600">{{ city.lines }} jeepney lines</span>
-              <span class="mt-2 block text-xs font-semibold text-slate-400">{{ city.source_label }}{% if city.coverage_note %} · {{ city.coverage_note }}{% endif %}</span>
+          <a href="/{{ city.id }}" class="group flex h-full items-center justify-between gap-4 rounded-2xl border border-line bg-white p-4 transition hover:border-ink-muted">
+            <span class="min-w-0">
+              <span class="block font-sign text-2xl font-bold leading-tight text-ink">{{ city.name }}</span>
+              <span class="mt-1 block text-sm text-ink-soft">{{ city.lines }} jeepney lines</span>
+              <span class="mt-2 block text-xs font-semibold text-ink-muted">{{ city.source_label }}{% if city.coverage_note %} · {{ city.coverage_note }}{% endif %}</span>
             </span>
-            <span class="mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-700 transition group-hover:bg-slate-900 group-hover:text-white" aria-hidden="true">→</span>
+            {# The city's own network, drawn from its route data. #}
+            <svg class="h-[84px] w-[120px] shrink-0 rounded-xl bg-ground transition group-hover:bg-ground-deep" viewBox="0 0 120 84" aria-hidden="true">
+              {% for line in outlines[city.id] %}<path d="{{ line.d }}" fill="none" stroke="{{ line.color }}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>{% endfor %}
+            </svg>
           </a>
         </li>
         {% endfor %}
@@ -82,31 +109,28 @@
       {% endfor %}
     </section>
 
-    <section class="border-y border-slate-200 bg-white" aria-labelledby="why-heading">
+    <section class="border-y border-line bg-white" aria-labelledby="why-heading">
       <div class="mx-auto grid max-w-5xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1fr_1.2fr]">
         <div>
           <h2 id="why-heading" class="text-2xl font-extrabold tracking-tight">Why Lugar.ph</h2>
-          <p class="mt-3 leading-relaxed text-slate-600">
+          <p class="mt-3 max-w-prose leading-relaxed text-ink-soft">
             Jeepneys carry most commuters in Philippine cities, but their routes are hard to learn if you're new. They're written
             in city route plans and ordinances, or passed along by word of mouth. Lugar.ph gathers what's published and what
             volunteers have mapped in OpenStreetMap into one free trip planner, so anyone can get around like a local.
           </p>
         </div>
-        <ol class="grid gap-4 sm:grid-cols-3 md:grid-cols-1 lg:grid-cols-3">
-          <li class="rounded-2xl bg-slate-50 p-4">
-            <span class="grid h-8 w-8 place-items-center rounded-full bg-slate-900 text-sm font-extrabold text-white">1</span>
-            <p class="mt-3 font-bold">Set your trip</p>
-            <p class="mt-1 text-sm text-slate-600">Search a place, drop a pin, or use your location.</p>
+        <ol class="space-y-5">
+          <li class="flex gap-4">
+            <span class="w-6 shrink-0 font-sign text-3xl font-bold leading-none text-ink-muted">1</span>
+            <span><span class="block font-bold">Set your trip</span><span class="mt-1 block text-sm text-ink-soft">Search a place, drop a pin, or use your location.</span></span>
           </li>
-          <li class="rounded-2xl bg-slate-50 p-4">
-            <span class="grid h-8 w-8 place-items-center rounded-full bg-[#ffc145] text-sm font-extrabold text-slate-900">2</span>
-            <p class="mt-3 font-bold">Find the jeep</p>
-            <p class="mt-1 text-sm text-slate-600">See where to board and which signboard to wait for.</p>
+          <li class="flex gap-4">
+            <span class="w-6 shrink-0 font-sign text-3xl font-bold leading-none text-ink-muted">2</span>
+            <span><span class="block font-bold">Find the jeep</span><span class="mt-1 block text-sm text-ink-soft">See where to board and which signboard to wait for.</span></span>
           </li>
-          <li class="rounded-2xl bg-slate-50 p-4">
-            <span class="grid h-8 w-8 place-items-center rounded-full bg-blue-700 text-sm font-extrabold text-white">3</span>
-            <p class="mt-3 font-bold">Ride and get off</p>
-            <p class="mt-1 text-sm text-slate-600">Know where to get off, where to transfer, and the fare.</p>
+          <li class="flex gap-4">
+            <span class="w-6 shrink-0 font-sign text-3xl font-bold leading-none text-ink-muted">3</span>
+            <span><span class="block font-bold">Ride and get off</span><span class="mt-1 block text-sm text-ink-soft">Know where to get off, where to transfer, and the fare.</span></span>
           </li>
         </ol>
       </div>
@@ -114,7 +138,7 @@
 
     <section class="mx-auto max-w-5xl px-4 py-10 sm:px-6" aria-labelledby="honest-heading">
       <h2 id="honest-heading" class="text-lg font-extrabold tracking-tight">Best estimates, not official timetables</h2>
-      <p class="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">
+      <p class="mt-2 max-w-3xl text-sm leading-relaxed text-ink-soft">
         Some lines are mapped street by street; others are drawn from published route plans and marked as estimates.
         Routes change, so check the signboard and ask the driver before you ride. If something is wrong, leave a note on
         the line in the app so the next rider knows.
@@ -122,9 +146,9 @@
     </section>
   </main>
 
-  <footer class="border-t border-slate-200">
-    <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-xs text-slate-500 sm:px-6">
-      <p>Map data © <a class="underline" href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>. Routes from city and LTFRB route plans.</p>
+  <footer class="border-t border-line">
+    <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-sm text-ink-muted sm:px-6">
+      <p>Map data © <a class="underline underline-offset-2" href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>. Routes from city and LTFRB route plans.</p>
     </div>
   </footer>
 

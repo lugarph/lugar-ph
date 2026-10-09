@@ -6,6 +6,7 @@ import json
 import math
 import os
 import secrets
+from functools import lru_cache
 from hashlib import pbkdf2_hmac, sha256
 from pathlib import Path
 from threading import Lock
@@ -23,7 +24,7 @@ from models import ProposalVote, RouteAdminSession, RouteComment, RouteProposal,
 from live_network import load_live_network
 from osm_services import search_places, walking_matrix, walking_route
 from route_catalog import ROUTE_BY_ID, distance_km, public_catalog
-from transit_network import CITY_METADATA, LINES_BY_CITY, plan_trips, trip_help
+from transit_network import CITY_METADATA, LINES_BY_CITY, plan_trips, signboard, trip_help
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -198,10 +199,50 @@ def _city_list() -> list[dict]:
     return [{"id": city, **metadata, "lines": counts[city]} for city, metadata in CITY_METADATA.items()]
 
 
+@lru_cache(maxsize=None)
+def _network_outline(city: str, width: int = 120, height: int = 84, pad: float = 5) -> tuple[dict, ...]:
+    """The city's checked-in lines as small SVG paths, so each city card shows its network's shape."""
+    lines = LINES_BY_CITY[city]
+    points = [point for line in lines for point in line.coordinates]
+    squash = math.cos(math.radians(sum(lat for _, lat in points) / len(points)))
+    min_x, max_x = min(lng for lng, _ in points) * squash, max(lng for lng, _ in points) * squash
+    min_y, max_y = min(lat for _, lat in points), max(lat for _, lat in points)
+    scale = min((width - 2 * pad) / ((max_x - min_x) or 1), (height - 2 * pad) / ((max_y - min_y) or 1))
+    left = (width - (max_x - min_x) * scale) / 2
+    top = (height - (max_y - min_y) * scale) / 2
+
+    def path(coordinates: tuple[tuple[float, float], ...]) -> str:
+        step = max(1, len(coordinates) // 60)
+        kept = list(coordinates[::step]) + [coordinates[-1]]
+        return "M" + "L".join(f"{left + (lng * squash - min_x) * scale:.1f} {top + (max_y - lat) * scale:.1f}" for lng, lat in kept)
+
+    return tuple({"d": path(line.coordinates), "color": line.color} for line in lines)
+
+
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
     """Splash page: what Lugar.ph is for, and a city to start in."""
-    return templates.TemplateResponse(request=request, name="home.html", context={"cities": _city_list()})
+    return templates.TemplateResponse(request=request, name="home.html", context=_home_context())
+
+
+def _chip_text(color: str) -> str:
+    """Dark text on light line colours, white on dark ones; matches chipText() in index.html."""
+    def channel(value: str) -> float:
+        c = int(value, 16) / 255
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+    r, g, b = (channel(color[index:index + 2]) for index in (1, 3, 5))
+    return "#17212f" if 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.3 else "#ffffff"
+
+
+def _home_context(**extra) -> dict:
+    return {
+        "cities": _city_list(),
+        "outlines": {city: _network_outline(city) for city in CITY_METADATA},
+        # The splash page's sample trip is Bacolod City center to SM City Bacolod.
+        "example_lines": {line.number: {"bg": line.color, "fg": _chip_text(line.color), "signboard": signboard(line)}
+                          for line in LINES_BY_CITY["bacolod"] if line.number in ("2", "3", "10")},
+        **extra,
+    }
 
 
 @app.get("/api/cities")
@@ -667,7 +708,7 @@ def city_page(request: Request, city: str):
     wanted = city.lower().strip()
     canonical = CITY_ALIASES.get(wanted, wanted)
     if canonical not in CITY_METADATA:
-        return templates.TemplateResponse(request=request, name="home.html", context={"cities": _city_list(), "unknown_city": city}, status_code=404)
+        return templates.TemplateResponse(request=request, name="home.html", context=_home_context(unknown_city=city), status_code=404)
     if canonical != city:
         return RedirectResponse(f"/{canonical}", status_code=308)
     return templates.TemplateResponse(request=request, name="index.html", context={"city": canonical, "cities": _city_list()})

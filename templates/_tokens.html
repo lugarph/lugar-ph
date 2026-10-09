@@ -1,0 +1,45 @@
+{# Shared design tokens for every page. Colours and type live here once;
+   Tailwind classes (text-ink, bg-ground, font-sign…) and hand-written CSS
+   (var(--ink)) both read from them. #}
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: { DEFAULT: '#17212f', soft: '#334155', muted: '#5b6676' },
+          ground: { DEFAULT: '#f6f7f9', deep: '#eceff3' },
+          line: { DEFAULT: '#e2e8f0', strong: '#cfd6df' },
+          brand: { DEFAULT: '#1d4ed8', wash: '#dbeafe', line: '#93c5fd' },
+          sign: '#ffc145',
+        },
+        fontFamily: {
+          sans: ['"Atkinson Hyperlegible Next"', 'system-ui', 'sans-serif'],
+          sign: ['"Barlow Condensed"', '"Arial Narrow"', 'sans-serif'],
+        },
+      },
+    },
+  };
+</script>
+<style>
+  :root {
+    --ink: #17212f; --ink-soft: #334155; --ink-muted: #5b6676;
+    --ground: #f6f7f9; --ground-deep: #eceff3;
+    --line: #e2e8f0; --line-strong: #cfd6df;
+    --brand: #1d4ed8; --brand-wash: #dbeafe; --brand-line: #93c5fd;
+    --sign: #ffc145;
+    --edit: #e11d48;
+    --walk: #475569; --alt-route: #94a3b8;
+    --map-ground: #e6ebe9;
+    --font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+    --font-sign: "Barlow Condensed", "Arial Narrow", sans-serif;
+    font-family: var(--font-body);
+    color: var(--ink);
+    caret-color: var(--brand);
+    scrollbar-color: var(--line-strong) transparent;
+  }
+  * { scrollbar-width: thin; }
+  ::selection { background: var(--sign); color: var(--ink); }
+  :where(a, button, select, summary, [role="tab"], [tabindex]):focus-visible { outline: 3px solid var(--brand) !important; outline-offset: 2px; }
+  /* Street tiles step back so the jeepney lines are the loudest thing on the map. */
+  .leaflet-tile-pane { filter: grayscale(.85) contrast(.92) brightness(1.04); }
+</style>

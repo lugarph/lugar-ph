@@ -2,72 +2,71 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
-  <meta name="theme-color" content="#f8fafc">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f7f9">
   <title>{{ (cities | selectattr('id', 'equalto', city) | first).name }} jeepney routes — Lugar.ph</title>
   <meta name="description" content="Which jeepney to take in {{ (cities | selectattr('id', 'equalto', city) | first).name }}: where to board, where to get off, and the fare.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <script src="https://cdn.tailwindcss.com"></script>
+  {% include "_tokens.html" %}
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
   <style>
-    :root { font-family: Inter, sans-serif; color: #17212f; }
     * { -webkit-tap-highlight-color: transparent; }
     html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none; }
     button, input { font: inherit; }
     button { touch-action: manipulation; }
     [x-cloak] { display: none !important; }
-    #map { position: fixed; inset: 0; z-index: 0; background: #dce8e5; }
-    .leaflet-container { font-family: Inter, sans-serif; }
-    .leaflet-control-attribution { font-size: 10px !important; margin-bottom: max(8px, env(safe-area-inset-bottom)) !important; }
-    .map-wash { position: fixed; inset: 0; z-index: 400; pointer-events: none; background: linear-gradient(180deg, rgba(245,248,247,.55), transparent 25%, transparent 70%, rgba(31,41,55,.06)); }
+    #map { position: fixed; inset: 0; z-index: 0; background: var(--map-ground); }
+    .leaflet-container { font-family: var(--font-body); }
+    .leaflet-control-attribution { font-size: 11px !important; margin-bottom: max(8px, env(safe-area-inset-bottom)) !important; }
     .top-bar { position: fixed; z-index: 500; top: calc(16px + env(safe-area-inset-top)); left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; pointer-events: none; }
     .top-bar > * { pointer-events: auto; }
-    .map-button { position: fixed; z-index: 520; right: 18px; width: 48px; height: 48px; display: grid; place-items: center; border-radius: 18px; background: #fff; box-shadow: 0 8px 26px rgba(17,24,39,.15); border: 1px solid rgba(148,163,184,.2); transition: bottom .42s cubic-bezier(.2,.8,.2,1), transform .18s ease-out; }
+    .map-button { position: fixed; z-index: 520; right: 18px; width: 48px; height: 48px; display: grid; place-items: center; border-radius: 16px; background: #fff; box-shadow: 0 8px 26px rgba(23,33,47,.15); transition: bottom .42s cubic-bezier(.2,.8,.2,1), transform .18s ease-out; }
     .map-button:active { transform: scale(.95); }
-    .sheet { position: fixed; z-index: 600; left: 0; right: 0; bottom: 0; height: min(430px, 58dvh); max-height: calc(100dvh - 102px); display: flex; flex-direction: column; overflow: hidden; background: #fff; border-radius: 30px 30px 0 0; box-shadow: 0 -12px 44px rgba(15,23,42,.16); transition: height .48s cubic-bezier(.2,.8,.2,1); }
+    .sheet { position: fixed; z-index: 600; left: 0; right: 0; bottom: 0; height: min(430px, 58dvh); max-height: calc(100dvh - 102px); display: flex; flex-direction: column; overflow: hidden; background: #fff; border-radius: 28px 28px 0 0; box-shadow: 0 -12px 44px rgba(23,33,47,.16); transition: height .48s cubic-bezier(.2,.8,.2,1); }
     .sheet.expanded { height: min(735px, 82dvh); }
     .sheet.preview { height: calc(164px + env(safe-area-inset-bottom)); }
     .grab-area { flex: none; height: 30px; display: flex; align-items: flex-start; justify-content: center; padding-top: 11px; touch-action: none; cursor: grab; }
     .grab-area:active { cursor: grabbing; }
-    .grabber { width: 38px; height: 5px; border-radius: 999px; background: #d5dbe2; }
-    .sheet-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
-    .sheet-body::-webkit-scrollbar { display: none; }
-    .field:focus-within { border-color: #334155; box-shadow: 0 0 0 3px rgba(51,65,85,.08); }
-    .route-line { width: 2px; height: 26px; background: repeating-linear-gradient(to bottom, #94a3b8 0 4px, transparent 4px 8px); margin-left: 7px; }
+    .grabber { width: 38px; height: 5px; border-radius: 999px; background: var(--line-strong); }
+    .sheet-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+    .field:focus-within { border-color: var(--ink-soft); box-shadow: 0 0 0 3px rgba(23,33,47,.08); }
     .sheet-footer { flex: none; padding: 12px 20px calc(15px + env(safe-area-inset-bottom)); background: #fff; box-shadow: 0 -10px 25px rgba(255,255,255,.95); }
-    .place-pin { width: 19px; height: 19px; border: 4px solid white; border-radius: 50%; background: #1d4ed8; box-shadow: 0 2px 10px rgba(15,23,42,.32); }
-    .place-pin.destination { background: #111827; }
+    .place-pin { width: 19px; height: 19px; border: 4px solid white; border-radius: 50%; background: var(--brand); box-shadow: 0 2px 10px rgba(23,33,47,.32); }
+    .place-pin.destination { background: var(--ink); }
     .loading-bar { position: fixed; z-index: 1000; top: 0; left: 0; right: 0; height: 3px; overflow: hidden; background: rgba(29,78,216,.15); pointer-events: none; }
-    .loading-bar::before { content: ''; position: absolute; top: 0; bottom: 0; width: 40%; border-radius: 3px; background: #1d4ed8; animation: loading-slide 1.1s ease-in-out infinite; }
+    .loading-bar::before { content: ''; position: absolute; top: 0; bottom: 0; width: 40%; border-radius: 3px; background: var(--brand); animation: loading-slide 1.1s ease-in-out infinite; }
     @keyframes loading-slide { from { left: -40%; } to { left: 100%; } }
-    .line-chip { display: inline-grid; place-items: center; min-width: 24px; height: 22px; padding: 0 6px; border-radius: 7px; background: #1d4ed8; color: #fff; font-size: 11px; font-weight: 800; }
-    .board-group { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 2px; padding: 2px; border-radius: 9px; background: #fff; box-shadow: 0 2px 8px rgba(15,23,42,.3); white-space: nowrap; font: 800 11px Inter, sans-serif; }
-    .board-group span { display: grid; place-items: center; min-width: 22px; height: 20px; padding: 0 5px; border-radius: 7px; }
-    .board-group .more { min-width: 0; padding: 0 3px; color: #475569; }
-    .alight-dot { position: absolute; transform: translate(-50%, -50%); width: 16px; height: 16px; border: 4px solid; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(15,23,42,.3); }
-    .route-stop-label { background: #fff; border: 1px solid #dbe3ee; border-radius: 8px; padding: 3px 7px; color: #17212f; font: 700 10px Inter, sans-serif; box-shadow: 0 2px 8px rgba(15,23,42,.12); }
+    /* Line numbers are lettered like the route plates on a jeepney's windshield. */
+    .line-chip { display: inline-grid; place-items: center; min-width: 26px; height: 24px; padding: 0 6px; border-radius: 6px; background: var(--brand); color: #fff; font: 700 15px/1 var(--font-sign); letter-spacing: .01em; }
+    .signboard { display: inline-block; padding: 1px 7px 0; border: 2px solid; border-radius: 5px; background: #fff; color: var(--ink); font: 700 17px/1.25 var(--font-sign); letter-spacing: .015em; text-transform: uppercase; }
+    .board-group { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 2px; padding: 2px; border-radius: 8px; background: #fff; box-shadow: 0 2px 8px rgba(23,33,47,.3); white-space: nowrap; font: 700 14px/1 var(--font-sign); }
+    .board-group span { display: grid; place-items: center; min-width: 22px; height: 21px; padding: 0 5px; border-radius: 6px; }
+    .board-group .more { min-width: 0; padding: 0 3px; color: var(--ink-soft); }
+    .alight-dot { position: absolute; transform: translate(-50%, -50%); width: 16px; height: 16px; border: 4px solid; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(23,33,47,.3); }
+    .route-stop-label { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 3px 7px; color: var(--ink); font: 700 12px var(--font-body); box-shadow: 0 2px 8px rgba(23,33,47,.12); }
     .route-stop-label::before { display: none; }
-    .tab-bar { position: fixed; z-index: 900; left: 0; right: 0; bottom: 0; height: calc(65px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); display: flex; background: #fff; border-top: 1px solid #e2e8f0; box-shadow: 0 -5px 25px rgba(15,23,42,.05); }
-    .tab-bar button { flex: 1; display: grid; place-content: center; gap: 2px; text-align: center; color: #64748b; font-size: 11px; font-weight: 700; }
-    .tab-bar button.active { color: #0f172a; }
+    .tab-bar { position: fixed; z-index: 900; left: 0; right: 0; bottom: 0; height: calc(65px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); display: flex; background: #fff; border-top: 1px solid var(--line); box-shadow: 0 -5px 25px rgba(23,33,47,.05); }
+    .tab-bar button { flex: 1; display: grid; place-content: center; gap: 2px; text-align: center; color: var(--ink-muted); font-size: 12px; font-weight: 700; }
+    .tab-bar button.active { color: var(--ink); }
     .tab-bar svg { margin: 0 auto; }
     .sheet { bottom: calc(65px + env(safe-area-inset-bottom)); max-height: calc(100dvh - 180px); }
     .sheet.expanded { height: min(735px, calc(82dvh - 65px)); }
     .sheet.preview { height: 164px; }
     .sheet.picking { height: 152px; }
     .sheet-footer { padding-bottom: 12px; }
-    .network-screen { position: fixed; z-index: 700; inset: 0 0 calc(65px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; background: #f8fafc; }
-    .network-map { flex: 0 0 min(40dvh, 390px); min-height: 220px; background: #e8eef1; }
+    .network-screen { position: fixed; z-index: 700; inset: 0 0 calc(65px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; background: var(--ground); }
+    .network-map { flex: 0 0 min(40dvh, 390px); min-height: 220px; background: var(--map-ground); }
     .network-details { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; }
-    .contribute-tab[aria-selected="true"] { color: #1d4ed8; border-color: #1d4ed8; }
-    .edit-tool[aria-pressed="true"] { background: #dbeafe; color: #1d4ed8; border-color: #93c5fd; }
-    .edit-vertex { width: 18px; height: 18px; border: 3px solid #fff; border-radius: 50%; background: #e11d48; box-shadow: 0 2px 8px #0f172a80; }
-    .network-chip { flex: none; width: 116px; border: 1px solid #e2e8f0; background: #fff; border-radius: 15px; padding: 9px; text-align: left; }
-    .network-chip.selected { border-color: #0f172a; box-shadow: 0 0 0 1px #0f172a; }
-    .network-chip strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+    .contribute-tab[aria-selected="true"] { color: var(--brand); border-color: var(--brand); }
+    .edit-tool[aria-pressed="true"] { background: var(--brand-wash); color: var(--brand); border-color: var(--brand-line); }
+    .edit-vertex { width: 18px; height: 18px; border: 3px solid #fff; border-radius: 50%; background: var(--edit); box-shadow: 0 2px 8px rgba(23,33,47,.5); }
+    .network-chip { flex: none; width: 124px; border: 1px solid var(--line); background: #fff; border-radius: 14px; padding: 9px; text-align: left; }
+    .network-chip.selected { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+    .network-chip strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
     @media (min-width: 768px) {
       .top-bar { left: 28px; right: 28px; }
       .sheet { left: 28px; right: auto; bottom: 28px; width: min(430px, calc(100vw - 56px)); border-radius: 30px; height: 435px; max-height: calc(100dvh - 56px); }
@@ -76,11 +75,12 @@
       .sheet.picking { height: 152px; }
       .map-button { right: 28px; bottom: 28px !important; }
       .leaflet-control-attribution { margin-bottom: 0 !important; }
-      .tab-bar { left: auto; right: 28px; bottom: 28px; width: 300px; height: 64px; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 30px rgba(15,23,42,.15); }
+      .tab-bar { left: auto; right: 28px; bottom: 28px; width: 300px; height: 64px; border: 1px solid var(--line); border-radius: 20px; overflow: hidden; box-shadow: 0 8px 30px rgba(23,33,47,.15); }
       .network-screen { inset: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(350px, 430px); grid-template-rows: auto minmax(0,1fr); }
       .network-heading { grid-column: 1 / -1; }
       .network-map { height: 100%; min-height: 0; }
-      .network-details { height: 100%; }
+      /* The floating tab bar sits over this column's foot; keep its last item clear of it. */
+      .network-details { height: 100%; padding-bottom: 112px !important; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
@@ -91,22 +91,17 @@
 </head>
 <body>
   <div id="map" aria-label="Jeepney route map"></div>
-  <div class="map-wash"></div>
 
   <div x-data="lugarApp()" class="relative z-[500]">
     <div x-show="loading || placeSearchLoading || (activeTab === 'routes' && (catalogLoading || networkSettling))" x-cloak class="loading-bar" role="progressbar" aria-label="Loading"></div>
     <header x-show="activeTab === 'plan'" class="top-bar">
-      <a href="/" class="flex items-center gap-2 rounded-2xl border border-white/80 bg-white/95 px-3 py-2 shadow-lg shadow-slate-900/10 backdrop-blur" aria-label="Lugar.ph home: about the app and all cities">
-        <span class="grid h-9 w-9 place-items-center rounded-xl bg-slate-900 text-white font-extrabold text-lg tracking-tight"><span>L<span class="text-[#ffc145]">.</span></span></span>
-        <div class="leading-tight">
-          <p class="text-[15px] font-extrabold tracking-tight">lugar<span class="text-slate-400">.ph</span></p>
-          <p class="text-[10px] font-semibold uppercase tracking-[.17em] text-slate-500">Move like a local</p>
-        </div>
+      <a href="/" class="flex min-h-11 items-center gap-2 rounded-2xl bg-white py-1.5 pl-1.5 pr-3 shadow-lg shadow-ink/10" aria-label="Lugar.ph home: about the app and all cities">
+        <span class="grid h-9 w-9 place-items-center rounded-xl bg-ink font-sign text-xl font-bold text-white"><span>L<span class="text-sign">.</span></span></span>
+        <span class="text-[16px] font-extrabold tracking-tight">lugar<span class="text-ink-muted">.ph</span></span>
       </a>
-      <label class="flex items-center gap-1.5 rounded-full border border-white/80 bg-white/95 px-3 py-2 text-xs font-bold text-slate-700 shadow-lg shadow-slate-900/10 backdrop-blur">
-        <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+      <label class="flex min-h-11 items-center gap-1.5 rounded-full bg-white pl-3 pr-1 text-sm font-bold text-ink-soft shadow-lg shadow-ink/10">
         <span class="sr-only">Choose city</span>
-        <select x-model="city" @change="changeCity()" class="bg-transparent font-bold outline-none"><template x-for="item in cities" :key="item.id"><option :value="item.id" :selected="item.id === city" x-text="item.name"></option></template></select>
+        <select x-model="city" @change="changeCity()" class="min-h-11 bg-transparent pr-2 font-bold outline-none"><template x-for="item in cities" :key="item.id"><option :value="item.id" :selected="item.id === city" x-text="item.name"></option></template></select>
       </label>
     </header>
 
@@ -121,24 +116,23 @@
 
       <div class="sheet-body" x-ref="sheetBody">
         <section x-show="!expanded && !mapPreview && !pinTarget && !searchTarget" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-3" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-out duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="px-5 pb-5 sm:px-6">
-          <div class="mb-5 flex items-start justify-between gap-3">
-            <div>
-              <p class="text-[11px] font-bold uppercase tracking-[.18em] text-slate-500" x-text="`Get around ${currentCity.name.replace(' City', '')}`"></p>
-              <h1 class="mt-1 text-[27px] font-extrabold tracking-[-.04em] leading-tight">Where to next?</h1>
-            </div>
-            <button type="button" @click="openCatalog()" class="rounded-full bg-[#f4f6f8] px-3 py-1.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-200">Jeepney map</button>
+          <div class="mb-4 flex items-center justify-between gap-3">
+            <h1 class="text-[27px] font-extrabold leading-tight tracking-[-.03em]" x-text="`Where to in ${currentCity.name.replace(' City', '')}?`"></h1>
+            <button type="button" @click="openCatalog()" class="min-h-11 shrink-0 rounded-full bg-ground-deep px-4 text-sm font-bold text-ink-soft hover:bg-line">Jeepney map</button>
           </div>
-          <button type="button" @click="beginSearch('destination')" class="field flex h-14 w-full items-center gap-3 rounded-2xl border border-slate-200 bg-[#f7f8fa] px-4 text-left transition">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>
-            <span class="min-w-0 flex-1 text-[16px] font-semibold text-slate-700">Search for a place</span>
-            <span class="text-xs font-semibold text-blue-700">Search</span>
+          <button type="button" @click="beginSearch('destination')" class="field flex h-14 w-full items-center gap-3 rounded-2xl border border-line bg-ground px-4 text-left transition">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>
+            <span class="min-w-0 flex-1 text-[16px] font-semibold text-ink-soft">Search for a place</span>
           </button>
-          <button type="button" @click="beginPin('destination')" class="mt-2 flex w-full items-center justify-center gap-2 rounded-xl py-2 text-xs font-bold text-slate-600"><span aria-hidden="true">⌖</span> Or choose a point on the map</button>
-          <p x-show="error" x-cloak x-text="error" class="mt-2 rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-700"></p>
-          <div class="mt-6 flex items-center justify-between">
-            <h2 class="text-xs font-bold uppercase tracking-[.16em] text-slate-500" x-text="recents.length ? 'Recent places' : 'Popular places'"></h2>
-            <span class="text-xs text-slate-400">Tap to plan</span>
-          </div>
+          <button type="button" @click="beginPin('destination')" class="mt-1 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold text-ink-soft hover:bg-ground">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Or choose a point on the map
+          </button>
+          <p class="mt-1 flex flex-wrap items-center gap-x-1 text-sm text-ink-muted">
+            <span x-text="originIsDefault ? `From ${originLabel} (default start)` : `From ${originLabel}`"></span>
+            <button type="button" @click="beginSearch('origin')" class="min-h-11 font-bold text-brand underline underline-offset-2">Change start</button>
+          </p>
+          <p x-show="error" x-cloak x-text="error" class="mt-2 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700"></p>
+          <h2 class="mt-4 text-sm font-bold text-ink-soft" x-text="recents.length ? 'Recent places' : 'Popular places'"></h2>
           <div class="mt-2">
             <template x-for="place in homePlaces" :key="place.name">
               <button type="button" @click="selectDestination(place)" class="flex w-full items-center gap-3 border-b border-slate-100 py-3 text-left last:border-0 hover:bg-slate-50">
@@ -146,7 +140,7 @@
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 11h1m4 0h1M9 15h1m4 0h1"/></svg>
                 </span>
                 <span class="min-w-0 flex-1"><span class="block truncate text-sm font-bold text-slate-900" x-text="place.name"></span><span class="block text-xs text-slate-500" x-text="place.area"></span></span>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"><path d="m9 5 7 7-7 7"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="text-ink-muted" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
               </button>
             </template>
           </div>
@@ -154,37 +148,37 @@
 
         <section x-show="!!searchTarget" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="px-4 pb-5 sm:px-5" aria-label="Choose start and destination">
           <div class="flex items-center gap-1.5">
-            <button type="button" @click="cancelSearch()" class="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-600 hover:bg-slate-100" aria-label="Close search">
+            <button type="button" @click="cancelSearch()" class="grid h-11 w-11 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-ground-deep" aria-label="Close search">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg>
             </button>
             <div class="min-w-0 flex-1 space-y-1.5">
-              <label class="flex h-11 items-center gap-2.5 rounded-xl border bg-[#f8f9fb] px-3 transition" :class="searchTarget === 'origin' ? 'border-blue-600 bg-white ring-2 ring-blue-600/15' : 'border-slate-200'">
+              <label class="flex h-11 items-center gap-2.5 rounded-xl border bg-ground px-3 transition" :class="searchTarget === 'origin' ? 'border-blue-600 bg-white ring-2 ring-blue-600/15' : 'border-slate-200'">
                 <span class="h-2.5 w-2.5 shrink-0 rounded-full border-[3px] border-blue-600 bg-white"></span>
                 <span class="sr-only">Starting point</span>
                 <input x-ref="originInput" x-model="queries.origin" @focus="focusField('origin', false)" @keydown.enter.prevent="searchPlaces()" @keydown.escape="cancelSearch()" type="search" autocomplete="off" enterkeyhint="search" placeholder="Choose starting point" class="min-w-0 flex-1 bg-transparent text-[14px] font-medium outline-none">
               </label>
-              <label class="flex h-11 items-center gap-2.5 rounded-xl border bg-[#f8f9fb] px-3 transition" :class="searchTarget === 'destination' ? 'border-blue-600 bg-white ring-2 ring-blue-600/15' : 'border-slate-200'">
+              <label class="flex h-11 items-center gap-2.5 rounded-xl border bg-ground px-3 transition" :class="searchTarget === 'destination' ? 'border-blue-600 bg-white ring-2 ring-blue-600/15' : 'border-slate-200'">
                 <span class="h-2.5 w-2.5 shrink-0 rounded-[3px] bg-slate-900"></span>
                 <span class="sr-only">Destination</span>
                 <input x-ref="destinationInput" x-model="queries.destination" @focus="focusField('destination', false)" @keydown.enter.prevent="searchPlaces()" @keydown.escape="cancelSearch()" type="search" autocomplete="off" enterkeyhint="search" placeholder="Where to?" class="min-w-0 flex-1 bg-transparent text-[14px] font-medium outline-none">
               </label>
             </div>
-            <button type="button" @click="swapEnds()" :disabled="!destination" class="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-600 hover:bg-slate-100 disabled:opacity-30" aria-label="Swap start and destination" title="Swap start and destination">
+            <button type="button" @click="swapEnds()" :disabled="!destination" class="grid h-11 w-11 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-ground-deep disabled:opacity-30" aria-label="Swap start and destination" title="Swap start and destination">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16m0-16-3 3m3-3 3 3M17 20V4m0 16-3-3m3 3 3-3"/></svg>
             </button>
           </div>
 
-          <div class="mt-3 flex gap-2 pl-[42px]">
-            <button type="button" @click="useMyLocation()" class="flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2" fill="#1d4ed8"/></svg>Your location
+          <div class="mt-3 flex flex-wrap gap-2 pl-[50px]">
+            <button type="button" @click="useMyLocation()" class="flex min-h-11 items-center gap-1.5 rounded-full border border-line px-4 text-sm font-bold text-ink-soft hover:bg-ground">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" class="text-brand" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>Your location
             </button>
-            <button type="button" @click="beginPin(searchTarget)" class="flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Choose on map
+            <button type="button" @click="beginPin(searchTarget)" class="flex min-h-11 items-center gap-1.5 rounded-full border border-line px-4 text-sm font-bold text-ink-soft hover:bg-ground">
+              <svg width="15" height="15" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Choose on map
             </button>
           </div>
 
           <p x-show="placeSearchError" x-text="placeSearchError" class="mt-3 rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-700"></p>
-          <p x-show="!activeQuery && suggestions.length" class="mt-4 pl-[42px] text-[11px] font-bold uppercase tracking-[.16em] text-slate-500" x-text="recents.length ? 'Recent and popular' : 'Popular places'"></p>
+          <p x-show="!activeQuery && suggestions.length" class="mt-4 pl-[50px] text-sm font-bold text-ink-soft" x-text="recents.length ? 'Recent and popular' : 'Popular places'"></p>
           <ul class="mt-1" role="listbox" :aria-label="searchTarget === 'origin' ? 'Starting point suggestions' : 'Destination suggestions'">
             <template x-for="item in suggestions" :key="item.key">
               <li role="option">
@@ -194,7 +188,7 @@
                     <template x-if="item.kind === 'landmark'"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="13" rx="3"/><path d="M5 11h14M8 20l1-3m7 3-1-3"/></svg></template>
                     <template x-if="item.kind === 'place' || item.kind === 'result'"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg></template>
                   </span>
-                  <span class="min-w-0"><strong class="block truncate text-sm text-slate-900" x-text="item.name"></strong><span x-show="item.area" class="block truncate text-[11px] text-slate-500" x-text="item.area"></span></span>
+                  <span class="min-w-0"><strong class="block truncate text-sm text-slate-900" x-text="item.name"></strong><span x-show="item.area" class="block truncate text-xs text-slate-500" x-text="item.area"></span></span>
                 </button>
               </li>
             </template>
@@ -203,47 +197,48 @@
             <span class="ml-[6px] grid h-[30px] w-[30px] shrink-0 place-items-center rounded-full bg-slate-900 text-white"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></span>
             <span class="min-w-0 text-sm font-bold text-slate-900" x-text="placeSearchLoading ? 'Searching…' : `Search “${activeQuery}” in ${currentCity.name}`"></span>
           </button>
-          <p class="mt-3 pl-[42px] text-[10px] text-slate-400">Place search © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" class="underline">OpenStreetMap contributors</a></p>
+          <p class="mt-3 pl-[50px] text-xs text-ink-muted">Place search © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" class="underline">OpenStreetMap contributors</a></p>
         </section>
 
         <section x-show="!!pinTarget" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-3" x-transition:enter-end="opacity-100 translate-y-0" class="px-5 pb-4 sm:px-6">
-          <div class="flex items-start justify-between gap-3"><div><p class="text-[10px] font-bold uppercase tracking-[.16em] text-blue-700">Place a map pin</p><h2 class="mt-1 text-lg font-extrabold" x-text="pinTarget === 'origin' ? 'Tap your starting point' : 'Tap your destination'"></h2><p class="mt-1 text-xs text-slate-500">Pan and zoom the map, then tap the exact spot.</p></div><button type="button" @click="cancelPin()" class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600" aria-label="Cancel placing pin">✕</button></div>
+          <div class="flex items-start justify-between gap-3"><div><h2 class="text-lg font-extrabold" x-text="pinTarget === 'origin' ? 'Tap your starting point' : 'Tap your destination'"></h2><p class="mt-1 text-sm text-ink-muted">Pan and zoom the map, then tap the exact spot.</p></div><button type="button" @click="cancelPin()" class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-ground-deep text-ink-soft" aria-label="Cancel placing pin"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg></button></div>
         </section>
 
         <section x-show="!expanded && mapPreview && !pinTarget" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-3" x-transition:enter-end="opacity-100 translate-y-0" class="px-5 pb-4 sm:px-6">
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
               <div x-show="selectedOption" class="flex items-center gap-2">
-                <div class="flex items-center gap-1"><template x-for="(leg, index) in selectedOption?.itinerary?.legs || []" :key="`preview-leg-${index}`"><span class="flex items-center gap-0.5"><span x-show="index" class="px-0.5 text-xs text-slate-400" aria-hidden="true">›</span><template x-for="jeep in legJeeps(leg).slice(0, 3)" :key="`${jeep.route_id}`"><span class="line-chip" :style="chipStyle(jeep.color)" x-text="jeep.route_number"></span></template><span x-show="legJeeps(leg).length > 3" class="text-[11px] font-bold text-slate-500" x-text="`+${legJeeps(leg).length - 3}`"></span></span></template></div>
+                <div class="flex items-center gap-1"><template x-for="(leg, index) in selectedOption?.itinerary?.legs || []" :key="`preview-leg-${index}`"><span class="flex items-center gap-0.5"><svg x-show="index" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="mx-0.5 text-ink-muted" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><template x-for="jeep in legJeeps(leg).slice(0, 3)" :key="`${jeep.route_id}`"><span class="line-chip" :style="chipStyle(jeep.color)" x-text="jeep.route_number"></span></template><span x-show="legJeeps(leg).length > 3" class="text-xs font-bold text-slate-500" x-text="`+${legJeeps(leg).length - 3}`"></span></span></template></div>
                 <p class="text-sm font-extrabold" x-text="`${selectedOption?.duration_minutes} min · ${fareLabel(selectedOption)}`"></p>
               </div>
               <h2 class="mt-1.5 truncate text-base font-extrabold" x-text="destination?.name"></h2>
               <p x-show="selectedOption" class="mt-0.5 truncate text-xs text-slate-500" x-text="firstBoardingHint(selectedOption)"></p>
               <p x-show="routeData && !selectedOption" class="mt-0.5 text-xs text-slate-500">No jeepney route found</p>
             </div>
-            <button type="button" @click="collapse()" class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600" aria-label="Clear trip">✕</button>
+            <button type="button" @click="collapse()" class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-ground-deep text-ink-soft" aria-label="Clear trip"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg></button>
           </div>
-          <button type="button" @click="backToOptions()" class="mt-3 text-xs font-extrabold text-blue-700">↑ Route details</button>
+          <button type="button" @click="backToOptions()" class="mt-1 flex min-h-11 items-center gap-1 text-sm font-extrabold text-brand"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>Route details</button>
         </section>
 
         <section x-show="expanded && !searchTarget" x-cloak x-transition:enter="transition ease-out duration-300 delay-75" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-out duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="pb-4">
           <div class="px-5 sm:px-6">
             <div class="flex items-center gap-2">
-              <button type="button" @click="collapse()" class="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-600 hover:bg-slate-100" aria-label="Clear trip">
+              <button type="button" @click="collapse()" class="grid h-11 w-11 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-ground-deep" aria-label="Clear trip">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M6 6 18 18M18 6 6 18"/></svg>
               </button>
-              <div class="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-[#f8f9fb]">
-                <button type="button" @click="beginSearch('origin')" class="flex w-full min-w-0 items-center gap-2.5 px-3 py-2 text-left" aria-label="Change starting point">
+              <div class="min-w-0 flex-1 rounded-2xl border border-line bg-ground">
+                <button type="button" @click="beginSearch('origin')" class="flex min-h-11 w-full min-w-0 items-center gap-2.5 px-3 text-left" aria-label="Change starting point">
                   <span class="h-2.5 w-2.5 shrink-0 rounded-full border-[3px] border-blue-600 bg-white"></span>
-                  <span class="truncate text-[13px] font-semibold text-slate-800" x-text="originLabel"></span>
+                  <span class="truncate text-sm font-semibold text-ink" x-text="originLabel"></span>
+                  <span x-show="originIsDefault" class="ml-auto shrink-0 rounded-full bg-sign/30 px-2 py-0.5 text-xs font-bold text-ink">Default</span>
                 </button>
                 <div class="ml-8 border-t border-slate-200"></div>
-                <button type="button" @click="beginSearch('destination')" class="flex w-full min-w-0 items-center gap-2.5 px-3 py-2 text-left" aria-label="Change destination">
+                <button type="button" @click="beginSearch('destination')" class="flex min-h-11 w-full min-w-0 items-center gap-2.5 px-3 text-left" aria-label="Change destination">
                   <span class="h-2.5 w-2.5 shrink-0 rounded-[3px] bg-slate-900"></span>
-                  <span class="truncate text-[13px] font-semibold" :class="destination ? 'text-slate-800' : 'text-slate-400'" x-text="destination?.name || 'Search or pin a destination'"></span>
+                  <span class="truncate text-sm font-semibold" :class="destination ? 'text-ink' : 'text-ink-muted'" x-text="destination?.name || 'Search or pin a destination'"></span>
                 </button>
               </div>
-              <button type="button" @click="swapEnds()" :disabled="!destination" class="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-600 hover:bg-slate-100 disabled:opacity-30" aria-label="Swap start and destination" title="Swap start and destination">
+              <button type="button" @click="swapEnds()" :disabled="!destination" class="grid h-11 w-11 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-ground-deep disabled:opacity-30" aria-label="Swap start and destination" title="Swap start and destination">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16m0-16-3 3m3-3 3 3M17 20V4m0 16-3-3m3 3 3-3"/></svg>
               </button>
             </div>
@@ -263,7 +258,7 @@
               <p class="mt-1 text-xs leading-relaxed text-slate-600" x-text="noRouteMessage().body"></p>
               <div class="mt-3 flex flex-col gap-2">
                 <template x-for="action in noRouteMessage().actions" :key="action.label">
-                  <button type="button" @click="action.run()" class="rounded-xl px-3 py-2.5 text-xs font-extrabold" :class="action.primary ? 'bg-slate-900 text-white' : 'border border-slate-200 text-slate-700'" x-text="action.label"></button>
+                  <button type="button" @click="action.run()" class="min-h-11 rounded-xl px-3 text-sm font-extrabold" :class="action.primary ? 'bg-ink text-white' : 'border border-slate-200 text-slate-700'" x-text="action.label"></button>
                 </template>
               </div>
             </div>
@@ -274,28 +269,28 @@
                   <div class="flex items-center justify-between gap-3">
                     <div class="flex min-w-0 flex-wrap items-center gap-1">
                       <template x-for="(leg, index) in option.itinerary.legs" :key="`${option.id}-leg-${index}`">
-                        <span class="flex items-center gap-0.5" :title="legTitle(leg)"><span x-show="index" class="px-0.5 text-xs text-slate-400" aria-hidden="true">›</span><template x-for="jeep in legJeeps(leg).slice(0, 3)" :key="`${jeep.route_id}`"><span class="line-chip" :style="chipStyle(jeep.color)" x-text="jeep.route_number"></span></template><span x-show="legJeeps(leg).length > 3" class="text-[11px] font-bold text-slate-500" x-text="`+${legJeeps(leg).length - 3}`"></span></span>
+                        <span class="flex items-center gap-0.5" :title="legTitle(leg)"><svg x-show="index" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="mx-0.5 text-ink-muted" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><template x-for="jeep in legJeeps(leg).slice(0, 3)" :key="`${jeep.route_id}`"><span class="line-chip" :style="chipStyle(jeep.color)" x-text="jeep.route_number"></span></template><span x-show="legJeeps(leg).length > 3" class="text-xs font-bold text-slate-500" x-text="`+${legJeeps(leg).length - 3}`"></span></span>
                       </template>
                     </div>
                     <p class="shrink-0 text-[15px] font-extrabold" x-text="`${option.duration_minutes} min`"></p>
                   </div>
                   <p class="mt-1.5 text-xs font-semibold text-slate-600" x-text="`${fareLabel(option)} · ${distanceLabel(option.walk_distance_km * 1000)} walk · ${rideCountLabel(option, true)}`"></p>
-                  <p class="mt-1 text-[11px] font-semibold">
+                  <p class="mt-1 text-xs font-semibold">
                     <span x-show="option.highlight" class="rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700" x-text="option.highlight"></span>
-                    <template x-for="(part, index) in comparison(option)" :key="`${option.id}-compare-${index}`"><span><span x-show="index" class="text-slate-400"> · </span><span :class="part.better ? 'text-emerald-700' : 'text-slate-500'" x-text="part.text"></span></span></template>
+                    <template x-for="(part, index) in comparison(option)" :key="`${option.id}-compare-${index}`"><span><span x-show="index" class="text-ink-muted"> · </span><span :class="part.better ? 'text-emerald-700' : 'text-slate-500'" x-text="part.text"></span></span></template>
                   </p>
                 </button>
               </template>
             </div>
 
             <div x-show="selectedOption && detailOpen && !loading" x-cloak class="px-5 sm:px-6">
-              <button x-show="routeData?.options?.length > 1" type="button" @click="backToList()" class="mb-3 flex items-center gap-1 text-xs font-extrabold text-blue-700"><span class="text-base leading-none">‹</span> All routes</button>
+              <button x-show="routeData?.options?.length > 1" type="button" @click="backToList()" class="mb-1 flex min-h-11 items-center gap-1 text-sm font-extrabold text-brand"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>All routes</button>
               <div class="flex items-end justify-between gap-3">
                 <div>
                   <p class="text-[22px] font-extrabold tracking-tight" x-text="`${selectedOption?.duration_minutes || 0} min`"></p>
                   <p class="text-xs font-semibold text-slate-500" x-text="`${fareLabel(selectedOption)} · ${distanceLabel((selectedOption?.walk_distance_km || 0) * 1000)} walk · ${rideCountLabel(selectedOption, true)}`"></p>
                 </div>
-                <span x-show="selectedOption?.highlight" class="mb-0.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700" x-text="selectedOption?.highlight"></span>
+                <span x-show="selectedOption?.highlight" class="mb-0.5 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700" x-text="selectedOption?.highlight"></span>
               </div>
 
               <ol class="mt-5" aria-label="Directions">
@@ -304,7 +299,7 @@
                     <div class="flex w-7 shrink-0 flex-col items-center">
                       <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full" :class="step.kind === 'arrive' ? 'bg-slate-900 text-white' : step.kind === 'walk' ? 'bg-slate-100 text-slate-600' : ''" :style="step.kind === 'ride' ? chipStyle(step.leg.color) : {}">
                         <template x-if="step.kind === 'walk'"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="2"/><path d="m9 20 3-6 3 3v4M7 12l3-4 4 1 3 3M10 8l-1 6"/></svg></template>
-                        <template x-if="step.kind === 'ride' && String(step.leg.route_number).length <= 3"><span class="text-[10px] font-extrabold" x-text="step.leg.route_number"></span></template>
+                        <template x-if="step.kind === 'ride' && String(step.leg.route_number).length <= 3"><span class="text-xs font-extrabold" x-text="step.leg.route_number"></span></template>
                         <!-- Longer codes (Baguio's destinations, "Bulua R1") don't fit the dot; the chip beside it names the jeep. -->
                         <template x-if="step.kind === 'ride' && String(step.leg.route_number).length > 3"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17V7a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v10M3 11h18M5 17h14"/><circle cx="8" cy="18" r="1.6"/><circle cx="16" cy="18" r="1.6"/></svg></template>
                         <template x-if="step.kind === 'arrive'"><span class="h-2.5 w-2.5 rounded-[3px] bg-white"></span></template>
@@ -314,32 +309,32 @@
                     <div class="min-w-0 flex-1 pb-5">
                       <template x-if="step.kind === 'walk'">
                         <div>
-                          <button type="button" @click="toggleWalk(step.key)" :disabled="!step.substeps.length" class="flex w-full items-center justify-between gap-2 pt-1 text-left" :aria-expanded="openWalks.includes(step.key)">
+                          <button type="button" @click="toggleWalk(step.key)" :disabled="!step.substeps.length" class="-mt-2 flex min-h-11 w-full items-center justify-between gap-2 text-left" :aria-expanded="openWalks.includes(step.key)">
                             <span class="text-[13px] font-bold text-slate-800" x-text="step.title"></span>
-                            <span x-show="step.substeps.length" class="text-xs text-slate-400 transition" :class="openWalks.includes(step.key) ? 'rotate-180' : ''" aria-hidden="true">⌄</span>
-                            <span x-show="!step.substeps.length && walkingLoading && step.routable" class="shrink-0 whitespace-nowrap text-[10px] font-semibold text-slate-400">Loading turns…</span>
+                            <svg x-show="step.substeps.length" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-ink-muted transition" :class="openWalks.includes(step.key) ? 'rotate-180' : ''" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                            <span x-show="!step.substeps.length && walkingLoading && step.routable" class="shrink-0 whitespace-nowrap text-xs font-semibold text-ink-muted">Loading turns…</span>
                           </button>
                           <ol x-show="openWalks.includes(step.key)" x-cloak class="mt-2 space-y-1.5 border-l border-slate-200 pl-3">
                             <template x-for="(substep, index) in step.substeps" :key="`${step.key}-${index}`">
-                              <li class="text-[11px] leading-snug text-slate-600"><span x-text="substep.title"></span><span x-show="substep.meta" class="text-slate-400" x-text="` · ${substep.meta}`"></span></li>
+                              <li class="text-xs leading-snug text-slate-600"><span x-text="substep.title"></span><span x-show="substep.meta" class="text-ink-muted" x-text="` · ${substep.meta}`"></span></li>
                             </template>
                           </ol>
                         </div>
                       </template>
                       <template x-if="step.kind === 'ride'">
                         <div>
-                          <p class="pt-0.5 text-[11px] font-semibold text-slate-500" x-text="rideHeading(step.leg)"></p>
+                          <p class="pt-0.5 text-xs font-semibold text-slate-500" x-text="rideHeading(step.leg)"></p>
                           <ul class="mt-1.5 space-y-1.5">
                             <template x-for="jeep in legJeeps(step.leg)" :key="`${step.key}-${jeep.route_id}`">
                               <li class="flex items-start gap-2">
-                                <span class="line-chip mt-px shrink-0" :style="chipStyle(jeep.color)" x-text="jeep.route_number"></span>
-                                <span class="min-w-0 text-[13px] leading-snug"><span class="font-bold text-slate-900" x-text="jeep.signboard"></span><span x-show="jeep.mode === 'uv_express'" class="ml-1 rounded bg-amber-100 px-1 py-px text-[10px] font-bold text-amber-800">UV Express</span><span x-show="jeep.heading" class="text-slate-500" x-text="` · toward ${jeep.heading}`"></span></span>
+                                <span class="line-chip mt-0.5 shrink-0" :style="chipStyle(jeep.color)" x-text="jeep.route_number"></span>
+                                <span class="min-w-0 text-sm leading-snug"><span class="signboard" :style="{ borderColor: strokeColor(jeep.color) }" x-text="jeep.signboard"></span><span x-show="jeep.mode === 'uv_express'" class="ml-1 rounded bg-amber-100 px-1 py-px text-xs font-bold text-amber-800">UV Express</span><span x-show="jeep.heading" class="mt-0.5 block text-ink-muted" x-text="`toward ${jeep.heading}`"></span></span>
                               </li>
                             </template>
                           </ul>
                           <p class="mt-2 text-xs text-slate-700"><span x-text="`Board ${step.leg.board.label || 'at the marked point'}`"></span><template x-if="!step.leg.heading"><span> · ride in the direction shown on the map</span></template></p>
-                          <p class="mt-1 text-[11px] text-slate-500" x-text="`Ride ${step.leg.road_distance_km.toFixed(1)} km · ~${step.leg.ride_minutes} min · ${step.leg.fare_php ? `~₱${step.leg.fare_php}` : 'fare on board'}`"></p>
-                          <p x-show="step.leg.estimated_path" class="mt-1 text-[11px] text-amber-700">Path estimated from the route plan; ask the driver if unsure.</p>
+                          <p class="mt-1 text-xs text-slate-500" x-text="`Ride ${step.leg.road_distance_km.toFixed(1)} km · ~${step.leg.ride_minutes} min · ${step.leg.fare_php ? `~₱${step.leg.fare_php}` : 'fare on board'}`"></p>
+                          <p x-show="step.leg.estimated_path" class="mt-1 text-xs text-amber-700">Path estimated from the route plan; ask the driver if unsure.</p>
                           <p class="mt-2 text-xs font-bold text-slate-900" x-text="`Get off ${step.leg.alight.label || 'at the marked point'}`"></p>
                         </div>
                       </template>
@@ -351,71 +346,71 @@
                 </template>
               </ol>
 
-              <details class="rounded-xl bg-slate-50 px-3 py-2.5 text-[11px] leading-relaxed text-slate-600">
-                <summary class="cursor-pointer font-bold text-slate-700">ⓘ About these directions</summary>
+              <details class="rounded-xl bg-ground px-3 py-1 text-xs leading-relaxed text-slate-600">
+                <summary class="flex min-h-11 cursor-pointer items-center font-bold text-ink-soft">About these directions</summary>
                 <p class="mt-2" x-text="selectedOption?.itinerary?.note"></p>
                 <p class="mt-1" x-text="routeData?.fare_note"></p>
                 <p x-show="selectedOption?.itinerary?.walk_basis !== 'street'" class="mt-1">Walking distances are estimates; street routing was unavailable.</p>
-                <a :href="selectedOption?.itinerary?.source_url" target="_blank" rel="noopener noreferrer" class="mt-1.5 inline-block font-bold text-blue-700 underline">Route data source ↗</a>
+                <a :href="selectedOption?.itinerary?.source_url" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-11 items-center font-bold text-brand underline">Route data source<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="ml-0.5 inline align-[-1px]" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></a>
               </details>
             </div>
           </div>
 
-          <div x-show="!destination" class="mx-5 mt-5 rounded-2xl bg-blue-50 p-4 sm:mx-6"><p class="text-sm font-bold text-blue-900">Tap the map to place your destination</p><p class="mt-1 text-xs leading-relaxed text-blue-700">You can also move the starting pin. Lugar.ph will walk you to a nearby line and use up to three jeepney rides.</p><button type="button" @click="beginPin('destination')" class="mt-3 rounded-xl bg-blue-700 px-3 py-2 text-xs font-bold text-white">Place destination pin</button></div>
+          <div x-show="!destination" class="mx-5 mt-5 rounded-2xl bg-blue-50 p-4 sm:mx-6"><p class="text-sm font-bold text-blue-900">Tap the map to place your destination</p><p class="mt-1 text-xs leading-relaxed text-blue-700">You can also move the starting pin. Lugar.ph will walk you to a nearby line and use up to three jeepney rides.</p><button type="button" @click="beginPin('destination')" class="mt-3 min-h-11 rounded-xl bg-brand px-4 text-sm font-bold text-white">Place destination pin</button></div>
         </section>
       </div>
 
       <div x-show="expanded && selectedOption && !searchTarget && !loading" x-cloak class="sheet-footer">
-        <button type="button" @click="showMapPreview()" class="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 text-[15px] font-bold text-white shadow-lg shadow-slate-900/15 transition hover:bg-slate-800 active:scale-[.99]" x-text="detailOpen ? 'Show route on map' : 'Show routes on map'"></button>
+        <button type="button" @click="showMapPreview()" class="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-ink text-[15px] font-bold text-white shadow-lg shadow-ink/15 transition hover:bg-ink-soft active:scale-[.99]" x-text="detailOpen ? 'Show route on map' : 'Show routes on map'"></button>
       </div>
     </main>
 
     <section x-show="activeTab === 'routes'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="network-screen" aria-label="Jeepney routes">
       <header class="network-heading flex items-center justify-between border-b border-slate-200 bg-white px-5 pb-3 pt-[calc(14px+env(safe-area-inset-top))] md:px-8">
-        <div><p class="text-[10px] font-bold uppercase tracking-[.18em] text-blue-700" x-text="`${currentCity.source_label} · mapped network`"></p><h1 class="text-xl font-extrabold tracking-tight">Jeepney routes</h1></div>
-        <label class="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-800"><span class="sr-only">Choose city</span><select x-model="city" @change="changeCity()" class="max-w-[145px] bg-transparent font-bold outline-none"><template x-for="item in cities" :key="item.id"><option :value="item.id" :selected="item.id === city" x-text="item.name"></option></template></select></label>
+        <div><h1 class="text-xl font-extrabold tracking-tight">Jeepney routes</h1><p class="text-sm text-ink-muted" x-text="`${currentCity.lines} lines · from ${currentCity.source_label}`"></p></div>
+        <label class="flex min-h-11 items-center rounded-full bg-brand-wash pl-3 pr-1 text-sm font-bold text-blue-800"><span class="sr-only">Choose city</span><select x-model="city" @change="changeCity()" class="min-h-11 max-w-[160px] bg-transparent pr-2 font-bold outline-none"><template x-for="item in cities" :key="item.id"><option :value="item.id" :selected="item.id === city" x-text="item.name"></option></template></select></label>
       </header>
       <div id="network-map" class="network-map" role="application" aria-label="Interactive city map with colored jeepney corridors"></div>
-      <div class="network-details bg-[#f8fafc] pb-8">
+      <div class="network-details bg-ground pb-8">
         <div class="flex border-b border-slate-200 bg-white px-5" role="tablist" aria-label="Jeepney route sections">
-          <button type="button" role="tab" class="contribute-tab border-b-2 border-transparent px-3 py-3 text-xs font-extrabold text-slate-500" :aria-selected="communityView === 'routes'" @click="communityView = 'routes'; closeProposalEditor()">Mapped lines</button>
-          <button type="button" role="tab" class="contribute-tab border-b-2 border-transparent px-3 py-3 text-xs font-extrabold text-slate-500" :aria-selected="communityView === 'contribute'" @click="openContributions()">Suggest a route</button>
+          <button type="button" role="tab" class="contribute-tab min-h-12 border-b-2 border-transparent px-3 text-sm font-extrabold text-ink-muted" :aria-selected="communityView === 'routes'" @click="communityView = 'routes'; closeProposalEditor()">Mapped lines</button>
+          <button type="button" role="tab" class="contribute-tab min-h-12 border-b-2 border-transparent px-3 text-sm font-extrabold text-ink-muted" :aria-selected="communityView === 'contribute'" @click="openContributions()">Suggest a route</button>
         </div>
         <div x-show="communityView === 'routes'" class="border-b border-slate-200 bg-white px-5 py-3">
-          <p class="text-xs font-semibold text-slate-800">Tap a colored line to inspect its route.</p>
-          <p class="mt-1 text-[11px] leading-relaxed text-slate-500">Lines come from published route plans or documented route geometry. Exact turns, operating direction, and current service still need local verification. Community notes are unverified.</p>
+          <p class="text-sm font-semibold text-ink">Tap a colored line to inspect its route.</p>
+          <p class="mt-1 text-xs leading-relaxed text-slate-500">Lines come from published route plans or documented route geometry. Exact turns, operating direction, and current service still need local verification. Community notes are unverified.</p>
         </div>
         <div x-show="communityView === 'routes'" class="px-5 pt-4">
           <label class="sr-only" for="network-search">Find a jeepney line</label>
-          <input id="network-search" x-model="catalogSearch" placeholder="Find a line or area" class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500">
+          <input id="network-search" x-model="catalogSearch" placeholder="Find a line or area" class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/25">
           <div x-show="catalogLoading" class="py-3 text-sm text-slate-500">Loading lines…</div>
           <p x-show="catalogError" x-text="catalogError" class="py-3 text-sm text-rose-700"></p>
           <div class="-mx-5 mt-3 flex gap-2 overflow-x-auto px-5 pb-3" aria-label="Select a jeepney line">
-            <template x-for="line in filteredCatalog" :key="line.id"><button type="button" @click="selectedLine?.id === line.id ? clearLineSelection() : selectLine(line)" class="network-chip" :class="selectedLine?.id === line.id ? 'selected' : ''" :aria-pressed="selectedLine?.id === line.id"><span class="mb-2 grid h-6 min-w-6 place-items-center rounded-md px-1 text-[11px] font-extrabold" :style="chipStyle(line.color)" x-text="line.number"></span><strong x-text="line.name"></strong></button></template>
+            <template x-for="line in filteredCatalog" :key="line.id"><button type="button" @click="selectedLine?.id === line.id ? clearLineSelection() : selectLine(line)" class="network-chip" :class="selectedLine?.id === line.id ? 'selected' : ''" :aria-pressed="selectedLine?.id === line.id"><span class="line-chip mb-2" :style="chipStyle(line.color)" x-text="line.number"></span><strong x-text="line.name"></strong></button></template>
           </div>
           <p x-show="catalogData && filteredCatalog.length === 0" class="text-xs text-slate-500">No matching lines.</p>
           <article x-show="selectedLine" x-cloak class="mt-1 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div class="flex gap-3"><span class="grid h-11 min-w-11 shrink-0 place-items-center rounded-xl px-1 text-sm font-extrabold" :style="chipStyle(selectedLine?.color)" x-text="selectedLine?.number"></span><div><h2 class="text-sm font-extrabold leading-snug" x-text="selectedLine?.name"></h2><p class="mt-1 text-xs text-slate-500" x-text="selectedLine?.length_km ? `About ${selectedLine.length_km} km in the published data` : 'Published route geometry' "></p></div></div>
-            <p x-show="selectedLine?.mode === 'uv_express'" class="mt-3 inline-block rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold text-amber-800">UV Express van, not a jeepney</p>
+            <div class="flex gap-3"><span class="grid h-11 min-w-11 shrink-0 place-items-center rounded-lg px-1.5 font-sign text-xl font-bold" :style="chipStyle(selectedLine?.color)" x-text="selectedLine?.number"></span><div><h2 class="text-sm font-extrabold leading-snug" x-text="selectedLine?.name"></h2><p class="mt-1 text-xs text-slate-500" x-text="selectedLine?.length_km ? `About ${selectedLine.length_km} km in the published data` : 'Published route geometry' "></p></div></div>
+            <p x-show="selectedLine?.mode === 'uv_express'" class="mt-3 inline-block rounded bg-amber-100 px-1.5 py-0.5 text-xs font-bold text-amber-800">UV Express van, not a jeepney</p>
             <p class="mt-3 text-xs leading-relaxed text-slate-600" x-text="`Path ${selectedLine?.mapped_portion || 'from published route data'}. Confirm current service locally.`"></p>
-            <a x-show="selectedLine?.osm_relations?.length" :href="`https://www.openstreetmap.org/relation/${selectedLine?.osm_relations?.[0]}`" target="_blank" rel="noopener noreferrer" class="mt-2 block text-xs font-semibold text-blue-700 underline">Route © OpenStreetMap contributors; improve it there ↗</a>
-            <div class="mt-3 flex flex-wrap gap-2"><button type="button" @click="focusSelectedLine()" class="rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700">Fit route on map</button><button type="button" @click="startProposal('correction', selectedLine)" class="rounded-xl bg-slate-900 px-3 py-2 text-xs font-bold text-white">Suggest correction</button><button type="button" @click="clearLineSelection()" class="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700">Show all lines</button></div>
-            <a :href="catalogData?.source_url" target="_blank" rel="noopener noreferrer" class="mt-3 block text-xs font-semibold text-blue-700 underline">Route plan source ↗</a>
+            <a x-show="selectedLine?.osm_relations?.length" :href="`https://www.openstreetmap.org/relation/${selectedLine?.osm_relations?.[0]}`" target="_blank" rel="noopener noreferrer" class="mt-2 block text-xs font-semibold text-blue-700 underline">Route © OpenStreetMap contributors; improve it there<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="ml-0.5 inline align-[-1px]" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></a>
+            <div class="mt-3 flex flex-wrap gap-2"><button type="button" @click="focusSelectedLine()" class="min-h-11 rounded-xl bg-brand-wash px-3 text-sm font-bold text-blue-800">Fit route on map</button><button type="button" @click="startProposal('correction', selectedLine)" class="min-h-11 rounded-xl bg-ink px-3 text-sm font-bold text-white">Suggest correction</button><button type="button" @click="clearLineSelection()" class="min-h-11 rounded-xl border border-line px-3 text-sm font-bold text-ink-soft">Show all lines</button></div>
+            <a :href="catalogData?.source_url" target="_blank" rel="noopener noreferrer" class="mt-3 block text-xs font-semibold text-blue-700 underline">Route plan source<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="ml-0.5 inline align-[-1px]" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></a>
           </article>
           <section x-show="selectedLine" x-cloak class="mt-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="Community route comments">
             <h3 class="text-sm font-extrabold">Community notes</h3>
             <p class="mt-1 text-xs leading-relaxed text-slate-500">Share a recent observation, correction, or boarding tip. Avoid personal details. Notes are public and unverified.</p>
             <form @submit.prevent="submitComment()" class="mt-3 space-y-2">
-              <label class="sr-only" for="comment-name">Your name</label><input id="comment-name" x-model="commentAuthor" maxlength="40" minlength="2" required placeholder="Your name" class="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500">
-              <label class="sr-only" for="comment-body">Your route note</label><textarea id="comment-body" x-model="commentBody" maxlength="600" minlength="10" required rows="3" placeholder="What did you notice about this route?" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500"></textarea>
+              <label class="sr-only" for="comment-name">Your name</label><input id="comment-name" x-model="commentAuthor" maxlength="40" minlength="2" required placeholder="Your name" class="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/25">
+              <label class="sr-only" for="comment-body">Your route note</label><textarea id="comment-body" x-model="commentBody" maxlength="600" minlength="10" required rows="3" placeholder="What did you notice about this route?" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"></textarea>
               <input x-model="commentWebsite" type="text" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true">
-              <button type="submit" :disabled="commentSaving" class="rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50" x-text="commentSaving ? 'Posting…' : 'Post note'"></button>
+              <button type="submit" :disabled="commentSaving" class="min-h-11 rounded-xl bg-ink px-4 text-sm font-bold text-white disabled:opacity-50" x-text="commentSaving ? 'Posting…' : 'Post note'"></button>
               <p x-show="commentError" x-text="commentError" class="text-xs text-rose-700"></p>
             </form>
             <div class="mt-4 border-t border-slate-100 pt-3">
               <p x-show="commentsLoading" class="text-xs text-slate-500">Loading notes…</p>
               <p x-show="!commentsLoading && comments.length === 0" class="text-xs text-slate-500">No notes yet. Be the first to share a local observation.</p>
-              <template x-for="comment in comments" :key="comment.id"><div class="border-b border-slate-100 py-3 last:border-0"><div class="flex items-center justify-between gap-2"><strong class="text-xs" x-text="comment.author"></strong><time class="text-[10px] text-slate-400" x-text="formatCommentDate(comment.created_at)"></time></div><p class="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-700" x-text="comment.body"></p></div></template>
+              <template x-for="comment in comments" :key="comment.id"><div class="border-b border-slate-100 py-3 last:border-0"><div class="flex items-center justify-between gap-2"><strong class="text-xs" x-text="comment.author"></strong><time class="text-xs text-ink-muted" x-text="formatCommentDate(comment.created_at)"></time></div><p class="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-700" x-text="comment.body"></p></div></template>
             </div>
           </section>
         </div>
@@ -424,36 +419,36 @@
             <h2 class="text-base font-extrabold">Help improve the routes</h2>
             <p class="mt-1 text-xs leading-relaxed text-slate-600">Edit a mapped line or draw a missing route. Your suggestion and its support votes are public. A reviewer checks it before any map or trip directions change.</p>
             <div class="mt-3 flex flex-wrap gap-2">
-              <button type="button" @click="startProposal('new')" class="rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white">+ Add a new route</button>
-              <button type="button" @click="communityView = 'routes'" class="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-700">Choose a line to correct</button>
+              <button type="button" @click="startProposal('new')" class="flex min-h-11 items-center gap-1.5 rounded-xl bg-ink px-4 text-sm font-bold text-white"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add a new route</button>
+              <button type="button" @click="communityView = 'routes'" class="min-h-11 rounded-xl border border-line px-4 text-sm font-bold text-ink-soft">Choose a line to correct</button>
             </div>
           </div>
           <form x-show="editorOpen" x-cloak @submit.prevent="submitProposal()" class="space-y-3 rounded-2xl border border-blue-200 bg-white p-4 shadow-sm" aria-label="Route proposal editor">
-            <div class="flex items-start justify-between gap-3"><div><p class="text-[10px] font-bold uppercase tracking-widest text-blue-700" x-text="proposalForm.kind === 'new' ? 'New route' : 'Route correction'"></p><h2 class="mt-1 text-base font-extrabold" x-text="proposalForm.kind === 'new' ? 'Draw a missing route' : `Edit ${selectedLine?.name || 'route'}`"></h2></div><button type="button" @click="closeProposalEditor()" class="text-xs font-bold text-slate-500">Cancel</button></div>
+            <div class="flex items-start justify-between gap-3"><div><h2 class="text-base font-extrabold" x-text="proposalForm.kind === 'new' ? 'Draw a missing route' : `Edit ${selectedLine?.name || 'route'}`"></h2></div><button type="button" @click="closeProposalEditor()" class="min-h-11 px-2 text-sm font-bold text-ink-muted">Cancel</button></div>
             <div class="grid grid-cols-[100px_1fr] gap-2">
-              <label class="text-xs font-bold text-slate-700">Line no.<input x-model="proposalForm.number" required maxlength="24" class="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm font-medium outline-none focus:border-blue-500"></label>
-              <label class="text-xs font-bold text-slate-700">Route name<input x-model="proposalForm.name" required minlength="3" maxlength="160" placeholder="Terminal – Terminal" class="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm font-medium outline-none focus:border-blue-500"></label>
+              <label class="text-xs font-bold text-slate-700">Line no.<input x-model="proposalForm.number" required maxlength="24" class="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm font-medium outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"></label>
+              <label class="text-xs font-bold text-slate-700">Route name<input x-model="proposalForm.name" required minlength="3" maxlength="160" placeholder="Terminal – Terminal" class="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm font-medium outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"></label>
             </div>
-            <label class="block text-xs font-bold text-slate-700">Vehicle type<select x-model="proposalForm.mode" class="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none"><option value="jeepney">Jeepney</option><option value="uv_express">UV Express</option></select></label>
+            <label class="block text-xs font-bold text-slate-700">Vehicle type<select x-model="proposalForm.mode" class="mt-1 h-11 w-full rounded-xl border border-line bg-white px-3 text-sm"><option value="jeepney">Jeepney</option><option value="uv_express">UV Express</option></select></label>
             <div class="rounded-xl bg-blue-50 p-3">
               <p class="text-xs font-bold text-blue-900">Edit the path on the map</p>
-              <p class="mt-1 text-[11px] leading-relaxed text-blue-800">Tap the route to choose a point, then drag it. Use Insert to add a point in the middle or Extend to add points at the end. New routes start with Extend. The line preview is straight between points; trace each turn before submitting.</p>
+              <p class="mt-1 text-xs leading-relaxed text-blue-800">Tap the route to choose a point, then drag it. Use Insert to add a point in the middle or Extend to add points at the end. New routes start with Extend. The line preview is straight between points; trace each turn before submitting.</p>
               <div class="mt-2 flex flex-wrap gap-1.5">
-                <button type="button" @click="editMode = 'select'" :aria-pressed="editMode === 'select'" class="edit-tool rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold">Move</button>
-                <button type="button" @click="editMode = 'insert'" :aria-pressed="editMode === 'insert'" class="edit-tool rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold">Insert</button>
-                <button type="button" @click="editMode = 'append'" :aria-pressed="editMode === 'append'" class="edit-tool rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold">Extend</button>
-                <button type="button" @click="deleteEditPoint()" :disabled="selectedEditPoint === null" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold disabled:opacity-40">Delete point</button>
-                <button type="button" @click="undoEdit()" :disabled="!previousCoordinates" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold disabled:opacity-40">Undo</button>
-                <button type="button" @click="resetEdit()" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold">Reset path</button>
+                <button type="button" @click="editMode = 'select'" :aria-pressed="editMode === 'select'" class="edit-tool min-h-11 rounded-lg border border-line bg-white px-3 text-sm font-bold">Move</button>
+                <button type="button" @click="editMode = 'insert'" :aria-pressed="editMode === 'insert'" class="edit-tool min-h-11 rounded-lg border border-line bg-white px-3 text-sm font-bold">Insert</button>
+                <button type="button" @click="editMode = 'append'" :aria-pressed="editMode === 'append'" class="edit-tool min-h-11 rounded-lg border border-line bg-white px-3 text-sm font-bold">Extend</button>
+                <button type="button" @click="deleteEditPoint()" :disabled="selectedEditPoint === null" class="min-h-11 rounded-lg border border-line bg-white px-3 text-sm font-bold disabled:opacity-40">Delete point</button>
+                <button type="button" @click="undoEdit()" :disabled="!previousCoordinates" class="min-h-11 rounded-lg border border-line bg-white px-3 text-sm font-bold disabled:opacity-40">Undo</button>
+                <button type="button" @click="resetEdit()" class="min-h-11 rounded-lg border border-line bg-white px-3 text-sm font-bold">Reset path</button>
               </div>
-              <p class="mt-2 text-[11px] text-blue-800" x-text="`${proposalForm.coordinates.length} path points${selectedEditPoint === null ? '' : ` · point ${selectedEditPoint + 1} selected`}`"></p>
+              <p class="mt-2 text-xs text-blue-800" x-text="`${proposalForm.coordinates.length} path points${selectedEditPoint === null ? '' : ` · point ${selectedEditPoint + 1} selected`}`"></p>
             </div>
-            <label class="block text-xs font-bold text-slate-700">Your name<input x-model="proposalForm.author" required minlength="2" maxlength="40" autocomplete="name" class="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500"></label>
-            <label class="block text-xs font-bold text-slate-700">What changed, and how do you know?<textarea x-model="proposalForm.reason" required minlength="20" maxlength="2000" rows="3" placeholder="For example, I rode this route last week; it now turns at…" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500"></textarea></label>
-            <label class="block text-xs font-bold text-slate-700">Source link (optional)<input x-model="proposalForm.source_url" type="url" maxlength="500" placeholder="https://…" class="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500"></label>
+            <label class="block text-xs font-bold text-slate-700">Your name<input x-model="proposalForm.author" required minlength="2" maxlength="40" autocomplete="name" class="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"></label>
+            <label class="block text-xs font-bold text-slate-700">What changed, and how do you know?<textarea x-model="proposalForm.reason" required minlength="20" maxlength="2000" rows="3" placeholder="For example, I rode this route last week; it now turns at…" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"></textarea></label>
+            <label class="block text-xs font-bold text-slate-700">Source link (optional)<input x-model="proposalForm.source_url" type="url" maxlength="500" placeholder="https://…" class="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"></label>
             <input x-model="proposalForm.website" type="text" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true">
             <p x-show="proposalError" x-text="proposalError" role="alert" class="rounded-lg bg-rose-50 p-2 text-xs text-rose-700"></p>
-            <button type="submit" :disabled="proposalSaving" class="w-full rounded-xl bg-blue-700 px-4 py-3 text-sm font-bold text-white disabled:opacity-50" x-text="proposalSaving ? 'Submitting…' : 'Submit for review'"></button>
+            <button type="submit" :disabled="proposalSaving" class="min-h-12 w-full rounded-xl bg-brand px-4 text-sm font-bold text-white disabled:opacity-50" x-text="proposalSaving ? 'Submitting…' : 'Submit for review'"></button>
           </form>
           <div x-show="!editorOpen" class="space-y-2">
             <h2 class="text-sm font-extrabold">Community suggestions</h2>
@@ -461,11 +456,11 @@
             <p x-show="proposalsError" x-text="proposalsError" class="text-xs text-rose-700"></p>
             <p x-show="!proposalsLoading && proposals.length === 0" class="text-xs text-slate-500">No suggestions yet for this city.</p>
             <template x-for="proposal in proposals" :key="proposal.id"><article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div class="flex items-start justify-between gap-2"><div><p class="text-[10px] font-bold uppercase tracking-widest text-blue-700" x-text="proposal.kind === 'new' ? 'New route' : 'Correction'"></p><h3 class="mt-1 text-sm font-extrabold" x-text="`${proposal.number} · ${proposal.name}`"></h3></div><span class="rounded-full px-2 py-1 text-[10px] font-bold" :class="proposal.status === 'pending' ? 'bg-amber-50 text-amber-800' : proposal.status === 'accepted' ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-100 text-slate-600'" x-text="proposal.status === 'accepted' ? 'Reviewed' : proposal.status"></span></div>
+              <div class="flex items-start justify-between gap-2"><div><h3 class="text-sm font-extrabold" x-text="`${proposal.number} · ${proposal.name}`"></h3><p class="mt-0.5 text-xs text-ink-muted" x-text="proposal.kind === 'new' ? 'Suggested new route' : 'Suggested correction'"></p></div><span class="rounded-full px-2 py-1 text-xs font-bold" :class="proposal.status === 'pending' ? 'bg-amber-50 text-amber-800' : proposal.status === 'accepted' ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-100 text-slate-600'" x-text="{ pending: 'Waiting for review', accepted: 'Published', rejected: 'Not published' }[proposal.status] || proposal.status"></span></div>
               <p class="mt-2 whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-700" x-text="proposal.reason"></p>
-              <p class="mt-2 text-[11px] text-slate-500" x-text="`By ${proposal.author} · ${formatCommentDate(proposal.created_at)}`"></p>
-              <p x-show="proposal.review_note" class="mt-2 rounded-lg bg-slate-50 p-2 text-[11px] text-slate-600" x-text="`Review: ${proposal.review_note}`"></p>
-              <div class="mt-3 flex flex-wrap items-center gap-2"><button type="button" @click="previewProposal(proposal)" class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700">View proposed path</button><button type="button" @click="voteProposal(proposal)" :disabled="proposal.status !== 'pending' || votingProposalId === proposal.id" :aria-pressed="proposal.voted" class="rounded-lg px-3 py-2 text-xs font-bold disabled:opacity-50" :class="proposal.voted ? 'bg-blue-100 text-blue-800' : 'bg-blue-700 text-white'" x-text="`${proposal.voted ? 'Supported' : 'Support'} · ${proposal.votes}`"></button><a x-show="proposal.source_url" :href="proposal.source_url" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-blue-700 underline">Evidence ↗</a></div>
+              <p class="mt-2 text-xs text-slate-500" x-text="`By ${proposal.author} · ${formatCommentDate(proposal.created_at)}`"></p>
+              <p x-show="proposal.review_note" class="mt-2 rounded-lg bg-slate-50 p-2 text-xs text-slate-600" x-text="`Review: ${proposal.review_note}`"></p>
+              <div class="mt-3 flex flex-wrap items-center gap-2"><button type="button" @click="previewProposal(proposal)" class="min-h-11 rounded-lg border border-line px-3 text-sm font-bold text-ink-soft">View proposed path</button><button type="button" @click="voteProposal(proposal)" :disabled="proposal.status !== 'pending' || votingProposalId === proposal.id" :aria-pressed="proposal.voted" class="min-h-11 rounded-lg px-3 text-sm font-bold disabled:opacity-50" :class="proposal.voted ? 'bg-blue-100 text-blue-800' : 'bg-blue-700 text-white'" x-text="`${proposal.voted ? 'Supported' : 'Support'} · ${proposal.votes}`"></button><a x-show="proposal.source_url" :href="proposal.source_url" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-11 items-center text-sm font-bold text-brand underline">Evidence<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="ml-0.5 inline align-[-1px]" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></a></div>
             </article></template>
           </div>
         </div>
@@ -480,18 +475,22 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script>
+    // Map strokes read the same design tokens as the page (templates/_tokens.html).
+    const token = name => getComputedStyle(document.documentElement).getPropertyValue(`--${name}`).trim();
+    const COLORS = { brand: token('brand'), ink: token('ink'), walk: token('walk'), altRoute: token('alt-route') };
+
     // Each jeep line keeps its own colour, like transit lines in a maps app.
     // Light colours get dark text on chips and a deeper stroke on the map.
     function luminance(hex) {
       const channel = value => { const c = parseInt(value, 16) / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
-      const [r, g, b] = [1, 3, 5].map(index => channel(String(hex || '#1d4ed8').slice(index, index + 2)));
+      const [r, g, b] = [1, 3, 5].map(index => channel(String(hex || COLORS.brand).slice(index, index + 2)));
       return 0.2126 * r + 0.7152 * g + 0.0722 * b;
     }
     function chipText(color) {
-      return luminance(color) > 0.3 ? '#0f172a' : '#ffffff';
+      return luminance(color) > 0.3 ? COLORS.ink : '#ffffff';
     }
     function strokeColor(color) {
-      if (luminance(color) <= 0.4) return color || '#1d4ed8';
+      if (luminance(color) <= 0.4) return color || COLORS.brand;
       const darken = index => Math.round(parseInt(color.slice(index, index + 2), 16) * 0.7).toString(16).padStart(2, '0');
       return `#${darken(1)}${darken(3)}${darken(5)}`;
     }
@@ -499,7 +498,7 @@
 
     // Leaflet objects and the raw network GeoJSON stay outside Alpine's
     // reactive state: proxying them slows every draw and can confuse Leaflet.
-    const maps = { map: null, networkMap: null, networkLayers: {}, networkAnchorLayer: null, editorLayer: null, previewLayer: null, originMarker: null, destinationMarker: null, routeLayers: null, catalogNetwork: null, networkCache: {} };
+    const maps = { map: null, backdropLayer: null, networkMap: null, networkLayers: {}, networkAnchorLayer: null, editorLayer: null, previewLayer: null, originMarker: null, destinationMarker: null, routeLayers: null, catalogNetwork: null, networkCache: {} };
 
     function lugarApp() {
       return {
@@ -629,6 +628,10 @@
         get walkingLoading() {
           return !!this.selectedOption && this.walkingPending.includes(`${this.requestId}:${this.selectedOption.id}`);
         },
+        get originIsDefault() {
+          const start = this.cityProfiles[this.city].origin;
+          return this.origin.lat === start.lat && this.origin.lng === start.lng;
+        },
         get currentCity() {
           return this.cities.find(item => item.id === this.city) || this.cities[0];
         },
@@ -665,7 +668,7 @@
           return parts.sort((a, b) => b.better - a.better);
         },
         chipStyle(color) {
-          return { background: color || '#1d4ed8', color: chipText(color) };
+          return { background: color || COLORS.brand, color: chipText(color) };
         },
         strokeColor(color) {
           return strokeColor(color);
@@ -787,6 +790,7 @@
           }).addTo(maps.map);
           this.loadRecents();
           this.updateMap();
+          this.loadBackdrop();
           navigator.permissions?.query({ name: 'geolocation' })
             .then(status => { if (status.state === 'granted') this.locateMe(true); })
             .catch(() => {});
@@ -834,7 +838,23 @@
           // updateMap recentres on the new origin; the routes map fits the new
           // network once it is drawn. Setting a view here too loads tiles twice.
           this.updateMap();
+          this.loadBackdrop();
           if (this.activeTab === 'routes') this.openCatalog();
+        },
+        async loadBackdrop() {
+          const requestedCity = this.city;
+          if (maps.backdropLayer) maps.map.removeLayer(maps.backdropLayer);
+          maps.backdropLayer = null;
+          try {
+            const network = maps.networkCache[requestedCity]?.network
+              || await fetch(`/api/jeepney-network?city=${encodeURIComponent(requestedCity)}`).then(response => response.ok ? response.json() : null);
+            if (!network || this.city !== requestedCity) return;
+            maps.backdropLayer = L.layerGroup(network.features.map(feature => L.polyline(
+              feature.geometry.coordinates.map(([lng, lat]) => [lat, lng]),
+              { color: strokeColor(feature.properties.color), weight: 3, opacity: .45, interactive: false },
+            )));
+            if (!this.destination) maps.backdropLayer.addTo(maps.map);
+          } catch (error) { /* The planner works without the backdrop. */ }
         },
         pinIcon(destination = false) {
           return L.divIcon({ className: '', html: `<div class="place-pin${destination ? ' destination' : ''}"></div>`, iconSize: [19, 19], iconAnchor: [9, 9] });
@@ -863,14 +883,14 @@
         },
         addAlternativeLeg(leg, optionId) {
           const coordinates = leg.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-          L.polyline(coordinates, { color: '#94a3b8', weight: 5, opacity: .75, lineCap: 'round', lineJoin: 'round' })
+          L.polyline(coordinates, { color: COLORS.altRoute, weight: 5, opacity: .75, lineCap: 'round', lineJoin: 'round' })
             .bindTooltip('Alternative route · tap to view')
             .on('click', event => { L.DomEvent.stopPropagation(event); this.selectOption(optionId); })
             .addTo(maps.routeLayers);
         },
         addAccessGuide(from, to) {
           if (L.latLng(from).distanceTo(L.latLng(to)) < 40) return;
-          L.polyline([from, to], { color: '#475569', weight: 3, opacity: .8, dashArray: '3 7', lineCap: 'round' })
+          L.polyline([from, to], { color: COLORS.walk, weight: 3, opacity: .8, dashArray: '3 7', lineCap: 'round' })
             .bindTooltip('Approximate walk; check crossings and entrances')
             .addTo(maps.routeLayers);
         },
@@ -878,7 +898,7 @@
           const coordinates = leg?.geometry?.coordinates?.map(([lng, lat]) => [lat, lng]) || [];
           if (coordinates.length < 2) return coordinates;
           L.polyline(coordinates, { color: '#ffffff', weight: 7, opacity: .92, lineCap: 'round', interactive: false }).addTo(maps.routeLayers);
-          L.polyline(coordinates, { color: '#475569', weight: 3, opacity: .95, dashArray: '2 7', lineCap: 'round' })
+          L.polyline(coordinates, { color: COLORS.walk, weight: 3, opacity: .95, dashArray: '2 7', lineCap: 'round' })
             .bindTooltip(`Walk ${this.distanceLabel((leg.distance_km || 0) * 1000)}`)
             .addTo(maps.routeLayers);
           return coordinates;
@@ -899,6 +919,11 @@
           if (maps.routeLayers) maps.map.removeLayer(maps.routeLayers);
           maps.routeLayers = L.layerGroup().addTo(maps.map);
           maps.originMarker = L.marker([this.origin.lat, this.origin.lng], { icon: this.pinIcon() }).addTo(maps.map);
+          // The city's lines sit faintly behind the planner until a trip takes over the map.
+          if (maps.backdropLayer) {
+            if (this.destination) maps.map.removeLayer(maps.backdropLayer);
+            else maps.backdropLayer.addTo(maps.map);
+          }
           if (!this.destination) {
             maps.map.setView([this.origin.lat, this.origin.lng], 14);
             return;

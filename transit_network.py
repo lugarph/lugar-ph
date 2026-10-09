@@ -563,7 +563,7 @@ def _stop_json(city: str, point: tuple[float, float], streets: dict[tuple[float,
     return {"lat": lat, "lng": lng, "landmark": landmark, "street": street, "label": label}
 
 
-def _signboard(line: Line) -> str:
+def signboard(line: Line) -> str:
     """The route name as painted on the jeepney, without planning qualifiers."""
     name = line.name.split(" via ")[0]
     return name[: -len(" Loop")] if name.endswith(" Loop") else name
@@ -589,7 +589,7 @@ def _itinerary(graph: StopGraph, journey: Journey, city: str, streets: dict[tupl
         start, end = graph.stops[line_pos][board], graph.stops[line_pos][alight]
         legs.append({
             "route_id": line.id, "route_number": line.number, "route_name": line.name, "color": line.color,
-            "signboard": _signboard(line), "heading": _heading(line, graph.stop_km[line_pos][alight]),
+            "signboard": signboard(line), "heading": _heading(line, graph.stop_km[line_pos][alight]),
             "board": board_stop, "alight": alight_stop,
             "geometry": {"type": "LineString", "coordinates": _slice(line, start, end)},
             "geometry_status": line.status, "estimated_path": line.estimated_path, "mode": line.mode,
@@ -598,7 +598,7 @@ def _itinerary(graph: StopGraph, journey: Journey, city: str, streets: dict[tupl
             # Any of these jeeps also works for this ride.
             "also": [
                 {
-                    "route_id": other.id, "route_number": other.number, "color": other.color, "signboard": _signboard(other),
+                    "route_id": other.id, "route_number": other.number, "color": other.color, "signboard": signboard(other),
                     "mode": other.mode, "estimated_path": other.estimated_path,
                     "heading": _heading(other, graph.stop_km[other_pos][other_alight]), "road_distance_km": round(other_km, 2),
                 }
