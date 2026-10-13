@@ -21,6 +21,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import case, func, select
 
 from models import ProposalVote, RouteAdminSession, RouteComment, RouteProposal, RoutePublication, RouteRevision, SessionLocal
+from gtfs_export import export_city
 from live_network import load_live_network
 from osm_services import search_places, walking_matrix, walking_route
 from route_catalog import ROUTE_BY_ID, distance_km, public_catalog
@@ -699,6 +700,22 @@ def _jeepney_option(itinerary: dict, index: int) -> dict:
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/{city}/gtfs.zip")
+def city_gtfs(city: str):
+    """The city's jeepney network as a static GTFS feed, including approved community revisions."""
+    wanted = city.lower().strip()
+    canonical = CITY_ALIASES.get(wanted, wanted)
+    if canonical not in CITY_METADATA:
+        raise HTTPException(status_code=404, detail="Unknown city")
+    if canonical != city:
+        return RedirectResponse(f"/{canonical}/gtfs.zip", status_code=308)
+    return Response(
+        content=export_city(canonical, _live(canonical)),
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="lugar-{canonical}-gtfs.zip"', "Cache-Control": "no-cache"},
+    )
 
 
 # Declared last so it never shadows /api, /health, or the docs pages.
