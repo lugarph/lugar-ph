@@ -180,6 +180,23 @@ cost = ride km + 2.2 × walk to and from the pins + 3 × walk between lines + 2 
    - **Time:** rides at 12 km/h, walks at 4.8 km/h, 6 minutes to board, and 8 minutes per transfer.
    - **Fare:** the LTFRB regular jeepney fare for each ride. UV Express rides show "fare on board".
 
+## GTFS feed
+
+Each city's network is also a static [GTFS](https://gtfs.org/documentation/schedule/reference/) feed at `/<city>/gtfs.zip`, such as `/bacolod/gtfs.zip`. The routes screen links to it. It includes routes approved since the last Git sync. To write one to a file, run `.venv/bin/python scripts/export_gtfs.py --city bacolod --out bacolod-gtfs.zip`. The code is in [`gtfs_export.py`](gtfs_export.py).
+
+Jeepneys are hail-and-ride, with no fixed stops and no timetable. The feed models them this way instead of as scheduled buses:
+
+- **Routes:** one route per line, `route_type` 3 (bus), with `continuous_pickup` and `continuous_drop_off` set to 0, so riders can board and get off anywhere along the route.
+- **Stops:** the planner's points every 100 m along each line, plus the far terminal of a circuit. They are not signposted stops. Each stop is named after the nearest landmark ("Near SM City") or by its distance along the line. Stop IDs are `<city>-<line id>-<position>`, so they stay the same between exports unless the line's geometry changes.
+- **Trips:** a circuit has one trip out to its far terminal and one back, with the same "toward" headsigns the planner shows. A loop with no known far terminal (most Cebu lines) is one trip. Each trip is timed at the planner's 12 km/h with `timepoint=0`, so times are approximate.
+- **Frequencies:** every 10 minutes from 05:00 to 22:00 daily, with `exact_times=0`. **These are assumptions, not observed data.** Change `DEFAULT_HEADWAY_SECONDS` and the service hours if you have counts.
+- **Fares:** GTFS fares can't express a per-kilometre fare on a hail-and-ride route without inventing fare zones. So the feed lists only the ₱14 base fare, which covers the first 4 km. Longer rides cost ₱2 more per km. `feed_info.txt` says this too. UV Express routes have no fare.
+- **Geometry source:** routes have two non-standard columns. `lugar_status` holds the line's `status` from the GeoJSON: `inferred_*` lines were estimated from route plans, while the others were traced. `lugar_source_url` is the source document. `route_desc` explains the status in plain words. `feed_info.txt` has a non-standard `lugar_notes` column with the caveats above.
+
+`scripts/validate_gtfs.py` runs every feed through the [MobilityData GTFS validator](https://github.com/MobilityData/gtfs-validator). It downloads the 40 MB jar into `scripts/.cache/` on first use, which Git ignores, and it needs Java 17 or newer. With validator 8.0.1, no feed has errors. All feeds get an info notice for the three `lugar_*` columns. Baguio and Davao get warnings for route codes longer than 12 characters, because their jeeps are named by destination. Six Cagayan de Oro routes have names that contain their code.
+
+Lugar.ph can't put these lines on Google Maps itself. Google takes transit feeds through its [transit partner programme](https://support.google.com/transitpartners/answer/1111471), which expects the city or the operators to submit and maintain the feed. A city or operator could start from this export, confirm the routes, and replace the assumed headways and hours with real ones.
+
 ## Contributing route data
 
 1. **Best: map it in OpenStreetMap.** Add or fix the line's public-transport route relations in OSM (one per direction, following the [PTv2 scheme](https://wiki.openstreetmap.org/wiki/Public_transport)). Then list the relation ids in `OSM_ROUTES`: in [`scripts/build_route_network.py`](scripts/build_route_network.py) for Bacolod (rerun it with the line's id), in [`scripts/build_additional_city_networks.py`](scripts/build_additional_city_networks.py) for Iloilo, Cebu, and Tacloban (rerun it with `--osm-only`), or in `OSM_ROUTES` or `OSM_LINES` in [`scripts/build_city_networks.py`](scripts/build_city_networks.py) for Baguio, Naga, Cagayan de Oro, and Davao. The shared import code is in [`scripts/osm_routes.py`](scripts/osm_routes.py). The fix then helps every OSM-based app too.
