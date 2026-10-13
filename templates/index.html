@@ -379,6 +379,7 @@
         <div x-show="communityView === 'routes'" class="border-b border-slate-200 bg-white px-5 py-3">
           <p class="text-sm font-semibold text-ink">Tap a colored line to inspect its route.</p>
           <p class="mt-1 text-xs leading-relaxed text-slate-500">Lines come from published route plans or documented route geometry. Exact turns, operating direction, and current service still need local verification. Community notes are unverified.</p>
+          <a :href="`/${city}/gtfs.zip`" download class="inline-flex min-h-11 items-center text-xs font-semibold text-slate-500 underline">Download these lines as a GTFS feed</a>
         </div>
         <div x-show="communityView === 'routes'" class="px-5 pt-4">
           <label class="sr-only" for="network-search">Find a jeepney line</label>
