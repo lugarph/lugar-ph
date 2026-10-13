@@ -110,12 +110,14 @@ def _trips(line: Line) -> tuple[_Trip, ...]:
 def _stop_points(line: Line) -> tuple[int, ...]:
     """Coordinate indexes of the line's stops: the planner's stops, its terminals, and its far terminal."""
     indexes, turn = _stop_indexes(line), _turnaround(line)
-    if turn is None or turn in indexes:
-        return indexes
-    # The far terminal replaces a planner stop that sits within half a spacing of it.
-    last, turn_km = len(line.coordinates) - 1, line.cumulative_km[turn]
-    kept = [index for index in indexes if index in (0, last) or abs(line.cumulative_km[index] - turn_km) >= STOP_SPACING_KM / 2]
-    return tuple(sorted([*kept, turn]))
+    if turn is not None and turn not in indexes:
+        # The far terminal replaces a planner stop that sits within half a spacing of it.
+        last, turn_km = len(line.coordinates) - 1, line.cumulative_km[turn]
+        kept = [index for index in indexes if index in (0, last) or abs(line.cumulative_km[index] - turn_km) >= STOP_SPACING_KM / 2]
+        indexes = tuple(sorted([*kept, turn]))
+    # A repeated final point gives the planner a second stop in the same place; GTFS needs distance to grow.
+    return tuple(index for position, index in enumerate(indexes)
+                 if position == 0 or line.cumulative_km[index] > line.cumulative_km[indexes[position - 1]])
 
 
 def _stop_id(city: str, line: Line, position: int) -> str:
