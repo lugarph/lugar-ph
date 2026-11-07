@@ -12,3 +12,5 @@ docker-compose.yml
 # Build inputs; the app serves only data/*.geojson
 scripts/
 data/sources/
+data/tools/
+data/.github/

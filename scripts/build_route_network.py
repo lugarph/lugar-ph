@@ -26,7 +26,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-from osm_routes import circuit, fetch_relations, osm_anchors, osm_properties
+from osm_routes import circuit, fetch_relations, osm_anchors, osm_properties, write_network
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -209,7 +209,7 @@ def main() -> None:
                 relations = fetch_relations([relation_id for ids, _, _ in OSM_ROUTES.values() for relation_id in ids])
             print(f"Importing {number:02d} {name} from OpenStreetMap", flush=True)
             features.append(osm_feature(number, route_id, name, color, anchor_ids, relations))
-            OUTPUT.write_text(json.dumps({"type": "FeatureCollection", "features": features}, indent=2), encoding="utf-8")
+            write_network(OUTPUT, features)
             continue
         print(f"Routing {number:02d} {name}", flush=True)
         geometry, distance_km = route_geometry(inferred_circuit(route_id, anchor_ids))
@@ -234,9 +234,9 @@ def main() -> None:
             },
             "geometry": geometry,
         })
-        OUTPUT.write_text(json.dumps({"type": "FeatureCollection", "features": features}, indent=2), encoding="utf-8")
+        write_network(OUTPUT, features)
         time.sleep(0.5)
-    OUTPUT.write_text(json.dumps({"type": "FeatureCollection", "features": features}, indent=2), encoding="utf-8")
+    write_network(OUTPUT, features)
     print(f"Wrote {len(features)} routes to {OUTPUT}")
 
 

@@ -6,9 +6,15 @@ Built with FastAPI, Alpine.js, Tailwind CSS, and Leaflet.
 
 ## Run it
 
+The routes live in their own repo, [lugar-ph-routes](https://github.com/lugarph/lugar-ph-routes), which `data/` pins to an exact commit. Clone with submodules:
+
 ```sh
+git clone --recurse-submodules https://github.com/lugarph/lugar-ph.git
+cd lugar-ph
 docker compose up --build
 ```
+
+In a clone you already have, run `git submodule update --init`.
 
 Or locally with Python 3.12+ (uses SQLite unless `DATABASE_URL` is set):
 
@@ -25,8 +31,8 @@ Open <http://localhost:8000>. Run the tests with `pytest`.
 
 Lugar.ph is free to copy for any city with jeepneys or other fixed-route transit. To make your own:
 
-1. **Fork this repo** on GitHub.
-2. **Get your city's routes** into one GeoJSON file, `data/<city>_jeepney_network.geojson`, in the [format below](#route-data).
+1. **Fork this repo and [the routes repo](https://github.com/lugarph/lugar-ph-routes)** on GitHub, and point `url` in `.gitmodules` at your routes fork.
+2. **Get your city's routes** into one GeoJSON file, `data/<city>_jeepney_network.geojson`, in the [route format](https://github.com/lugarph/lugar-ph-routes#files). Commit it in your routes fork.
    - **Check OpenStreetMap first.** Many Philippine cities already have jeepney routes mapped. Run this in [overpass turbo](https://overpass-turbo.eu/) over your city:
      ```text
      relation["type"="route"]["route"~"bus|share_taxi|jeepney|minibus"]({{bbox}});
@@ -60,82 +66,20 @@ Reviewers sign in at `/admin` (also available at `/admin/routes`). There is no l
 
 Approval publishes the proposed geometry to the public map and trip planner immediately. Every route starts with a saved baseline revision; approvals and rollbacks add immutable revisions. The admin history view can restore any prior revision, including removing a newly approved route. Rejection leaves the public map alone. The editor's straight line segments are **not** automatically snapped to roads, so reviewers must inspect the path before publishing. Approved community paths are labeled as such rather than presented as official or OpenStreetMap geometry.
 
-The database is the live source for approved revisions. To keep permanent changes in Git, run `.venv/bin/python scripts/sync_approved_routes.py --site https://www.lugarph.app --check` locally. The command prompts for the admin password and uses a protected export endpoint. Run it again without `--check` to update the city's GeoJSON file. Alternatively, load the production `DATABASE_URL` from your secret store and omit `--site` for a direct database export. Review `git diff -- data/`, run the tests, and commit the data change. The script never commits or pushes for you. A later admin rollback remains authoritative even if the now-removed route is in a checked-in file; run the sync command again to put the rollback into Git. Run Alembic migration `0005` before deploying this version to an existing database.
+The database is the live source for approved revisions. To keep permanent changes in Git, run `.venv/bin/python scripts/sync_approved_routes.py --site https://www.lugarph.app --check` locally. The command prompts for the admin password and uses a protected export endpoint. Run it again without `--check` to update the city's GeoJSON file. Alternatively, load the production `DATABASE_URL` from your secret store and omit `--site` for a direct database export. Review the diff inside `data/`, run the tests, commit and push it in the routes repo, then commit the new `data` pointer here. The script never commits or pushes for you. A later admin rollback remains authoritative even if the now-removed route is in a checked-in file; run the sync command again to put the rollback into Git. Once a sync is deployed, load the production `DATABASE_URL` and run `.venv/bin/python scripts/sync_approved_routes.py --prune` (add `--check` first to preview). This retires the database versions the files now match. Otherwise an approved line keeps overriding the file, and a later fix to it in the routes repo won't show. Revisions are kept, so rollback still works. Run Alembic migration `0005` before deploying this version to an existing database.
 
 ## Route data
 
-Each city's jeepney network is one GeoJSON file in `data/`:
+Each city's network is one GeoJSON file in `data/`, which is the [lugar-ph-routes](https://github.com/lugarph/lugar-ph-routes) repo pinned to a commit. Its README has the file format and the rules each line follows, and [SOURCES.md](https://github.com/lugarph/lugar-ph-routes/blob/main/SOURCES.md) says where each city's lines come from.
 
-| City | File | Lines | Mapped in OpenStreetMap |
-| --- | --- | --- | --- |
-| Bacolod | `jeepney_network.geojson` | 24 | 11 |
-| Iloilo | `iloilo_jeepney_network.geojson` | 25 | 10 |
-| Cebu | `cebu_jeepney_network.geojson` | 64 | 28 |
-| Tacloban | `tacloban_jeepney_network.geojson` | 19 | 6 |
-| Baguio | `baguio_jeepney_network.geojson` | 45 | 45 |
-| Naga | `naga_jeepney_network.geojson` | 11 | 0 |
-| Cagayan de Oro | `cdo_jeepney_network.geojson` | 63 | 0 |
-| Davao | `davao_jeepney_network.geojson` | 8 | 2 |
+To take new routes, update the pin, run the tests, and commit it:
 
-The file is a `FeatureCollection` with one `LineString` feature per jeepney line:
-
-```json
-{
-  "type": "Feature",
-  "geometry": { "type": "LineString", "coordinates": [[122.95053, 10.70964], [122.95061, 10.70941]] },
-  "properties": {
-    "id": "banago-libertad",
-    "number": 1,
-    "name": "Banago – Libertad Loop",
-    "color": "#ef6f77",
-    "status": "inferred_from_lptrp_anchors",
-    "distance_km": 12.94,
-    "anchors": [
-      { "id": "banago_school", "name": "Banago School", "lng": 122.95053, "lat": 10.70964 },
-      { "id": "libertad", "name": "Libertad", "lng": 122.94974, "lat": 10.66012 }
-    ]
-  }
-}
+```sh
+git -C data pull origin main
+.venv/bin/pytest
+git add data
+git commit -m "Update routes"
 ```
-
-### Line properties
-
-| Property | Type | Required | Meaning |
-| --- | --- | --- | --- |
-| `id` | string | yes | Stable slug, unique across all cities. Community notes are stored against it, so don't rename it. |
-| `number` | string or int | yes | Route number or code shown on the jeep (`1`, `04L`), unique within the city. |
-| `name` | string | yes | Route name as `Terminal – Terminal`, with an en dash. The signboard shown to riders drops `via …` and a trailing `Loop`. |
-| `color` | hex string | yes | The line's colour on chips, directions, and maps. Pick one distinct from lines sharing its roads. Light colours get dark text automatically. |
-| `status` | string | yes | Where the geometry came from. `osm_route_relation` (mapped street by street in OpenStreetMap) and `archived_dotc_gtfs_shape` are traced paths. `inferred_from_lptrp_anchors` and `inferred_from_official_route_structure` are estimated from route plans; riders see a note on those. |
-| `mode` | string | no | `jeepney` (default) or `uv_express`. UV Express rides get no fare estimate. |
-| `distance_km` | number | yes | Length of the drawn geometry. |
-| `planned_length_km` | number or null | no | Length stated in the published route plan. |
-| `source_url` | string | no | Document the line comes from. Defaults to the city's source. |
-| `anchors` | array | yes | Named landmarks from the first terminal to the far terminal, in riding order (see below). |
-| `return_anchors` | array | no | Landmarks passed only on the way back, when the return uses other streets. |
-| `osm_relations` | array of ints | no | OpenStreetMap route relations the geometry was imported from, in riding order. |
-| `attribution` | string | no | Required credit for imported geometry, such as `© OpenStreetMap contributors, ODbL`. |
-
-### Anchors
-
-| Property | Type | Meaning |
-| --- | --- | --- |
-| `id` | string | Slug for the landmark. |
-| `name` | string | Place name riders know (`Ayala`, `Burgos Market`). Names of three letters or fewer are shown in capitals (`SM`). Names containing `endpoint` are ignored. |
-| `lng`, `lat` | number | Position in WGS84. |
-
-Anchors do three things. They name stops ("Get off near SM"), they give each ride its direction, and they feed instant search suggestions. The direction reads "toward" the last anchor on the way out and "toward" the first anchor on the way back.
-
-### Geometry rules
-
-Jeeps don't run both ways on the same roads, so every line is drawn one way, as it is driven:
-
-- Coordinates are `[lng, lat]` in WGS84 and follow the roads the jeep drives.
-- Draw the full circuit: start at the first anchor, drive out to the far terminal, and come back to the start. The line should end within 500 m of where it begins.
-- Draw the way back as it is really driven. Main roads are often shared, but side streets, one-way pairs, and detours differ.
-- Keep consecutive points under 500 m apart.
-- The planner only rides a line in the order its points are drawn. On a circuit, a ride may continue past the start, the way a jeep carries on through its terminal.
-- A line that doesn't come back to its start is treated as one-way and ends at its last point.
 
 ### How the planner reads it
 
@@ -199,17 +143,17 @@ Lugar.ph can't put these lines on Google Maps itself. Google takes transit feeds
 
 ## Contributing route data
 
-1. **Best: map it in OpenStreetMap.** Add or fix the line's public-transport route relations in OSM (one per direction, following the [PTv2 scheme](https://wiki.openstreetmap.org/wiki/Public_transport)). Then list the relation ids in `OSM_ROUTES`: in [`scripts/build_route_network.py`](scripts/build_route_network.py) for Bacolod (rerun it with the line's id), in [`scripts/build_additional_city_networks.py`](scripts/build_additional_city_networks.py) for Iloilo, Cebu, and Tacloban (rerun it with `--osm-only`), or in `OSM_ROUTES` or `OSM_LINES` in [`scripts/build_city_networks.py`](scripts/build_city_networks.py) for Baguio, Naga, Cagayan de Oro, and Davao. The shared import code is in [`scripts/osm_routes.py`](scripts/osm_routes.py). The fix then helps every OSM-based app too.
-2. **Or fix the GeoJSON directly.** Edit the city's file in [geojson.io](https://geojson.io), QGIS, or JOSM. Trace the roads the jeep actually takes, in riding order, and add anchors for the landmarks riders use.
-3. **Or change the anchors or street lists and regenerate.** Lines without a mapped path are generated from anchors by [`scripts/build_route_network.py`](scripts/build_route_network.py) and [`scripts/build_additional_city_networks.py`](scripts/build_additional_city_networks.py), and from the street lists in `data/sources/` by [`scripts/build_city_networks.py`](scripts/build_city_networks.py).
+Corrections go to [lugar-ph-routes](https://github.com/lugarph/lugar-ph-routes), which has a local map editor, checks every pull request, and takes reports from people who don't use Git.
+
+To change how routes are generated, use the build scripts here. They write to `data/`, so commit the result in that repo:
+
+1. **Best: map it in OpenStreetMap.** Add or fix the line's public-transport route relations in OSM (one per direction, following the [PTv2 scheme](https://wiki.openstreetmap.org/wiki/Public_transport)). Then list the relation ids in `OSM_ROUTES`: in [`scripts/build_route_network.py`](scripts/build_route_network.py) for Bacolod (rerun it with the line's id), in [`scripts/build_additional_city_networks.py`](scripts/build_additional_city_networks.py) for Iloilo, Cebu, and Tacloban (rerun it with `--osm-only`), or in `OSM_ROUTES` or `OSM_LINES` in [`scripts/build_city_networks.py`](scripts/build_city_networks.py) for Baguio, Naga, Cagayan de Oro, and Davao. The shared import code is in [`scripts/osm_routes.py`](scripts/osm_routes.py).
+2. **Or change the anchors or street lists and regenerate.** Lines without a mapped path are generated from anchors by [`scripts/build_route_network.py`](scripts/build_route_network.py) and [`scripts/build_additional_city_networks.py`](scripts/build_additional_city_networks.py), and from the street lists in `data/sources/` by [`scripts/build_city_networks.py`](scripts/build_city_networks.py).
    - Each line is routed out through its anchors, then back.
    - By default the way back passes the same landmarks in reverse, following one-way streets. If the jeep returns through different landmarks, list them in `RETURN_VIA`.
-   - Rerunning a script overwrites hand edits to those cities' files.
-4. **New Bacolod lines** also need an entry in `ROUTES` in [`route_catalog.py`](route_catalog.py).
-5. **Run `pytest`.** If you added or removed lines, update the expected line counts in `tests/test_route_catalog.py`.
-6. **Open a pull request** that says what changed and how you know: a published route plan, a photo of the signboard, or a ride you took.
-
-Sources and known limitations are in [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md).
+   - Rebuilding keeps any line with the status `community_verified`, which is what a correction gets. To rebuild one of those from source, change its status first. Other hand edits are overwritten, and a line removed by hand comes back.
+3. **New Bacolod lines** also need an entry in `ROUTES` in [`route_catalog.py`](route_catalog.py).
+4. **Run `pytest`.** If lines were added or removed, update the expected line counts in `tests/test_route_catalog.py`.
 
 ## Licence
 
@@ -217,4 +161,4 @@ The code is free and open source under the [MIT Licence](LICENSE): use it, chang
 
 ### Route data
 
-Geometry imported from OpenStreetMap is © OpenStreetMap contributors and available under the [Open Database Licence](https://opendatacommons.org/licenses/odbl/). Because every city's file in `data/` includes it, those files are shared under the ODbL too. Keep the credit when you reuse it.
+The routes are in a separate repo, [lugar-ph-routes](https://github.com/lugarph/lugar-ph-routes), under the [Open Database Licence](https://opendatacommons.org/licenses/odbl/), because they include geometry imported from OpenStreetMap, © OpenStreetMap contributors. Keep the credit when you reuse them.
