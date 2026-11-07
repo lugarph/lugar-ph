@@ -33,6 +33,8 @@ NETWORK_FILES = {
     "cdo": DATA_DIR / "cdo_jeepney_network.geojson",
     "davao": DATA_DIR / "davao_jeepney_network.geojson",
 }
+if not NETWORK_FILES["bacolod"].exists():
+    raise SystemExit("Route data is missing. It lives in a Git submodule; run: git submodule update --init")
 NETWORKS = {city: json.loads(path.read_text(encoding="utf-8")) for city, path in NETWORK_FILES.items()}
 NETWORK = NETWORKS["bacolod"]
 

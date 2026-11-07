@@ -34,7 +34,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from osm_routes import Point, circuit, fetch_relations, km, osm_anchors, osm_properties, overlay, slug
+from osm_routes import Point, circuit, fetch_relations, km, osm_anchors, osm_properties, overlay, slug, write_network
 from street_sequences import fetch_streets, fold, route_through, split_sequence, waypoints
 
 
@@ -309,7 +309,7 @@ def build(city: str) -> None:
         })
     features += osm_features(city, landmarks, len(features))
     output = ROOT / "data" / f"{city}_jeepney_network.geojson"
-    output.write_text(json.dumps({"type": "FeatureCollection", "features": features}, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
+    write_network(output, features)
     if city in OSM_ROUTES:
         overlay(output, OSM_ROUTES[city])
     (SOURCES / city / "build_report.json").write_text(json.dumps(

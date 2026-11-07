@@ -617,17 +617,26 @@ def rollback_route(route_slug: str, payload: RollbackInput, request: Request):
         if not target or target.route_slug != route_slug:
             raise HTTPException(status_code=404, detail="Unknown revision for this route")
         publication = session.get(RoutePublication, (target.city, route_slug), with_for_update=True)
-        if not publication:
-            raise HTTPException(status_code=404, detail="Route has no publication history")
-        if publication.feature_json == target.feature_json:
+        if publication:
+            already_published = publication.feature_json == target.feature_json
+        else:
+            # Retired by `sync_approved_routes.py --prune`: the checked-in file is the live version.
+            live = next((feature for feature in load_live_network(target.city, session).network["features"]
+                         if feature["properties"]["id"] == route_slug), None)
+            already_published = live == (json.loads(target.feature_json) if target.feature_json else None)
+        if already_published:
             raise HTTPException(status_code=409, detail="That version is already published")
         revision = RouteRevision(city=target.city, route_slug=route_slug, feature_json=target.feature_json,
                                  action="rollback", proposal_id=None, actor=actor,
                                  note=f"Restored revision {target.id}: {' '.join(payload.note.split())}")
         session.add(revision)
         session.flush()
-        publication.feature_json = target.feature_json
-        publication.revision_id = revision.id
+        if publication:
+            publication.feature_json = target.feature_json
+            publication.revision_id = revision.id
+        else:
+            session.add(RoutePublication(city=target.city, route_slug=route_slug,
+                                         feature_json=target.feature_json, revision_id=revision.id))
         session.commit()
         return {"city": target.city, "route_slug": route_slug, "revision_id": revision.id}
 

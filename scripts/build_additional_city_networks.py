@@ -21,7 +21,7 @@ import urllib.request
 from collections import defaultdict
 from pathlib import Path
 
-from osm_routes import overlay
+from osm_routes import overlay, write_network
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -233,7 +233,7 @@ def build_inferred(city: str, routes, places, source: str) -> None:
         })
         time.sleep(0.35)
     output = ROOT / "data" / f"{city}_jeepney_network.geojson"
-    output.write_text(json.dumps({"type": "FeatureCollection", "features": features}, separators=(",", ":")), encoding="utf-8")
+    write_network(output, features)
 
 
 def build_cebu(gtfs_directory: Path) -> None:
@@ -268,7 +268,7 @@ def build_cebu(gtfs_directory: Path) -> None:
             "geometry": {"type": "LineString", "coordinates": points},
         })
     output = ROOT / "data" / "cebu_jeepney_network.geojson"
-    output.write_text(json.dumps({"type": "FeatureCollection", "features": features}, separators=(",", ":")), encoding="utf-8")
+    write_network(output, features)
     print(f"Cebu: wrote {len(features)} GTFS shapes", flush=True)
 
 

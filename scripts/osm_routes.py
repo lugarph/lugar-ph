@@ -16,6 +16,7 @@ import hashlib
 import json
 import math
 import os
+import sys
 import time
 import urllib.parse
 import urllib.request
@@ -258,16 +259,46 @@ def osm_properties(relation_ids: list[int], points: list[Point], anchors: list[d
     }
 
 
+# A person corrected this line, in the routes repo's editor or through an approved
+# suggestion in the app. Rebuilds must not overwrite it.
+CORRECTED_STATUS = "community_verified"
+
+
+def dumps_network(network: dict) -> str:
+    """The routes repo's own formatter, so a rebuild's diff shows only what really changed."""
+    tools = str(Path(__file__).resolve().parents[1] / "data" / "tools")
+    if tools not in sys.path:
+        sys.path.insert(0, tools)
+    from routeformat import dumps_network as canonical
+
+    return canonical(network)
+
+
+def write_network(path: Path, features: list[dict]) -> None:
+    """Write a city's file from freshly built lines, keeping every line a person corrected."""
+    corrected: dict[str, dict] = {}
+    if path.exists():
+        corrected = {feature["properties"]["id"]: feature for feature in json.loads(path.read_text(encoding="utf-8"))["features"]
+                     if feature["properties"].get("status") == CORRECTED_STATUS}
+    kept = [corrected.pop(feature["properties"]["id"], feature) for feature in features]
+    network = {"type": "FeatureCollection", "features": [*kept, *corrected.values()]}
+    path.write_text(dumps_network(network), encoding="utf-8")
+
+
 def overlay(path: Path, routes: dict[str, tuple[list[int], str | None, str | None]]) -> None:
     """Replace the listed lines in a city's GeoJSON with their OSM circuits, keeping every other line.
 
-    Each line's existing anchors are reused as candidate landmarks.
+    Each line's existing anchors are reused as candidate landmarks. A line a person
+    corrected is skipped, and the build says so, so its fix can be moved to OSM.
     """
     data = json.loads(path.read_text(encoding="utf-8"))
     relations = fetch_relations([relation_id for ids, _, _ in routes.values() for relation_id in ids])
     for feature in data["features"]:
         properties = feature["properties"]
         if properties["id"] not in routes:
+            continue
+        if properties.get("status") == CORRECTED_STATUS:
+            print(f"{path.stem}: keeping corrected line {properties['number']} {properties['name']}", flush=True)
             continue
         relation_ids, start_name, far_name = routes[properties["id"]]
         print(f"{path.stem}: importing {properties['number']} {properties['name']} from OpenStreetMap", flush=True)
@@ -280,4 +311,4 @@ def overlay(path: Path, routes: dict[str, tuple[list[int], str | None, str | Non
         anchors, return_anchors = osm_anchors(points, turnaround, known, start_name, far_name)
         properties.update(osm_properties(relation_ids, points, anchors, return_anchors))
         feature["geometry"] = {"type": "LineString", "coordinates": [[round(lng, 6), round(lat, 6)] for lng, lat in points]}
-    path.write_text(json.dumps(data, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
+    path.write_text(dumps_network(data), encoding="utf-8")

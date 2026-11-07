@@ -12,6 +12,8 @@ from pathlib import Path
 
 
 GEOMETRY_FILE = Path(__file__).resolve().parent / "data" / "road_segments.geojson"
+if not GEOMETRY_FILE.exists():
+    raise SystemExit("Route data is missing. It lives in a Git submodule; run: git submodule update --init")
 _features = json.loads(GEOMETRY_FILE.read_text(encoding="utf-8"))["features"]
 SEGMENTS = {feature["properties"]["id"]: feature for feature in _features}
 
